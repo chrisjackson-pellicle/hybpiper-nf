@@ -586,9 +586,9 @@ def main():
     if args.bwa:
         if args.blast:
             args.blast = False
-            # bamfile = bwa(readfiles, baitfile, basename, cpu=args.cpu)
-            bamfile = basename + ".bam" #CJJ added
-            print(f'CJJ: bamefile is: {bamfile}')
+            bamfile = bwa(readfiles, baitfile, basename, cpu=args.cpu)
+            # bamfile = basename + ".bam" #CJJ added
+            print(f'CJJ: bamfile is: {bamfile}')
             if args.unpaired:
                 unpaired_bamfile = bwa(unpaired_readfile, baitfile, basename, cpu=args.cpu, unpaired=True)
             if not bamfile:
@@ -617,18 +617,18 @@ def main():
 
 ########################################## DISTRIBUTE READS TO GENES ###################################################
 
-    # if args.distribute:
-    #     pre_existing_fastas = glob.glob("./*/*_interleaved.fasta") + glob.glob("./*/*_unpaired.fasta")
-    #     for fn in pre_existing_fastas:
-    #         os.remove(fn)
-    #     if args.bwa:
-    #         exitcode = distribute_bwa(bamfile, readfiles, baitfile, run_dir, args.target, unpaired_readfile,
-    #                                   args.exclude)
-    #     else:
-    #         exitcode = distribute(blastx_outputfile, readfiles, baitfile, run_dir, args.target, unpaired_readfile,
-    #                               args.exclude)
-    #     if exitcode:
-    #         sys.exit(1)
+    if args.distribute:
+        pre_existing_fastas = glob.glob("./*/*_interleaved.fasta") + glob.glob("./*/*_unpaired.fasta")
+        for fn in pre_existing_fastas:
+            os.remove(fn)
+        if args.bwa:
+            exitcode = distribute_bwa(bamfile, readfiles, baitfile, run_dir, args.target, unpaired_readfile,
+                                      args.exclude)
+        else:
+            exitcode = distribute(blastx_outputfile, readfiles, baitfile, run_dir, args.target, unpaired_readfile,
+                                  args.exclude)
+        if exitcode:
+            sys.exit(1)
     if len(readfiles) == 2:
         genes = [x for x in os.listdir(".") if os.path.isfile(os.path.join(x, x + "_interleaved.fasta"))]
         # print(f'CJJ genes: {genes}')
@@ -640,24 +640,24 @@ def main():
 
 ############################################## ASSEMBLE WITH SPADES ####################################################
 
-    # if args.assemble:
-    #     if len(readfiles) == 1:
-    #         spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
-    #                                  paired=False, timeout=args.timeout)
-    #     elif len(readfiles) == 2:
-    #         if unpaired_readfile:
-    #             spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
-    #                                      timeout=args.timeout, unpaired=True)
-    #         else:
-    #             spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
-    #                                      timeout=args.timeout)
-    #
-    #     else:
-    #         print("ERROR: Please specify either one (unpaired) or two (paired) read files! Exiting!")
-    #         return
-    #     if not spades_genelist:
-    #         print("ERROR: No genes had assembleRunning Exonerate to generate sequencesd contigs! Exiting!")
-    #         return
+    if args.assemble:
+        if len(readfiles) == 1:
+            spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
+                                     paired=False, timeout=args.timeout)
+        elif len(readfiles) == 2:
+            if unpaired_readfile:
+                spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
+                                         timeout=args.timeout, unpaired=True)
+            else:
+                spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
+                                         timeout=args.timeout)
+
+        else:
+            print("ERROR: Please specify either one (unpaired) or two (paired) read files! Exiting!")
+            return
+        if not spades_genelist:
+            print("ERROR: No genes had assembleRunning Exonerate to generate sequencesd contigs! Exiting!")
+            return
 
 ############################################## RUN EXONERATE ###########################################################
     # Exonerate hits
