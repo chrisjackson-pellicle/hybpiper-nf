@@ -129,7 +129,7 @@ def blastx(readfiles, baitfile, evalue, basename, cpu=None, max_target_seqs=10, 
         else:
             print("Making protein blastdb in current directory.")
             if os.path.split(baitfile)[0]:
-                shutil.copy(baitfile, '../..')
+                shutil.copy(baitfile, '.')
             db_file = os.path.split(baitfile)[1]
             makeblastdb_cmd = "makeblastdb -dbtype prot -in {}".format(db_file)
             print(makeblastdb_cmd)
@@ -412,8 +412,8 @@ def bwa(readfiles, baitfile, basename, cpu, unpaired=None):
             print("Making nucleotide bwa index in current directory.")
             baitfileDir = os.path.split(baitfile)[0]
             if baitfileDir:
-                if os.path.realpath(baitfileDir) != os.path.realpath('../..'):
-                    shutil.copy(baitfile, '../..')
+                if os.path.realpath(baitfileDir) != os.path.realpath('.'):
+                    shutil.copy(baitfile, '.')
             db_file = os.path.split(baitfile)[1]
             make_bwa_index_cmd = "bwa index {}".format(db_file)
             print(("[CMD]: {}".format(make_bwa_index_cmd)))
@@ -682,9 +682,10 @@ def main():
                                              f'{basename}_supercontigs_with_discordant_reads.csv'
     subprocess.call(collate_discordant_supercontig_reports, shell=True)
 
+
     sys.stderr.write("Generated sequences from {} genes!\n".format(len(open("genes_with_seqs.txt").readlines())))
 
-    paralog_warnings = [x for x in os.listdir("../..") if os.path.isfile(os.path.join(x, basename,
+    paralog_warnings = [x for x in os.listdir(".") if os.path.isfile(os.path.join(x, basename,
                                                                                       "paralog_warning.txt"))]
     with open("genes_with_paralog_warnings.txt", 'w') as pw:
         pw.write("\n".join(paralog_warnings))
