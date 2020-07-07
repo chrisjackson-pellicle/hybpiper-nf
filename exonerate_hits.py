@@ -174,7 +174,7 @@ def pairwise(iterable):  # CJJ
     return zip(a, b)
 
 
-def grouped(iterable, n):
+def grouped(iterable, n):  # CJJ
     """s -> (s0,s1,s2,...sn-1), (sn,sn+1,sn+2,...s2n-1), (s2n,s2n+1,s2n+2,...s3n-1), ...
     Used in the function fullContigs to iterate over non-overlapping pairs of reads from a sam file (i.e. reads 1+2,
     then reads 3+4 etc).
@@ -183,7 +183,7 @@ def grouped(iterable, n):
 
 
 def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh=55, nosupercontigs=False,
-                interleaved_reads='None', memory=1, discordant_cutoff=100, edit_distance=7):
+                interleaved_reads='None', memory=1, discordant_cutoff=100, edit_distance=7, threads=1):
     """Generates a contig from all hits to a protein.
     If more than one hit, conduct a second exonerate search with the original contigs
     stitched together."""
@@ -351,7 +351,7 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
 
         # CJJ How to specify threads? This script is launched via parallel, so if I specify multiple threads here then
         # it'll overburden the number of cpus requested by the slurm job.
-        bbmap_command = f'bbmap.sh -Xmx{memory}g -t=15 ref={prefix}/CJJ_supercontig.fasta in={interleaved_reads} ' \
+        bbmap_command = f'bbmap.sh -Xmx{memory}g -t={threads} ref={prefix}/CJJ_supercontig.fasta in={interleaved_reads} ' \
                         f'out={prefix}/CJJ_supercontig.sam interleaved=t pairedonly=t mappedonly=t ' \
                         f'maxindel={maxindel} strictmaxindel=t nodisk=t minid={minid} ambiguous=toss'
         sys.stderr.write(f'\nbbmap_command: {bbmap_command}\n')
@@ -401,7 +401,7 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
     sys.stderr.write(f'\nSuperdupercontig_reference: {supercontig_reference}\n')
     sys.stderr.flush()
 
-    bbmap_command = f'bbmap.sh -Xmx{memory}g  -t=15 ref={prefix}/CJJ_supercontig.fasta in={interleaved_reads} ' \
+    bbmap_command = f'bbmap.sh -Xmx{memory}g  -t={threads} ref={prefix}/CJJ_supercontig.fasta in={interleaved_reads} ' \
                     f'out={prefix}/CJJ_supercontig.sam interleaved=t pairedonly=t mappedonly=t maxindel={maxindel} ' \
                     f'strictmaxindel=t nodisk=t minid={minid} ambiguous=toss'
 
@@ -735,13 +735,14 @@ def main():
     parser.add_argument("--nosupercontigs",
                         help="Do not create any supercontigs. The longest single Exonerate hit will be used",
                         action="store_true", dest='nosupercontigs', default=False)  # CJJ
-    parser.add_argument("--memory", help="memory (RAM ) to use for bbmap.sh", default=1, type=int)
+    parser.add_argument("--memory", help="memory (RAM ) to use for bbmap.sh", default=1, type=int)  # CJJ
+    parser.add_argument("--threads", help="threads to use for bbmap.sh", default=4, type=int)  # CJJ
     parser.add_argument("--discordant_reads_edit_distance",
                         help="Minimum number of differences between one read of a read pair vs the supercontig "
-                             "reference for a read pair to be flagged as discordant", default=7, type=int) # CJJ
+                             "reference for a read pair to be flagged as discordant", default=7, type=int)  # CJJ
     parser.add_argument("--discordant_reads_cutoff",
                         help="minimum number of discordant reads pairs required to flag a supercontigs as a potential "
-                             "hybrid of contigs from multiple paralogs", default=100, type=int) # CJJ
+                             "hybrid of contigs from multiple paralogs", default=100, type=int)  # CJJ
 
 
 
@@ -853,7 +854,7 @@ def main():
         nucl_sequence = fullContigs(proteinHits[prot], sequence_dict, assembly_dict, protein_dict, prefix,
                                     args.threshold, args.nosupercontigs, interleaved_reads, memory=args.memory,
                                     discordant_cutoff=args.discordant_reads_edit_distance,
-                                    edit_distance=args.discordant_reads_edit_distance)
+                                    edit_distance=args.discordant_reads_edit_distance, threads=args.threads)
         if nucl_sequence:
             if args.no_sequences:
                 continue
