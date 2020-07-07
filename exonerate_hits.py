@@ -47,6 +47,8 @@ def initial_exonerate(proteinfilename, assemblyfilename, prefix):
     exonerate_ryo, proteinfilename, assemblyfilename, outputfilename)
     logger.debug(exonerate_command)
     proc = subprocess.call(exonerate_command, shell=True)
+    records = SeqIO.to_dict(SeqIO.parse(outputfilename, 'fasta'))
+    return records
 
 
 def protein_sort(records):
