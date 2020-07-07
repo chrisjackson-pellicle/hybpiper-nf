@@ -753,7 +753,6 @@ def main():
     sys.stderr.write(f'\n memory is : {args.memory} \n')
     sys.stderr.write(f'\n edit distance is : {args.discordant_reads_edit_distance} \n')
     sys.stderr.write(f'\n discordant cutoff is : {args.discordant_reads_cutoff} \n')
-
     sys.stderr.flush()
 
     proteinfilename = args.proteinfile  # CJJ read in protein fasta e.g. At2g47110_baits.fasta
@@ -799,9 +798,6 @@ def main():
         sequence_dict = SeqIO.to_dict(SeqIO.parse(first_search_filename, 'fasta'))
     else:
         sequence_dict = initial_exonerate(proteinfilename, assemblyfilename, prefix)
-
-    sys.stderr.write(f'\nCJJ from exonerate_hits.py sequence_dict {sequence_dict}, {type(sequence_dict)}\n')
-    sys.stderr.flush()
     proteinHits = protein_sort(sequence_dict)
 
     sys.stderr.write("There were {} exonerate hits for {}.\n".format(len(sequence_dict), proteinfilename))
