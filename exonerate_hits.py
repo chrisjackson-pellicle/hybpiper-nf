@@ -798,6 +798,7 @@ def main():
         sequence_dict = initial_exonerate(proteinfilename, assemblyfilename, prefix)
 
     sys.stderr.write(f'\nCJJ from exonerate_hits.py sequence_dict {sequence_dict}, {type(sequence_dict)}: {args}\n')
+    sys.stderr.flush()
     proteinHits = protein_sort(sequence_dict)
 
     sys.stderr.write("There were {} exonerate hits for {}.\n".format(len(sequence_dict), proteinfilename))
