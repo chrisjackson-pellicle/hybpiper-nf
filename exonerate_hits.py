@@ -6,10 +6,10 @@
 
 """
 - When stitching together contigs tos create a supercontig, trim the Exonerate hits to hit sequence only, rather than
-  using the whole contig sequence,
+  using the whole contig sequence,.
 - For supercontigs, trim overlaps between Exonerate hits when stitching together sequences. To me, these overlaps seem
   most likely to occur when when Exonerate hits come from partially assembled paralogs, and the contigs have
-  overlapping termini (which presumably end when the SPAdes assembly graphs get too confused... )
+  overlapping termini (which presumably end when the SPAdes assembly graphs get too confused... ).
 """
 
 
@@ -152,14 +152,14 @@ def write_exonerate_stats(contig_id_list, prefix):
 
 def write_genes_with_supercontigs(data, prefix):  # CJJ
     """Write a file listing genes for which a supercontig was created. These per sample files are collated
-    in the reads_first.py script after all samples/genes have completed)."""
+    in the reads_first.py script after all genes have completed)."""
     with open("{}/genes_with_supercontigs.csv".format(prefix), 'w') as supercontig_reportfile:
         supercontig_reportfile.write(f'{data}\n')
 
 
 def write_supercontigs_with_discordant_readpairs(data, prefix):  # CJJ
     """Write a file listing supercontigs for which one read maps perfectly and the other has mismatches with the
-    reference. These per sample files are collated in reads_first.py script after all samples/genes have
+    reference. These per sample files are collated in reads_first.py script after all genes have
     completed)."""
     with open("{}/supercontigs_with_discordant_readpairs.csv".format(prefix), 'w') as discordant_supercontig_reportfile:
         discordant_supercontig_reportfile.write(f'{data}\n')
