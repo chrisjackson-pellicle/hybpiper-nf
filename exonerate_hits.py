@@ -48,6 +48,7 @@ def initial_exonerate(proteinfilename, assemblyfilename, prefix):
     logger.debug(exonerate_command)
     proc = subprocess.call(exonerate_command, shell=True)
 
+
 def protein_sort(records):
     """Given the Biopython dictionary, return a dictionary of proteins indexed by their hits."""
     proteinHits = {}
@@ -796,6 +797,7 @@ def main():
     else:
         sequence_dict = initial_exonerate(proteinfilename, assemblyfilename, prefix)
 
+    sys.stderr.write(f'\nCJJ from exonerate_hits.py sequence_dict {sequence_dict}, {type(sequence_dict)}: {args}\n')
     proteinHits = protein_sort(sequence_dict)
 
     sys.stderr.write("There were {} exonerate hits for {}.\n".format(len(sequence_dict), proteinfilename))
