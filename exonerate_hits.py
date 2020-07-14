@@ -769,6 +769,8 @@ def main():
     if not args.nosupercontigs:  # CJJ
         gene_folder = os.path.split(prefix)[0]
         interleaved_reads = f'{gene_folder}/{gene_folder}_interleaved.fasta'
+    else:
+        interleaved_reads = 'None'
 
     logger = logging.getLogger("pipeline")
     ch = logging.StreamHandler()
@@ -848,8 +850,8 @@ def main():
             continue  # All hits have been filtered out
 
         nucl_sequence = fullContigs(proteinHits[prot], sequence_dict, assembly_dict, protein_dict, prefix,
-                                    args.threshold, args.nosupercontigs, interleaved_reads, memory=args.memory,
-                                    discordant_cutoff=args.discordant_reads_edit_distance,
+                                    args.threshold, args.nosupercontigs, interleaved_reads=interleaved_reads,
+                                    memory=args.memory, discordant_cutoff=args.discordant_reads_edit_distance,
                                     edit_distance=args.discordant_reads_edit_distance, threads=args.threads)
         if nucl_sequence:
             if args.no_sequences:
