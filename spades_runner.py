@@ -27,7 +27,7 @@ def make_spades_cmd(genelist, cov_cutoff=8, cpu=None, paired=True, kvals=None, r
         spades_cmd_list.append("--12 {}/{}_interleaved.fasta")
     if merged:
         spades_cmd_list.append("--merged {}/{}_merged.fasta")
-        spades_cmd_list.append("--12 {}/{}_interleaved.fasta")
+        spades_cmd_list.append("--12 {}/{}_unmerged.fasta")
     else:
         spades_cmd_list.append("-s {}/{}_unpaired.fasta")
 

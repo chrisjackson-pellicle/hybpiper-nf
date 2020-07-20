@@ -655,7 +655,6 @@ def main():
                               f'outu={unmerged_out}'
             bbmerge_capture = subprocess.run(bbmerge_command, capture_output=True, shell=True)
 
-
     if args.assemble:
         if len(readfiles) == 1:
             spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
