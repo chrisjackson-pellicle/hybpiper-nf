@@ -286,7 +286,8 @@ def main():
         try:
             genelist = [x.split()[0] for x in open('genes_with_seqs.txt').readlines()]
         except FileNotFoundError:
-            sys.exit(f'No "genes_with_seqs.txt" file found, exiting!')
+            sys.stderr.write(f'No "genes_with_seqs.txt" file found, exiting!')
+            sys.exit(0)
 
     with open("intron_stats.txt", 'w') as intron_stats_file:
         full_gff = ''
