@@ -271,7 +271,7 @@ def make_basename(readfiles, prefix=None):
     return '.', basename
 
 
-def spades(genes, run_dir, cov_cutoff=8, cpu=None, paired=True, kvals=None, timeout=None, unpaired=False):
+def spades(genes, run_dir, cov_cutoff=8, cpu=None, paired=True, kvals=None, timeout=None, unpaired=False, merged=False):
     "Run SPAdes on each gene separately using GNU paralell."""
 
     with open(spades_genefilename, 'w') as spadesfile:  # CJJ Note that <spades_genefilename> is defined as a global
@@ -298,6 +298,8 @@ def spades(genes, run_dir, cov_cutoff=8, cpu=None, paired=True, kvals=None, time
     if kvals:
         spades_runner_list.append("--kvals")
         spades_runner_list.append("{}".format(",".join(kvals)))
+    if merged:
+        spades_runner_list.append("--merged")
 
     spades_runner_cmd = " ".join(spades_runner_list)
 
@@ -529,6 +531,8 @@ def main():
     parser.add_argument("--discordant_reads_cutoff",
                         help="minimum number of discordant reads pairs required to flag a supercontigs as a potential "
                              "hybrid of contigs from multiple paralogs", default=100, type=int)
+    parser.add_argument("--merged", help="For assembly with both merged and unmerged (interleaved)",
+                        action="store_true", default=False)
 
     parser.set_defaults(check_depend=False, blast=True, distribute=True, velvet=False, cap3=False, assemble=True,
                         use_velvet=False, exonerate=True, )
@@ -586,8 +590,8 @@ def main():
     if args.bwa:
         if args.blast:
             args.blast = False
-            bamfile = bwa(readfiles, baitfile, basename, cpu=args.cpu)
-            # bamfile = basename + ".bam" #CJJ added
+            # bamfile = bwa(readfiles, baitfile, basename, cpu=args.cpu)
+            bamfile = basename + ".bam" #CJJ added
             print(f'CJJ: bamfile is: {bamfile}')
             if args.unpaired:
                 unpaired_bamfile = bwa(unpaired_readfile, baitfile, basename, cpu=args.cpu, unpaired=True)
@@ -640,6 +644,18 @@ def main():
 
 ############################################## ASSEMBLE WITH SPADES ####################################################
 
+    # Merge reads for SPAdes assembly CJJ
+    if args.merged:
+        print(f'Merging reads for SPAdes assembly')
+        for gene in genes:
+            interleaved_reads_for_merged = f'{gene}/{gene}_interleaved.fasta'
+            merged_out = f'{gene}/{gene}_merged.fasta'
+            unmerged_out = f'{gene}/{gene}_unmerged.fasta'
+            bbmerge_command = f'pwd; bbmerge.sh interleaved=true in={interleaved_reads_for_merged} out={merged_out} ' \
+                              f'outu={unmerged_out}'
+            bbmerge_capture = subprocess.run(bbmerge_command, capture_output=True, shell=True)
+
+
     if args.assemble:
         if len(readfiles) == 1:
             spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
@@ -648,6 +664,9 @@ def main():
             if unpaired_readfile:
                 spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
                                          timeout=args.timeout, unpaired=True)
+            elif args.merged:
+                spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
+                                         timeout=args.timeout, merged=True)
             else:
                 spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
                                          timeout=args.timeout)
