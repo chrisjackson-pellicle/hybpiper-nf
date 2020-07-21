@@ -41,7 +41,7 @@ def make_spades_cmd(genelist, cov_cutoff=8, cpu=None, paired=True, kvals=None, r
 
     # spades_cmd_list.append("-o {{}}/{{}}_spades :::: {} > spades.log".format(genelist))
 
-    if merged:
+    if merged:  # CJJ
         with open(genelist, 'r') as gene_file:
             contents = gene_file.readlines()
         genelist_list = [gene.strip() for gene in contents]
@@ -50,13 +50,13 @@ def make_spades_cmd(genelist, cov_cutoff=8, cpu=None, paired=True, kvals=None, r
             f'{gene}/{gene}_merged.fastq')]
         with open(f'spades_genelist_with_merged.txt', 'w') as with_merged:
             for gene in genes_with_merged_reads:
-                with_merged.write(f'gene\n')
+                with_merged.write(f'{gene}\n')
 
         genes_without_merged_reads = [gene for gene in genelist_list if not file_exists_and_not_empty(
             f'{gene}/{gene}_merged.fastq')]
         with open(f'spades_genelist_without_merged.txt', 'w') as without_merged:
-            for gene in genes_with_merged_reads:
-                without_merged.write(f'gene\n')
+            for gene in genes_without_merged_reads:
+                without_merged.write(f'{gene}\n')
 
         sys.stderr.write(f'With merged: {len(genes_with_merged_reads)}\n')
         sys.stderr.flush()
@@ -78,8 +78,8 @@ def make_spades_cmd(genelist, cov_cutoff=8, cpu=None, paired=True, kvals=None, r
 
         spades_cmd_with_merged = " ".join(parallel_cmd_list) + " " + " ".join(spades_cmd_list_with_merged)
         spades_cmd_without_merged = " ".join(parallel_cmd_list) + " " + " ".join(spades_cmd_list_without_merged)
-        print(spades_cmd_with_merged)
-        print(spades_cmd_without_merged)
+        # print(spades_cmd_with_merged)
+        # print(spades_cmd_without_merged)
         return spades_cmd_with_merged, spades_cmd_without_merged
     else:
         spades_cmd_list.append("-o {{}}/{{}}_spades :::: {} > spades.log".format(genelist))
