@@ -531,7 +531,7 @@ def main():
     parser.add_argument("--discordant_reads_cutoff",
                         help="minimum number of discordant reads pairs required to flag a supercontigs as a potential "
                              "hybrid of contigs from multiple paralogs", default=100, type=int)
-    parser.add_argument("--merged", help="For assembly with both merged and unmerged (interleaved)",
+    parser.add_argument("--merged", help="For assembly with both merged and unmerged (interleaved) reads",
                         action="store_true", default=False)
 
     parser.set_defaults(check_depend=False, blast=True, distribute=True, velvet=False, cap3=False, assemble=True,
