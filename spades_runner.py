@@ -1,10 +1,18 @@
 #!/usr/bin/env python
 
-import argparse, os, sys, shutil, subprocess
+import argparse, os, sys, shutil, subprocess, re
 
 helptext = '''Run the assembler SPAdes with re-dos if any of the k-mers are unsuccessful.
 The re-runs are attempted by removing the largest k-mer and re-running spades. If a final
 contigs.fasta file is generated, a 'spades.ok' file is saved.'''
+
+
+def file_exists_and_not_empty(file_name):  # CJJ
+    """
+    Check if file exists and is not empty by confirming that its size is not 0 bytes
+    """
+    # Check if file exist and is not empty
+    return os.path.isfile(file_name) and not os.path.getsize(file_name) == 0
 
 
 def make_spades_cmd(genelist, cov_cutoff=8, cpu=None, paired=True, kvals=None, redo=False, timeout=None,
@@ -31,10 +39,53 @@ def make_spades_cmd(genelist, cov_cutoff=8, cpu=None, paired=True, kvals=None, r
         spades_cmd_list.append("--merged {}/{}_merged.fastq")
         spades_cmd_list.append("--12 {}/{}_unmerged.fastq")
 
-    spades_cmd_list.append("-o {{}}/{{}}_spades :::: {} > spades.log".format(genelist))
+    # spades_cmd_list.append("-o {{}}/{{}}_spades :::: {} > spades.log".format(genelist))
 
-    spades_cmd = " ".join(parallel_cmd_list) + " " + " ".join(spades_cmd_list)
-    return spades_cmd
+    if merged:
+        with open(genelist, 'r') as gene_file:
+            contents = gene_file.readlines()
+        genelist_list = [gene.strip() for gene in contents]
+
+        genes_with_merged_reads = [gene for gene in genelist_list if file_exists_and_not_empty(
+            f'{gene}/{gene}_merged.fastq')]
+        with open(f'spades_genelist_with_merged.txt', 'w') as with_merged:
+            for gene in genes_with_merged_reads:
+                with_merged.write(f'gene\n')
+
+        genes_without_merged_reads = [gene for gene in genelist_list if not file_exists_and_not_empty(
+            f'{gene}/{gene}_merged.fastq')]
+        with open(f'spades_genelist_without_merged.txt', 'w') as without_merged:
+            for gene in genes_with_merged_reads:
+                without_merged.write(f'gene\n')
+
+        sys.stderr.write(f'With merged: {len(genes_with_merged_reads)}\n')
+        sys.stderr.flush()
+
+        sys.stderr.write(f'Without merged: {len(genes_without_merged_reads)}\n')
+        sys.stderr.flush()
+
+    if merged:
+        spades_cmd_list_with_merged = spades_cmd_list.copy()
+        spades_cmd_list_with_merged.append("-o {{}}/{{}}_spades :::: {} >> spades.log".format(
+            'spades_genelist_with_merged.txt'))
+        # print(spades_cmd_list_with_merged)
+        spades_cmd_list_without_merged = spades_cmd_list.copy()
+        spades_cmd_list_without_merged = [re.sub('--merged {}/{}_merged.fastq', '', item) for item in
+                                          spades_cmd_list_without_merged]
+        spades_cmd_list_without_merged.append(
+            "-o {{}}/{{}}_spades :::: {} >> spades.log".format('spades_genelist_without_merged.txt'))
+        # print(spades_cmd_list_without_merged)
+
+        spades_cmd_with_merged = " ".join(parallel_cmd_list) + " " + " ".join(spades_cmd_list_with_merged)
+        spades_cmd_without_merged = " ".join(parallel_cmd_list) + " " + " ".join(spades_cmd_list_without_merged)
+        print(spades_cmd_with_merged)
+        print(spades_cmd_without_merged)
+        return spades_cmd_with_merged, spades_cmd_without_merged
+    else:
+        spades_cmd_list.append("-o {{}}/{{}}_spades :::: {} > spades.log".format(genelist))
+        spades_cmd = " ".join(parallel_cmd_list) + " " + " ".join(spades_cmd_list)
+        return spades_cmd
+    # return spades_cmd
 
 
 def spades_initial(genelist, cov_cutoff=8, cpu=None, paired=True, kvals=None, timeout=None, unpaired=False,
@@ -45,16 +96,34 @@ def spades_initial(genelist, cov_cutoff=8, cpu=None, paired=True, kvals=None, ti
 
     genes = [x.rstrip() for x in open(genelist)]
     # print paired
-    spades_cmd = make_spades_cmd(genelist, cov_cutoff, cpu, paired=paired, kvals=kvals, unpaired=unpaired,
-                                 merged=merged)
 
-    sys.stderr.write("Running SPAdes on {} genes\n".format(len(genes)))
-    sys.stderr.write(spades_cmd + "\n")
-    exitcode = subprocess.call(spades_cmd, shell=True)
+    if merged:
+        spades_cmd_with_merged, spades_cmd_without_merged = make_spades_cmd(
+            genelist, cov_cutoff, cpu, paired=paired, kvals=kvals, unpaired=unpaired, merged=merged)
+        sys.stderr.write(spades_cmd_with_merged + "\n")
+        exitcode = subprocess.call(spades_cmd_with_merged, shell=True)
+        if exitcode:
+            sys.stderr.write(
+                "ERROR: One or more genes had an error with SPAdes assembly. This may be due to low coverage. No "
+                "contigs found for the following genes:\n")
+        sys.stderr.write(spades_cmd_without_merged + "\n")
+        exitcode = subprocess.call(spades_cmd_without_merged, shell=True)
+        if exitcode:
+            sys.stderr.write(
+                "ERROR: One or more genes had an error with SPAdes assembly. This may be due to low coverage. No "
+                "contigs found for the following genes:\n")
+    else:
+        spades_cmd = make_spades_cmd(genelist, cov_cutoff, cpu, paired=paired, kvals=kvals, unpaired=unpaired,
+                                     merged=merged)
 
-    if exitcode:
-        sys.stderr.write(
-            "ERROR: One or more genes had an error with SPAdes assembly. This may be due to low coverage. No contigs found for the following genes:\n")
+        sys.stderr.write("Running SPAdes on {} genes\n".format(len(genes)))
+        sys.stderr.write(spades_cmd + "\n")
+        exitcode = subprocess.call(spades_cmd, shell=True)
+
+        if exitcode:
+            sys.stderr.write(
+                "ERROR: One or more genes had an error with SPAdes assembly. This may be due to low coverage. No "
+                "contigs found for the following genes:\n")
 
     spades_successful = []
     spades_failed = []
