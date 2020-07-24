@@ -41,7 +41,9 @@ def make_spades_cmd(genelist, cov_cutoff=8, cpu=None, paired=True, kvals=None, r
 
     # spades_cmd_list.append("-o {{}}/{{}}_spades :::: {} > spades.log".format(genelist))
 
-    if merged:  # CJJ
+    # CJJ WRite separate gene name files for those that have merged reads and those that don't. Format the SPAdes
+    # command accordingly and run as two separate subprocess commands in spades_initial().
+    if merged:
         with open(genelist, 'r') as gene_file:
             contents = gene_file.readlines()
         genelist_list = [gene.strip() for gene in contents]
@@ -233,8 +235,13 @@ def main():
                         action="store_true", default=False)
     args = parser.parse_args()
 
-    # if args.merged:
-    #     sys.stderr.write(f'****CJJ MERGE FLAG IS {args.merged} ******************')
+    if args.merged:
+        sys.stderr.write(f'\n****CJJ MERGE FLAG IS {args.merged} ******************\n')
+        sys.stderr.flush()
+
+    if args.unpaired:
+        sys.stderr.write(f'\n****CJJ UNPAIRED FLAG IS {args.unpaired} ******************\n')
+        sys.stderr.flush()
 
     if args.single:
         is_paired = False

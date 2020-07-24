@@ -660,12 +660,18 @@ def main():
             spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
                                      paired=False, timeout=args.timeout)
         elif len(readfiles) == 2:
-            if unpaired_readfile:
-                spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
-                                         timeout=args.timeout, unpaired=True)
-            elif args.merged:
+            # if unpaired_readfile:
+            #     spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
+            #                              timeout=args.timeout, unpaired=True)
+            if args.merged and not unpaired_readfile:  # CJJ
                 spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
                                          timeout=args.timeout, merged=True)
+            elif args.merged and unpaired_readfile:  # CJJ
+                spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
+                                         timeout=args.timeout, merged=True, unpaired=True)
+            elif unpaired_readfile and not args.merged:
+                spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
+                                         timeout=args.timeout, unpaired=True)
             else:
                 spades_genelist = spades(genes, run_dir, cov_cutoff=args.cov_cutoff, cpu=args.cpu, kvals=args.kvals,
                                          timeout=args.timeout)
