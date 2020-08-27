@@ -851,7 +851,7 @@ def main():
 
         nucl_sequence = fullContigs(proteinHits[prot], sequence_dict, assembly_dict, protein_dict, prefix,
                                     args.threshold, args.nosupercontigs, interleaved_reads=interleaved_reads,
-                                    memory=args.memory, discordant_cutoff=args.discordant_reads_edit_distance,
+                                    memory=args.memory, discordant_cutoff=args.discordant_reads_cutoff,
                                     edit_distance=args.discordant_reads_edit_distance, threads=args.threads)
         if nucl_sequence:
             if args.no_sequences:
