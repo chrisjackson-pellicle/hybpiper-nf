@@ -590,8 +590,8 @@ def main():
     if args.bwa:
         if args.blast:
             args.blast = False
-            bamfile = bwa(readfiles, baitfile, basename, cpu=args.cpu)
-            # bamfile = basename + ".bam" #CJJ added
+            # bamfile = bwa(readfiles, baitfile, basename, cpu=args.cpu)
+            bamfile = basename + ".bam" #CJJ added
             print(f'CJJ: bamfile is: {bamfile}')
             if args.unpaired:
                 unpaired_bamfile = bwa(unpaired_readfile, baitfile, basename, cpu=args.cpu, unpaired=True)
