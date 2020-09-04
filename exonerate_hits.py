@@ -251,12 +251,28 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
             right_contig_length = pairs[1][6]
             if int(pairs[0][2]) > int(pairs[1][1]):  # Check for overlap between the Exonerate hits
                 overlap_offset_in_nucleotides = (int(pairs[0][2]) - int(pairs[1][1])) * 3
+                intron_offset = 0 # set as default for slice calculations below
+                # if left_contig_strand == '-':
+                #     left_prot_query_span_nucleotides = (int(pairs[0][1]) - int(pairs[0][2])) * 3
+                # else:
+                left_prot_query_span_nucleotides = (int(pairs[0][2]) - int(pairs[0][1])) * 3
+                # print(left_prot_query_span_nucleotides)
+                if left_contig_strand == '-':
+                    left_spades_contig_target_span = int(pairs[0][3]) - int(pairs[0][4])
+                else:
+                    left_spades_contig_target_span = int(pairs[0][4]) - int(pairs[0][3])
+                # print(left_spades_contig_target_span)
+                if left_prot_query_span_nucleotides < left_spades_contig_target_span:
+                    # print('Query span does not equal target span!')
+                    intron_offset = left_spades_contig_target_span - left_prot_query_span_nucleotides
+                    # print(f'Intron offset is: {intron_offset}')
+
                 if left_contig_strand == '-':  # CJJ get slice indexes if the hit is on the negative strand
-                    left_contig_hit_start = int(pairs[0][3])  # from left side of exonerate results
+                    left_contig_hit_start = int(pairs[0][3])  # from left side of exonerate results, not from contig
                     left_contig_hit_end = int(pairs[0][4])
                     left_slice_start = left_contig_length - left_contig_hit_start
                     left_slice_end = left_slice_start + left_contig_hit_start - left_contig_hit_end - \
-                                     overlap_offset_in_nucleotides
+                                     overlap_offset_in_nucleotides - intron_offset
                     if right_contig_strand == '-':
                         right_contig_hit_start = int(pairs[1][3])
                         right_slice_start = right_contig_length - right_contig_hit_start
@@ -264,7 +280,7 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
                         right_slice_start = int(pairs[1][3])
                 else:
                     left_slice_start = int(pairs[0][3])
-                    left_slice_end = int(pairs[0][4]) - overlap_offset_in_nucleotides
+                    left_slice_end = int(pairs[0][4]) - overlap_offset_in_nucleotides - intron_offset
                     if right_contig_strand == '-':
                         right_contig_hit_start = int(pairs[1][3])
                         right_slice_start = right_contig_length - right_contig_hit_start
