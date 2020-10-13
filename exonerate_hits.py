@@ -224,7 +224,6 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
         write_genes_with_supercontigs(','.join(log_entry), prefix)
         return str(sequence_dict[prot["assemblyHits"][hit_index]].seq)
     else:
-
 ######################################### CJJ trim supercontigs ########################################################
 
         # CJJ this is very verbose and convoluted, partly because I have to fit in with how HybPiper was written. But
@@ -242,6 +241,7 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
                                               prot["hit_strand"][hit],
                                               assembly_seq_length])
             nucleotide_slice_indices[assembly_seq_name] = [None, None]  # CJJ set default slice indices
+        # print(hit_start_and_end_indices)
         for pairs in pairwise(hit_start_and_end_indices):
             left_contig_name = pairs[0][0]
             right_contig_name = pairs[1][0]
@@ -249,43 +249,88 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
             right_contig_strand = pairs[1][5]
             left_contig_length = pairs[0][6]
             right_contig_length = pairs[1][6]
-            if int(pairs[0][2]) > int(pairs[1][1]):  # Check for overlap between the Exonerate hits
-                overlap_offset_in_nucleotides = (int(pairs[0][2]) - int(pairs[1][1])) * 3
-                intron_offset = 0 # set as default for slice calculations below
-                # if left_contig_strand == '-':
-                #     left_prot_query_span_nucleotides = (int(pairs[0][1]) - int(pairs[0][2])) * 3
-                # else:
-                left_prot_query_span_nucleotides = (int(pairs[0][2]) - int(pairs[0][1])) * 3
-                # print(left_prot_query_span_nucleotides)
-                if left_contig_strand == '-':
-                    left_spades_contig_target_span = int(pairs[0][3]) - int(pairs[0][4])
-                else:
-                    left_spades_contig_target_span = int(pairs[0][4]) - int(pairs[0][3])
-                # print(left_spades_contig_target_span)
-                if left_prot_query_span_nucleotides < left_spades_contig_target_span:
-                    # print('Query span does not equal target span!')
-                    intron_offset = left_spades_contig_target_span - left_prot_query_span_nucleotides
-                    # print(f'Intron offset is: {intron_offset}')
 
-                if left_contig_strand == '-':  # CJJ get slice indexes if the hit is on the negative strand
-                    left_contig_hit_start = int(pairs[0][3])  # from left side of exonerate results, not from contig
+
+            left_prot_target_start = int(pairs[0][1])
+            left_prot_target_end = int(pairs[0][2])
+            # print(f'left_prot_target_end: {left_prot_target_end}')
+            right_prot_target_start = int(pairs[1][1])
+            # print(f'right_prot_target_start: {right_prot_target_start}')
+
+            if left_prot_target_end > right_prot_target_start:  # Check for overlap between the Exonerate hits
+                overlap_offset_in_nucleotides = (left_prot_target_end - right_prot_target_start) * 3
+                # print(f'overlap_offset_in_nucleotides: {overlap_offset_in_nucleotides}')
+
+                ########################################################################################################
+                ########################################################################################################
+                # Calculate intron offset:
+
+                intron_offset = 0 # set as default for slice calculations below
+                left_query_span_nucleotides_in_exonerate_hit = (left_prot_target_end - left_prot_target_start) * 3 # i.e. how many
+                # nucleotides in the contig query are actually in the Exonerate hit (so, not counting introns).
+                # print(f'left_query_span_nucleotides_in_exonerate_hit: {left_query_span_nucleotides_in_exonerate_hit}')
+
+                if left_contig_strand == '+':
+                    left_query_spades_contig_start = int(pairs[0][3])  # i.e. smaller number relative to spades contig
+                    left_query_spades_contig_end = int(pairs[0][4])  # i.e. larger number relative to spades contig
+                    left_query_span_nucleotides_in_spades_contig = left_query_spades_contig_end - \
+                                                                   left_query_spades_contig_start
+                    # print(f'Positive strand left_query_span_nucleotides_in_spades_contig: '
+                    #       f'{left_query_span_nucleotides_in_spades_contig}')
+                elif left_contig_strand == '-':
+                    left_query_spades_contig_start = int(pairs[0][4]) # i.e. smaller number relative to spades contig
+                    left_query_spades_contig_end = int(pairs[0][3])  # i.e. larger number relative to spades contig
+                    left_query_span_nucleotides_in_spades_contig = left_query_spades_contig_end - \
+                                                                   left_query_spades_contig_start
+                    # print(f'Negative strand left_query_span_nucleotides_in_spades_contig: '
+                    #       f'{left_query_span_nucleotides_in_spades_contig}')
+
+                # Check if the left Exonerate hit contains introns:  CHANGE THIS TO CHECK IF THE INTRON IS IN THE
+                # OVERLAP, OTHERWISE THE INTRON OFFSET SHOULDN'T BE USED!!! CAN I EVEN DO THIS WITH THE EXONERATE
+                # RESULTS HYBPIPER GENERATES?
+                if left_query_span_nucleotides_in_exonerate_hit < left_query_span_nucleotides_in_spades_contig:
+                    # print('Query span does not equal target span!')
+                    intron_offset = left_query_span_nucleotides_in_spades_contig - left_query_span_nucleotides_in_exonerate_hit
+                    # print(f'Intron offset is: {intron_offset}')
+                ########################################################################################################
+                ########################################################################################################
+
+                # Calculate slices:
+
+                # Left hit:
+                if left_contig_strand == '+': # CJJ get slice indexes if the left hit is on the positive strand
+                    # print('yep left positive')
+                    left_slice_start = int(pairs[0][3])  # i.e. the nucleotide associated with the left side of exonerate results, NOT from the contig
+                    left_contig_hit_end = int(pairs[0][4])  # i.e. the nucleotide associated with the right side of exonerate results, NOT from the contig
+                    # left_slice_end = int(pairs[0][4]) - overlap_offset_in_nucleotides - intron_offset
+                    left_slice_end = int(left_contig_hit_end - overlap_offset_in_nucleotides)  # CJJ 13Oct2020
+
+                elif left_contig_strand == '-':  # CJJ get slice indexes if the left hit is on the negative strand
+                    left_contig_hit_start = int(pairs[0][3])  # Note that here hit_start mean relative to the translated protein target.
                     left_contig_hit_end = int(pairs[0][4])
                     left_slice_start = left_contig_length - left_contig_hit_start
+                    # print(f'left_contig_strand negative; left_slice_start: {left_slice_start}')
+                    # left_slice_end = left_slice_start + left_contig_hit_start - left_contig_hit_end - \
+                    #                  overlap_offset_in_nucleotides - intron_offset
                     left_slice_end = left_slice_start + left_contig_hit_start - left_contig_hit_end - \
-                                     overlap_offset_in_nucleotides - intron_offset
-                    if right_contig_strand == '-':
-                        right_contig_hit_start = int(pairs[1][3])
-                        right_slice_start = right_contig_length - right_contig_hit_start
-                    else:
-                        right_slice_start = int(pairs[1][3])
-                else:
-                    left_slice_start = int(pairs[0][3])
-                    left_slice_end = int(pairs[0][4]) - overlap_offset_in_nucleotides - intron_offset
-                    if right_contig_strand == '-':
-                        right_contig_hit_start = int(pairs[1][3])
-                        right_slice_start = right_contig_length - right_contig_hit_start
-                    else:
-                        right_slice_start = int(pairs[1][3])
+                                     overlap_offset_in_nucleotides
+                    # print(f'left_contig_strand negative; left_slice_end: {left_slice_end}')
+
+                # Right hit:
+                if right_contig_strand == '+':
+                    right_slice_start = int(pairs[1][3])
+                elif right_contig_strand == '-':
+                    right_contig_hit_start = int(pairs[1][3])  # Note that here hit_start mean relative to the translated protein target.
+                    # print(f'right_contig_hit_start: {right_contig_hit_start}')
+                    right_slice_start = right_contig_length - right_contig_hit_start  # i.e. trim off any contig sequence that isn't in Exonerate hit.
+                    # print(f'right_slice_start; {right_slice_start}')
+
+
+                ########################################################################################################
+                ########################################################################################################
+
+                # Populate slice dictionary for contig pair:
+
                 if nucleotide_slice_indices[left_contig_name][0] is not None:
                     pass
                 else:
@@ -298,6 +343,9 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
                     pass
                 else:
                     nucleotide_slice_indices[right_contig_name][0] = right_slice_start
+
+        # print(nucleotide_slice_indices)
+
         # Check if trimming has been performed and, if so, write slice indices to the log file
         trimming_performed = False
         for key, value in nucleotide_slice_indices.items():
@@ -323,16 +371,19 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
                                                                                         prot["percentid"][hit],
                                                                                         prot["hit_strand"][hit]
                                                                                         ))
-            if assembly_seq_name not in contigHits:  # Only add each contig once.
+            if assembly_seq_name not in contigHits:  # Only add each contig once. # CJJ: contigHits is an empty list
+                # defined at the start of the function
                 start = nucleotide_slice_indices[assembly_seq_name][0]
                 end = nucleotide_slice_indices[assembly_seq_name][1]
+                # print(f'start, end: {start}, {end}')
                 if prot["hit_strand"][hit] == "+":
+                    # sequence_list is an empty list defined at the start of the function
                     sequence_list.append(assembly_dict[assembly_seq_name][start:end])  # CJJ slice seq using indices
                 else:
                     sequence_list.append(
                         SeqRecord(assembly_dict[assembly_seq_name].reverse_complement().seq[start:end],
                                   id=assembly_seq_name))
-                contigHits.append(assembly_seq_name)
+                contigHits.append(assembly_seq_name) # contigHits is an empty list defined at the start of the function
         logger.debug("Contig order: {}".format(",".join([x.id for x in sequence_list])))
         logger.debug(",".join(contigHits))
     supercontig = SeqRecord(Seq("".join(str(b.seq) for b in sequence_list)), id=prot["name"])
@@ -369,15 +420,15 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
         # it'll overburden the number of cpus requested by the slurm job.
         bbmap_command = f'bbmap.sh -Xmx{memory}g -t={threads} ref={prefix}/CJJ_supercontig.fasta in={interleaved_reads} ' \
                         f'out={prefix}/CJJ_supercontig.sam interleaved=t pairedonly=t mappedonly=t ' \
-                        f'maxindel={maxindel} strictmaxindel=t nodisk=t minid={minid} ambiguous=toss'
-        sys.stderr.write(f'\nbbmap_command: {bbmap_command}\n')
-        sys.stderr.flush()
+                        f'maxindel={maxindel} strictmaxindel=t nodisk=t minid={minid} ambiguous=toss 2> /dev/null'
+        # sys.stderr.write(f'\nbbmap_command: {bbmap_command}\n')
+        # sys.stderr.flush()
         exitcode = subprocess.call(bbmap_command, shell=True)
 
         samtools_proper_pair = f'samtools view -f 3 -h {prefix}/CJJ_supercontig.sam > ' \
                                f'{prefix}/CJJ_supercontig_properPair.sam'
-        sys.stderr.write(f'\nbwa samtools_proper_pair command: {samtools_proper_pair}\n')
-        sys.stderr.flush()
+        # sys.stderr.write(f'\nbwa samtools_proper_pair command: {samtools_proper_pair}\n')
+        # sys.stderr.flush()
         exitcode = subprocess.call(samtools_proper_pair, shell=True)
         samfile_reads = []
         with open(f'{prefix}/CJJ_supercontig_properPair.sam') as samfile:
@@ -419,16 +470,16 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
 
     bbmap_command = f'bbmap.sh -Xmx{memory}g  -t={threads} ref={prefix}/CJJ_supercontig.fasta in={interleaved_reads} ' \
                     f'out={prefix}/CJJ_supercontig.sam interleaved=t pairedonly=t mappedonly=t maxindel={maxindel} ' \
-                    f'strictmaxindel=t nodisk=t minid={minid} ambiguous=toss'
+                    f'strictmaxindel=t nodisk=t minid={minid} ambiguous=toss 2> /dev/null'
 
-    sys.stderr.write(f'\nbbmap_command: {bbmap_command}\n')
-    sys.stderr.flush()
+    # sys.stderr.write(f'\nbbmap_command: {bbmap_command}\n')
+    # sys.stderr.flush()
     exitcode = subprocess.call(bbmap_command, shell=True)
 
     samtools_proper_pair = f'samtools view -f 3 -h {prefix}/CJJ_supercontig.sam > ' \
                            f'{prefix}/CJJ_supercontig_properPair.sam'
-    sys.stderr.write(f'\nbwa samtools_proper_pair command: {samtools_proper_pair}\n')
-    sys.stderr.flush()
+    # sys.stderr.write(f'\nbwa samtools_proper_pair command: {samtools_proper_pair}\n')
+    # sys.stderr.flush()
     exitcode = subprocess.call(samtools_proper_pair, shell=True)
     samfile_reads = []
     with open(f'{prefix}/CJJ_supercontig_properPair.sam') as samfile:
@@ -783,8 +834,12 @@ def main():
         prefix = os.path.basename(assemblyfilename).split(".")[0]
 
     if not args.nosupercontigs:  # CJJ
+        # print(f'prefix is: {prefix}')
         gene_folder = os.path.split(prefix)[0]
+        # gene_folder = os.path.split(prefix)[1] # FOR TESTING ONLY CHANGE BACK!!!!
         interleaved_reads = f'{gene_folder}/{gene_folder}_interleaved.fasta'
+        # interleaved_reads = f'{gene_folder}_interleaved.fasta'  # FOR TESTING ONLY CHANGE BACK!!!!
+        # print(interleaved_reads)
     else:
         interleaved_reads = 'None'
 
