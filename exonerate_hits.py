@@ -697,7 +697,9 @@ def tuple_overlap(a, b):
 
 def tuple_subsume(a, b):
     """Given two tuples of length two, determine if a has a range that includes b"""
-    if b[0] >= a[0] and b[1] <= a[1]:
+    # if b[0] >= a[0] and b[1] <= a[1]:
+    if b[0] > a[0] and b[1] < a[1]:  #  CJJ is using >= and <= and there are two good contigs with the same protein
+        # hit ranges, they both get removed. We don't want this behaviour.
         return True
     else:
         return False
