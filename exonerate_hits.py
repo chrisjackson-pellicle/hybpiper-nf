@@ -55,7 +55,10 @@ def initial_exonerate(proteinfilename, assemblyfilename, prefix):
     exonerate_command = "exonerate -m protein2genome --showalignment no --showvulgar no -V 0 --refine full --ryo %s " \
                         "%s %s >%s" % (exonerate_ryo, proteinfilename, assemblyfilename, outputfilename)  # CJJ refine
     logger.debug(exonerate_command)
-    proc = subprocess.call(exonerate_command, shell=True)
+    try:
+        proc = subprocess.call(exonerate_command, shell=True)
+    except:
+        logger.debug(f'exonerate_command with refine failed for {outputfilename}')
     if file_exists_and_not_empty(outputfilename):  # CJJ
         records = SeqIO.to_dict(SeqIO.parse(outputfilename, 'fasta'))
         return records
