@@ -379,7 +379,7 @@ def exonerate(genes, basename, run_dir, replace=True, cpu=None, thresh=55, use_v
                               "--memory {}".format(memory),
                               "--discordant_reads_edit_distance {}".format(discordant_reads_edit_distance),
                               "--discordant_reads_cutoff {}".format(discordant_reads_cutoff),
-                              "--debug"
+                              "--debug",
                               "::::",
                               exonerate_genefilename,
                               "> genes_with_seqs.txt"]
