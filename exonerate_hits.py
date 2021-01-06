@@ -56,7 +56,7 @@ def initial_exonerate(proteinfilename, assemblyfilename, prefix):
                         "%s %s >%s" % (exonerate_ryo, proteinfilename, assemblyfilename, outputfilename)  # CJJ refine
     logger.debug(exonerate_command)
     proc = subprocess.call(exonerate_command, shell=True)
-    if file_exists_and_not_empty(outputfilename):
+    if file_exists_and_not_empty(outputfilename):  # CJJ
         records = SeqIO.to_dict(SeqIO.parse(outputfilename, 'fasta'))
         return records
     else:
