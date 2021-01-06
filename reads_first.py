@@ -497,7 +497,8 @@ def main():
                              " Default auto-dectection by SPAdes.", default=None)
     parser.add_argument("--thresh", type=int,
                         help="Percent Identity Threshold for stitching together exonerate results. Default is 55, but "
-                             "increase this if you are worried about contaminant sequences.", default=65)
+                             "increase this if you are worried about contaminant sequences.", default=55)  # CJJ
+    # Changed from 65 to 55 as I noticedf cases with real hits falling beneath cutoff threshold
     parser.add_argument("--length_pct",
                         help="Include an exonerate hit if it is at least as long as X percentage of the reference "
                              "protein length. Default = 90%%", default=90, type=int)

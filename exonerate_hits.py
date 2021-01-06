@@ -37,18 +37,35 @@ import re  # CJJ
 first_search_filename = "exonerate_results.fasta"
 
 
+def file_exists_and_not_empty(file_name):  # CJJ added for initial exonerate tests
+    """
+    Check if file exists and is not empty by confirming that its size is not 0 bytes
+    """
+    # Check if file exist and is not empty
+    return os.path.isfile(file_name) and not os.path.getsize(file_name) == 0
+
+
 def initial_exonerate(proteinfilename, assemblyfilename, prefix):
     """Conduct exonerate search, returns a dictionary of results.
     Using the ryo option in exonerate, the header should contain all the useful information."""
     logger = logging.getLogger("pipeline")
     outputfilename = "%s/exonerate_results.fasta" % prefix
     exonerate_ryo = '">%ti,%qi,%qab,%qae,%pi,(%tS),%tab,%tae\\n%tcs\\n"'
-    exonerate_command = "exonerate -m protein2genome --showalignment no --showvulgar no -V 0 --ryo %s %s %s >%s" % (
-    exonerate_ryo, proteinfilename, assemblyfilename, outputfilename)
+
+    exonerate_command = "exonerate -m protein2genome --showalignment no --showvulgar no -V 0 --refine full --ryo %s " \
+                        "%s %s >%s" % (exonerate_ryo, proteinfilename, assemblyfilename, outputfilename)  # CJJ refine
     logger.debug(exonerate_command)
     proc = subprocess.call(exonerate_command, shell=True)
-    records = SeqIO.to_dict(SeqIO.parse(outputfilename, 'fasta'))
-    return records
+    if file_exists_and_not_empty(outputfilename):
+        records = SeqIO.to_dict(SeqIO.parse(outputfilename, 'fasta'))
+        return records
+    else:
+        exonerate_command = "exonerate -m protein2genome --showalignment no --showvulgar no -V 0 --ryo %s %s %s >%s" \
+                            % (exonerate_ryo, proteinfilename, assemblyfilename, outputfilename)
+        logger.debug(exonerate_command)
+        proc = subprocess.call(exonerate_command, shell=True)
+        records = SeqIO.to_dict(SeqIO.parse(outputfilename, 'fasta'))
+        return records
 
 
 def protein_sort(records):
