@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse, os, sys, importlib, shutil, subprocess, glob
+import gzip
 
 helptext = """
 
@@ -586,6 +587,19 @@ def main():
     basedir, basename = make_basename(args.readfiles, prefix=args.prefix)
     os.chdir(os.path.join(basedir, basename))
 
+################################### CJJ unzip read files if they're provided as .gz ####################################
+
+    if unpaired_readfile:
+        list_of_readfiles = readfiles.extend(unpaired_readfile)
+    else:
+        list_of_readfiles = readfiles
+    for read_file in list_of_readfiles:
+        filename, file_extension = os.path.splitext(read_file)
+        if file_extension == '.gz':
+            print(f'Unzipping transcriptome {filename}...')
+            with open(filename, 'w') as outfile:
+                with gzip.open(read_file, 'rt') as infile:
+                    outfile.write(infile.read())
 
 #################################### MAP READS TO TARGETS WITH BWA #####################################################
     # BWA
