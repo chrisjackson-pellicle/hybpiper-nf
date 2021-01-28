@@ -590,7 +590,8 @@ def main():
 ################################### CJJ unzip read files if they're provided as .gz ####################################
 
     if unpaired_readfile:
-        list_of_readfiles = readfiles.extend(unpaired_readfile)
+        list_of_readfiles = readfiles.copy()
+        list_of_readfiles.append(unpaired_readfile)
     else:
         list_of_readfiles = readfiles
     for read_file in list_of_readfiles:
