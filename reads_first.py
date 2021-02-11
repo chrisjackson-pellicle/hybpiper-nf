@@ -597,10 +597,10 @@ def main():
             with open(filename, 'w') as outfile:
                 with gzip.open(unpaired_readfile, 'rt') as infile:
                     outfile.write(infile.read())
-            unpaired_readfile = re.sub('.gz', '', str(unpaired_readfile))
+            unpaired_readfile = filename
+    print(unpaired_readfile)
 
     filename, file_extension = os.path.splitext(readfiles[0])
-    print(filename)
     if file_extension == '.gz':
         print(f'Unzipping read file  {readfiles[0]}...')
         with open(filename, 'w') as outfile:
