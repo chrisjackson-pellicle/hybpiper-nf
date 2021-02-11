@@ -26,8 +26,8 @@ def make_spades_cmd(genelist, cov_cutoff=8, cpu=None, paired=True, kvals=None, r
     if timeout:
         parallel_cmd_list.append("--timeout {}%".format(timeout))
 
-    # spades_cmd_list = ["spades.py --only-assembler --threads 1 --cov-cutoff", str(cov_cutoff)]
-    spades_cmd_list = ["spades.py --only-assembler --sc --threads 1 --cov-cutoff", str(cov_cutoff)]  # CJJ added --sc
+    spades_cmd_list = ["spades.py --only-assembler --threads 1 --cov-cutoff", str(cov_cutoff)]
+    # spades_cmd_list = ["spades.py --only-assembler --sc --threads 1 --cov-cutoff", str(cov_cutoff)]  # CJJ added --sc
     if kvals:
         spades_cmd_list.append("-k {}".format(kvals))
     if unpaired:
