@@ -600,29 +600,42 @@ def main():
             unpaired_readfile = filename
     print(unpaired_readfile)
 
-    filename, file_extension = os.path.splitext(readfiles[0])
-    if file_extension == '.gz':
-        print(f'Unzipping read file  {readfiles[0]}...')
-        with open(filename, 'w') as outfile:
-            with gzip.open(readfiles[0], 'rt') as infile:
-                outfile.write(infile.read())
-        reads_r1 = filename
-    else:
-        reads_r1 = readfiles[0]
+    if len(readfiles) == 2:
+        filename, file_extension = os.path.splitext(readfiles[0])
+        if file_extension == '.gz':
+            print(f'Unzipping read file  {readfiles[0]}...')
+            with open(filename, 'w') as outfile:
+                with gzip.open(readfiles[0], 'rt') as infile:
+                    outfile.write(infile.read())
+            reads_r1 = filename
+        else:
+            reads_r1 = readfiles[0]
 
-    filename, file_extension = os.path.splitext(readfiles[1])
-    if file_extension == '.gz':
-        print(f'Unzipping read file  {readfiles[1]}...')
-        with open(filename, 'w') as outfile:
-            with gzip.open(readfiles[1], 'rt') as infile:
-                outfile.write(infile.read())
-        reads_r2 = filename
-    else:
-        reads_r2 = readfiles[1]
+        filename, file_extension = os.path.splitext(readfiles[1])
+        if file_extension == '.gz':
+            print(f'Unzipping read file  {readfiles[1]}...')
+            with open(filename, 'w') as outfile:
+                with gzip.open(readfiles[1], 'rt') as infile:
+                    outfile.write(infile.read())
+            reads_r2 = filename
+        else:
+            reads_r2 = readfiles[1]
 
-    readfiles = [reads_r1, reads_r2]
+        readfiles = [reads_r1, reads_r2]
 
-    # print(f'CJJ readfiles are: {readfiles}')
+    elif len(readfiles) == 1:
+        filename, file_extension = os.path.splitext(readfiles[0])
+        if file_extension == '.gz':
+            print(f'Unzipping read file  {readfiles[0]}...')
+            with open(filename, 'w') as outfile:
+                with gzip.open(readfiles[0], 'rt') as infile:
+                    outfile.write(infile.read())
+            reads_single = filename
+        else:
+            reads_single = readfiles[0]
+        readfiles = [reads_single]
+
+    print(f'CJJ readfiles are: {readfiles}')
 
 #################################### MAP READS TO TARGETS WITH BWA #####################################################
     # BWA
