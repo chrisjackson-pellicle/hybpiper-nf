@@ -11,23 +11,22 @@ This script is a wrapper around several scripts in the HybSeqPipeline.
 It can check whether you have the appropriate dependencies available (see --check-depend).
 It makes sure that the other scripts needed are in the same directory as this one.
 Command line options are passed to the other executables.
-Unless --prefix is set, output will be put within a directory named after your read files."""
+Unless --prefix is set, output will be put within a directory named after your read files.
+"""
 
-velvet_genefilename = "velvet_genelist.txt"
-cap3_genefilename = "cap3_genelist.txt"
 exonerate_genefilename = "exonerate_genelist.txt"
 spades_genefilename = "spades_genelist.txt"
 
 
 def py_which(cmd, mode=os.F_OK | os.X_OK, path=None):
-    """Given a command, mode, and a PATH string, return the path which
+    """
+    Given a command, mode, and a PATH string, return the path which
     conforms to the given mode on the PATH, or None if there is no such
     file.
 
     `mode` defaults to os.F_OK | os.X_OK. `path` defaults to the result
     of os.environ.get("PATH"), or can be overridden with a custom search
     path.
-
     """
 
     # Check that a given file can be accessed with the correct mode.
@@ -84,7 +83,9 @@ def py_which(cmd, mode=os.F_OK | os.X_OK, path=None):
 
 
 def check_dependencies():
-    """Checks for the presence of executables and Python packages"""
+    """
+    Checks for the presence of executables and Python packages.
+    """
     executables = ["blastx",
                    "exonerate",
                    "parallel",
@@ -115,6 +116,10 @@ def check_dependencies():
 
 
 def blastx(readfiles, baitfile, evalue, basename, cpu=None, max_target_seqs=10, unpaired=False):
+    """
+    CJJ: creates a blast database from protein target file, and performs BLASTx searches of sample nucleotide read
+    files against the protein database.
+    """
     dna = set("ATCGN")
     if os.path.isfile(baitfile):
         # Quick detection of whether baitfile is DNA.
@@ -189,8 +194,10 @@ def blastx(readfiles, baitfile, evalue, basename, cpu=None, max_target_seqs=10, 
 
 
 def distribute(blastx_outputfile, readfiles, baitfile, run_dir, target=None, unpaired_readfile=None, exclude=None):
+    """
+    CJJ: when using blastx, distribute sample reads to their corresponding target file hits.
+    """
     # NEED TO ADD SOMETHING ABOUT DIRECTORIES HERE.
-    # print run_dir
     read_cmd = "time python {} {} {}".format(os.path.join(run_dir, "distribute_reads_to_targets.py"), blastx_outputfile,
                                              " ".join(readfiles))
     exitcode = subprocess.call(read_cmd, shell=True)
@@ -218,12 +225,13 @@ def distribute(blastx_outputfile, readfiles, baitfile, run_dir, target=None, unp
 
 
 def distribute_bwa(bamfile, readfiles, baitfile, run_dir, target=None, unpaired=None, exclude=None):
+    """
+    CJJ: when using BWA mapping, distribute sample reads to their corresponding target file matches.
+    """
     # NEED TO ADD SOMETHING ABOUT DIRECTORIES HERE.
-    # print run_dir
     read_cmd = "time python {} {} {}".format(os.path.join(run_dir, "distribute_reads_to_targets_bwa.py"), bamfile,
                                              " ".join(readfiles))
     print(("[CMD] {}\n".format(read_cmd)))
-
     exitcode = subprocess.call(read_cmd, shell=True)
 
     if unpaired:
@@ -253,8 +261,10 @@ def distribute_bwa(bamfile, readfiles, baitfile, run_dir, target=None, unpaired=
 
 
 def make_basename(readfiles, prefix=None):
-    """Unless prefix is set, generate a directory based off the readfiles, using everything up to the first underscore.
-    If prefix is set, generate the directory "prefix" and set basename to be the last component of the path."""
+    """
+    Unless prefix is set, generate a directory based off the readfiles, using everything up to the first underscore.
+    If prefix is set, generate the directory "prefix" and set basename to be the last component of the path.
+    """
     if prefix:
         if not os.path.exists(prefix):
             os.makedirs(prefix)
@@ -273,7 +283,9 @@ def make_basename(readfiles, prefix=None):
 
 
 def spades(genes, run_dir, cov_cutoff=8, cpu=None, paired=True, kvals=None, timeout=None, unpaired=False, merged=False):
-    "Run SPAdes on each gene separately using GNU paralell."""
+    """
+    Run SPAdes on each gene separately using GNU parallel.
+    """
 
     with open(spades_genefilename, 'w') as spadesfile:  # CJJ Note that <spades_genefilename> is defined as a global
         # variable
@@ -331,15 +343,13 @@ def spades(genes, run_dir, cov_cutoff=8, cpu=None, paired=True, kvals=None, time
 def exonerate(genes, basename, run_dir, replace=True, cpu=None, thresh=55, use_velvet=False, depth_multiplier=0,
               length_pct=100, timeout=None, nosupercontigs=False, memory=1, discordant_reads_edit_distance=7,
               discordant_reads_cutoff=100):
-    # Check that each gene in genes actually has CAP3 output
-    # cap3_sizes = [os.stat(os.path.join(x,x+"_cap3ed.fa")).st_size for x in genes]
-    # print cap3_sizes
-
+    """
+    CJJ: runs the `exonerate_hits.py script via GNU parallel.
+    """
     if replace:
         for g in genes:
             if os.path.isdir(os.path.join(g, basename)):
                 shutil.rmtree(os.path.join(g, basename))
-    # genes = [x for x in genes if os.stat(os.path.join(x,x+"_cap3ed.fa")).st_size > 0]
     if len(genes) == 0:
         print(("ERROR: No genes recovered for {}!".format(basename)))
         return 1
@@ -397,8 +407,11 @@ def exonerate(genes, basename, run_dir, replace=True, cpu=None, thresh=55, use_v
 
 
 def bwa(readfiles, baitfile, basename, cpu, unpaired=None):
-    """Conduct BWA search of reads against the baitfile.
-    Returns an error if the second line of the baitfile contains characters other than ACTGN"""
+    """
+    Conduct BWA search of reads against the baitfile.
+    Returns an error if the second line of the baitfile contains characters other than ACTGN
+    """
+
     dna = set("ATCGN")
     if os.path.isfile(baitfile):
         # Quick detection of whether baitfile is DNA.
@@ -464,16 +477,9 @@ def main():
                              "\nUseful for re-runnning assembly/exonerate steps with different options.")
     parser.add_argument("--no-distribute", dest="distribute", action="store_false",
                         help="Do not distribute the reads and bait sequences to sub-directories.")
-    parser.add_argument("--no-velvet", dest="velvet", action="store_false",
-                        help="Do not run the velvet stages (velveth and velvetg)")
-    parser.add_argument("--no-cap3", dest="cap3", action="store_false",
-                        help="Do not run CAP3, which joins the output of the different velvet runs")
     parser.add_argument("--no-exonerate", dest="exonerate", action="store_false",
                         help="Do not run the Exonerate step, which assembles full length CDS regions and proteins from "
                              "each gene")
-    parser.add_argument("--velvet-mode", dest="use_velvet", action="store_true",
-                        help="Backwards compatability for velvet mode. NOT RECOMMENDED, VELVET MAKES ERROR PRONE"
-                             " ASSEMBLIES!")
     parser.add_argument("--no-assemble", dest="assemble", action="store_false", help="Skip the SPAdes assembly stage.")
 
     parser.add_argument('-r', "--readfiles", nargs='+',
@@ -484,7 +490,6 @@ def main():
                         help="FASTA file containing bait sequences for each gene. If there are multiple baits for a "
                              "gene, the id must be of the form: >Taxon-geneName",
                         default=None)
-
     parser.add_argument('--cpu', type=int, default=0,
                         help="Limit the number of CPUs. Default is to use all cores available.")
     parser.add_argument('--evalue', type=float, default=1e-10,
@@ -498,21 +503,19 @@ def main():
                              " Default auto-dectection by SPAdes.", default=None)
     parser.add_argument("--thresh", type=int,
                         help="Percent Identity Threshold for stitching together exonerate results. Default is 55, but "
-                             "increase this if you are worried about contaminant sequences.", default=55)  # CJJ
-    # Changed from 65 to 55 as I noticedf cases with real hits falling beneath cutoff threshold
+                             "increase this if you are worried about contaminant sequences.", default=55)  # CJJ:
+    # changed from 65 to 55 as I noticed cases with real hits falling beneath cutoff threshold
     parser.add_argument("--length_pct",
                         help="Include an exonerate hit if it is at least as long as X percentage of the reference "
                              "protein length. Default = 90%%", default=90, type=int)
     parser.add_argument("--depth_multiplier",
                         help="Accept any full-length exonerate hit if it has a coverage depth X times the next best "
                              "hit. Set to zero to not use depth. Default = 10", default=10, type=int)
-
     parser.add_argument('--prefix', help="Directory name for pipeline output, default is to use the FASTQ file name.",
                         default=None)
     parser.add_argument("--timeout",
                         help="Use GNU Parallel to kill long-running processes if they take longer than X percent of "
                              "average.", default=0)
-
     parser.add_argument("--target",
                         help="Use this target to align sequences for each gene. Other targets for that gene will be "
                              "used only for read sorting. Can be a tab-delimited file (one gene per line) or a single "
@@ -572,7 +575,6 @@ def main():
         parser.print_help()
         return
     readfiles = [os.path.abspath(x) for x in args.readfiles]
-    # print(f'Original readfiles are {readfiles}')
     if args.unpaired:
         unpaired_readfile = os.path.abspath(args.unpaired)
     else:
@@ -589,7 +591,6 @@ def main():
     os.chdir(os.path.join(basedir, basename))
 
 ################################### CJJ unzip read files if they're provided as .gz ####################################
-
     if unpaired_readfile:
         filename, file_extension = os.path.splitext(unpaired_readfile)
         if file_extension == '.gz':
@@ -638,7 +639,6 @@ def main():
     print(f'CJJ readfiles are: {readfiles}')
 
 #################################### MAP READS TO TARGETS WITH BWA #####################################################
-    # BWA
     if args.bwa:
         if args.blast:
             args.blast = False
@@ -653,8 +653,7 @@ def main():
         else:
             bamfile = basename + ".bam"
 
-########################################################################################################################
-
+################################# MAP READS TO TARGETS WITH BLASTX #####################################################
     # bamfile = basename + ".bam"
     # BLAST
     if args.blast:
@@ -670,9 +669,7 @@ def main():
         blastx_outputfile = basename + ".blastx"
     # Distribute
 
-
 ########################################## DISTRIBUTE READS TO GENES ###################################################
-
     if args.distribute:
         pre_existing_fastas = glob.glob("./*/*_interleaved.fasta") + glob.glob("./*/*_unpaired.fasta")
         for fn in pre_existing_fastas:
@@ -749,23 +746,21 @@ def main():
 
 ########################################################################################################################
 
+    # Collate all supercontig and discordant read information in to one file:
     collate_supercontig_reports = f'find .  -name "genes_with_supercontigs.csv" -exec cat {{}} \; | tee ' \
                                   f'{basename}_genes_with_supercontigs.csv'
     subprocess.call(collate_supercontig_reports, shell=True)
-
     collate_discordant_supercontig_reports = f'find .  -name "supercontigs_with_discordant_readpairs.csv" ' \
                                              f'-exec cat {{}} \; | tee ' \
                                              f'{basename}_supercontigs_with_discordant_reads.csv'
     subprocess.call(collate_discordant_supercontig_reports, shell=True)
 
-
     sys.stderr.write("Generated sequences from {} genes!\n".format(len(open("genes_with_seqs.txt").readlines())))
-
-    paralog_warnings = [x for x in os.listdir(".") if os.path.isfile(os.path.join(x, basename,
-                                                                                      "paralog_warning.txt"))]
+    paralog_warnings = [x for x in os.listdir(".") if os.path.isfile(os.path.join(x, basename, "paralog_warning.txt"))]
     with open("genes_with_paralog_warnings.txt", 'w') as pw:
         pw.write("\n".join(paralog_warnings))
     sys.stderr.write("WARNING: Potential paralogs detected for {} genes!".format(len(paralog_warnings)))
 
 
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    main()
