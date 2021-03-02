@@ -244,7 +244,7 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
         write_genes_with_supercontigs(','.join(log_entry), prefix)
         return str(sequence_dict[prot["assemblyHits"][hit_index]].seq)
     else:
-######################################### CJJ trim supercontigs ########################################################
+       ################################## CJJ trim supercontigs ########################################################
 
         # CJJ this is very verbose and convoluted, partly because I have to fit in with how HybPiper was written. But
         # there's no doubt a more elegant way of doing this. Review...eventually...
@@ -381,7 +381,7 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
             log_entry = [log_sample_and_gene, 'Supercontig created but no contig trimming performed']
         write_genes_with_supercontigs(','.join(log_entry), prefix)
 
-#################################### CJJ Finished getting slice indexes for trimming ###################################
+        ############################ CJJ Finished getting slice indexes for trimming ###################################
 
         for hit in range(len(prot["assemblyHits"])):
             assembly_seq_name = prot["assemblyHits"][hit].split(",")[0]
@@ -427,8 +427,7 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
     minid = 0.76                             # CJJ should be user modifiable
     if len(joined_supercontig_cds) == 1:
 
-################ CJJ mapping check 1: if only one sequence left after filtering above ##################################
-
+        ################ CJJ mapping check 1: if only one sequence left after filtering above ##########################
         supercontig_reference = joined_supercontig_cds
         SeqIO.write(supercontig_reference, '%s/CJJ_supercontig.fasta' % prefix, 'fasta')
         logger.debug("One sequence remaining")
@@ -480,8 +479,7 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
     logger.debug(">joined_supercontig\n{}".format(superdupercontig.seq))
 
 
-################  CJJ mapping check 2: if multiple sequences left after filtering above  ###############################
-
+    ##############  CJJ mapping check 2: if multiple sequences left after filtering above  #############################
     supercontig_reference = superdupercontig
     SeqIO.write(supercontig_reference, '%s/CJJ_supercontig.fasta' % prefix, 'fasta')
     sys.stderr.write(f'\nInterleaved_reads: {interleaved_reads}\n')
@@ -718,7 +716,7 @@ def tuple_overlap(a, b):
 def tuple_subsume(a, b):
     """Given two tuples of length two, determine if a has a range that includes b"""
     # if b[0] >= a[0] and b[1] <= a[1]:
-    if b[0] > a[0] and b[1] < a[1]:  #  CJJ is using >= and <= and there are two good contigs with the same protein
+    if b[0] > a[0] and b[1] < a[1]:  # CJJ is using >= and <= and there are two good contigs with the same protein
         # hit ranges, they both get removed. We don't want this behaviour.
         return True
     else:
@@ -833,19 +831,26 @@ def main():
                         help="minimum number of discordant reads pairs required to flag a supercontigs as a potential "
                              "hybrid of contigs from multiple paralogs", default=100, type=int)  # CJJ
 
-
-
     args = parser.parse_args()
 
+    ####################################################################################################################
+    # Print run info for script parameters
+    ####################################################################################################################
     sys.stderr.write(f'\nCJJ from exonerate_hits.py: {args}\n')
-    # sys.stderr.write(f'\n TEXT: {} \n')
     sys.stderr.write(f'\n memory is : {args.memory} \n')
     sys.stderr.write(f'\n edit distance is : {args.discordant_reads_edit_distance} \n')
     sys.stderr.write(f'\n discordant cutoff is : {args.discordant_reads_cutoff} \n')
     sys.stderr.flush()
 
+    ####################################################################################################################
+    # Read in the selected protein reference sequence and SPAdes nucleotide contigs
+    ####################################################################################################################
     proteinfilename = args.proteinfile  # CJJ read in protein fasta e.g. At2g47110_baits.fasta
     assemblyfilename = args.assemblyfile  # CJJ read in SPAdes contigs e.g. At2g47110_contigs.fasta
+
+    ####################################################################################################################
+    # Create a directory for output files based on the prefix name
+    ####################################################################################################################
     if args.prefix:
         prefix = args.prefix
         if os.path.exists(prefix):
@@ -855,6 +860,9 @@ def main():
     else:
         prefix = os.path.basename(assemblyfilename).split(".")[0]
 
+    ####################################################################################################################
+    # If producing supercontigs, identify file of interleaved reads for this sample/gene for mapping
+    ####################################################################################################################
     if not args.nosupercontigs:  # CJJ
         # print(f'prefix is: {prefix}')
         gene_folder = os.path.split(prefix)[0]
@@ -865,6 +873,9 @@ def main():
     else:
         interleaved_reads = 'None'
 
+    ####################################################################################################################
+    # Set up logger
+    ####################################################################################################################
     logger = logging.getLogger("pipeline")
     ch = logging.StreamHandler()
     logger.addHandler(ch)
@@ -874,6 +885,10 @@ def main():
         logger.setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     ch.setFormatter(formatter)
+
+    ####################################################################################################################
+    # Read the protein reference and the SPAdes contigs into SeqIO dictionaries
+    ####################################################################################################################
     try:
         proteinfile = open(proteinfilename)
     except IOError:
@@ -888,15 +903,20 @@ def main():
     assembly_dict = SeqIO.to_dict(SeqIO.parse(assemblyfile, 'fasta'))
     protein_dict = SeqIO.to_dict(SeqIO.parse(proteinfile, 'fasta'))
 
+    ####################################################################################################################
+    # Run the function initial_exonerate, and sort the SPAdes contig hits
+    ####################################################################################################################
     if os.path.exists(args.first_search_filename):  # Shortcut for Testing purposes
         logger.info("Reading initial exonerate results from file {}.".format(first_search_filename))
         sequence_dict = SeqIO.to_dict(SeqIO.parse(first_search_filename, 'fasta'))
     else:
         sequence_dict = initial_exonerate(proteinfilename, assemblyfilename, prefix)
     proteinHits = protein_sort(sequence_dict)
-
     sys.stderr.write("There were {} exonerate hits for {}.\n".format(len(sequence_dict), proteinfilename))
 
+    ####################################################################################################################
+    # Create directories for nucleotide (FNA) and amino acid (FAA) sequences
+    ####################################################################################################################
     directory_name = "%s/sequences/FNA" % prefix
     if not os.path.exists(directory_name):
         os.makedirs(directory_name)
@@ -905,6 +925,9 @@ def main():
     if not os.path.exists(directory_name):
         os.makedirs(directory_name)
 
+    ####################################################################################################################
+    # Filter the Exonerate SPAdes contig hits
+    ####################################################################################################################
     for prot in proteinHits:
         logger.debug(prot)
         logger.debug("Initial hits: %s" % len(proteinHits[prot]["assemblyHits"]))
@@ -933,11 +956,13 @@ def main():
 
         ################################################################################################################
         # Delete contigs if their range is completely subsumed by another hit's range.
+        ################################################################################################################
         proteinHits[prot] = overlapping_contigs(proteinHits[prot], args.length_pct * 0.01, args.depth_multiplier)
         logger.debug("After overlapping_contigs: %d" % len(proteinHits[prot]["assemblyHits"]))
-        ################################################################################################################
 
+        ################################################################################################################
         # Stitch together a "supercontig" containing all the hits and conduct a second exonerate search.
+        ################################################################################################################
         if len(proteinHits[prot]["assemblyHits"]) == 0:
             report_no_sequences(proteinHits[prot]["name"])
             continue  # All hits have been filtered out
@@ -946,6 +971,10 @@ def main():
                                     args.threshold, args.nosupercontigs, interleaved_reads=interleaved_reads,
                                     memory=args.memory, discordant_cutoff=args.discordant_reads_cutoff,
                                     edit_distance=args.discordant_reads_edit_distance, threads=args.threads)
+
+        ################################################################################################################
+        # If a sequence for the locus was returned, translate it, and write nucleotide and protein seqs to file
+        ################################################################################################################
         if nucl_sequence:
             if args.no_sequences:
                 continue
@@ -970,5 +999,11 @@ def main():
     sys.stderr.flush()
 
 
-if __name__ == "__main__": main()
+########################################################################################################################
+# Run the script
+########################################################################################################################
+if __name__ == "__main__":
+    main()
+
+################################################## END OF SCRIPT #######################################################
 
