@@ -4,8 +4,8 @@
 sample.filename = "seq_lengths.txt"
 
 #Calculate sizes for gene and sample labels, increase the multiplier to make text bigger
-gene.size.multiplier = .1
-sample.size.multiplier = .5
+# gene.size.multiplier = .1
+# sample.size.multiplier = .5
 
 #Below is an example of a ggplot save command
 #ggsave("plastid_heatmap.png", height = 4, width = 6, units = "in")
@@ -28,9 +28,42 @@ percent.len = ifelse(percent.len>1,1,percent.len)
 percent.long = melt(percent.len)
 percent.long$Var1 = as.factor(percent.long$Var1)
 
-gene.size = dim(percent.len)[2] * gene.size.multiplier
-if (gene.size < 10) {gene.size = 8} else {gene.size = gene.size}  # CJJ
-sample.size = dim(percent.len)[1] * sample.size.multiplier
+
+# print(dim(percent.len)[2]) # e.g. will be 353 for the 353 target file
+# gene.size = dim(percent.len)[2] * gene.size.multiplier # i.e. size of text on x-axis
+# if (gene.size < 10) {gene.size = 8} else {gene.size = gene.size}  # CJJ
+# sample.size = dim(percent.len)[1] * sample.size.multiplier # i.e. size of text on y-axis
+
+# if (dim(percent.len)[2] < 10) {gene.size = 8} 
+# if (dim(percent.len)[2] > 10 && dim(percent.len)[2] < 20) {gene.size = 8}
+# if (dim(percent.len)[2] > 300 && dim(percent.len)[2] < 400) {gene.size = 3} && {fig_height = 21} && {fig_length = 29.7}
+
+
+# Set some dimensions for given sample numbers:
+if (dim(percent.len)[1] < 10) {sample.size = 10} && {fig_height = 10}
+if (dim(percent.len)[1] > 10 && dim(percent.len)[1] < 20) {sample.size = 10} && {fig_height = 10}
+if (dim(percent.len)[1] > 20 && dim(percent.len)[1] < 50) {sample.size = 8} && {fig_height = 15}
+if (dim(percent.len)[1] > 50 && dim(percent.len)[1] < 100) {sample.size = 6} && {fig_height = 15}
+if (dim(percent.len)[1] > 100 && dim(percent.len)[1] < 200) {sample.size = 4} && {fig_height = 21}
+if (dim(percent.len)[1] > 200 && dim(percent.len)[1] < 400) {sample.size = 3} && {fig_height = 21}
+if (dim(percent.len)[1] > 400) {sample.size = 3} && {fig_height = 21}
+    
+# Set some dimensions for given gene numbers (i.e. unique genes in target file):
+if (dim(percent.len)[2] < 10) {gene.size = 8} && {fig_length = 10.7}
+if (dim(percent.len)[2] > 10 && dim(percent.len)[2] < 20) {gene.size = 10} && {fig_length = 15.7}
+if (dim(percent.len)[2] > 20 && dim(percent.len)[2] < 50) {gene.size = 8} && {fig_length = 20.7}
+if (dim(percent.len)[2] > 50 && dim(percent.len)[2] < 100) {gene.size = 6} && {fig_length = 20.7}
+if (dim(percent.len)[2] > 100 && dim(percent.len)[2] < 200) {gene.size = 4} && {fig_length = 29.7}
+if (dim(percent.len)[2] > 200 && dim(percent.len)[2] < 400) {gene.size = 3} && {fig_length = 29.7}
+if (dim(percent.len)[2] > 400) {gene.size = 3} && {fig_length = 29.7}
+
+print(gene.size)
+print(fig_height)
+print(fig_length)
+
+# CJJ fixed size for testing:
+# gene.size <- 3
+# sample.size <- 10
 
 ggplot(data = percent.long, aes(x=Var2, y=Var1, fill = value))+
   geom_raster()+
@@ -40,10 +73,6 @@ ggplot(data = percent.long, aes(x=Var2, y=Var1, fill = value))+
   ylab(NULL)+xlab(NULL)+
   theme(axis.text.y=element_text(face="italic",size = sample.size),axis.text.x =element_text(size=gene.size))
 
-ggsave("heatmap.png", height = 8, width = 12, units = "in")  # CJJ
+# ggsave("heatmap.png", height = 21, width = 29.7, units = "cm")  # CJJ
+ggsave("heatmap.png", height = fig_height, width = fig_length, units = "cm")  # CJJ
 
-#sed -i -r 's|(^gene.size =.*)|\1\nif \(gene.size < 10\) \{gene.size = 8\} else \{gene.size = gene.size\}|g' /HybPiper/gene_recovery_heatmap_ggplot.R
-#echo 'ggsave("heatmap.png", height = 4, width = 6, units = "in")' >> /HybPiper/gene_recovery_heatmap_ggplot.R
-
-
-#sed -i -r 's|(^gene.size =.*)|\1\nif \(gene.size < 10\) \{gene.size = 8\} else \{gene.size = gene.size\}|g' /HybPiper/gene_recovery_heatmap_ggplot.R
