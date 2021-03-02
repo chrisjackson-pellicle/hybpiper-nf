@@ -17,6 +17,10 @@ Unless --prefix is set, output will be put within a directory named after your r
 exonerate_genefilename = "exonerate_genelist.txt"
 spades_genefilename = "spades_genelist.txt"
 
+########################################################################################################################
+# Define functions
+########################################################################################################################
+
 
 def py_which(cmd, mode=os.F_OK | os.X_OK, path=None):
     """
@@ -551,7 +555,9 @@ def main():
     run_dir = os.path.realpath(os.path.split(sys.argv[0])[0])
     print(("HybPiper was called with these arguments:\n{}\n".format(" ".join(sys.argv))))
 
+    ####################################################################################################################
     # Check dependencies
+    ####################################################################################################################
     if args.check_depend:
         if check_dependencies():
             other_scripts = ["distribute_reads_to_targets.py", "distribute_targets.py", "exonerate_hits.py"]
@@ -569,6 +575,9 @@ def main():
             print("ERROR: One or more dependencies not found!")
             return
 
+    ####################################################################################################################
+    # Read in the target file (called baitfile here) and read files
+    ####################################################################################################################
     if args.baitfile:
         baitfile = os.path.abspath(args.baitfile)
     else:
@@ -590,7 +599,9 @@ def main():
     basedir, basename = make_basename(args.readfiles, prefix=args.prefix)
     os.chdir(os.path.join(basedir, basename))
 
-################################### CJJ unzip read files if they're provided as .gz ####################################
+    ####################################################################################################################
+    # CJJ unzip read files if they're provided as .gz
+    ####################################################################################################################
     if unpaired_readfile:
         filename, file_extension = os.path.splitext(unpaired_readfile)
         if file_extension == '.gz':
@@ -638,7 +649,9 @@ def main():
 
     print(f'CJJ readfiles are: {readfiles}')
 
-#################################### MAP READS TO TARGETS WITH BWA #####################################################
+    ####################################################################################################################
+    # Map reads to nucleotide targets with BWA
+    ####################################################################################################################
     if args.bwa:
         if args.blast:
             args.blast = False
@@ -653,7 +666,9 @@ def main():
         else:
             bamfile = basename + ".bam"
 
-################################# MAP READS TO TARGETS WITH BLASTX #####################################################
+    ####################################################################################################################
+    # Map reads to protein targets with BLASTx
+    ####################################################################################################################
     # bamfile = basename + ".bam"
     # BLAST
     if args.blast:
@@ -669,7 +684,9 @@ def main():
         blastx_outputfile = basename + ".blastx"
     # Distribute
 
-########################################## DISTRIBUTE READS TO GENES ###################################################
+    ####################################################################################################################
+    # Distribute reads to genes for either BLASTx or BWA mappings
+    ####################################################################################################################
     if args.distribute:
         pre_existing_fastas = glob.glob("./*/*_interleaved.fasta") + glob.glob("./*/*_unpaired.fasta")
         for fn in pre_existing_fastas:
@@ -691,8 +708,9 @@ def main():
         print("ERROR: No genes with BLAST hits! Exiting!")
         return
 
-############################################## ASSEMBLE WITH SPADES ####################################################
-
+    ####################################################################################################################
+    # Assemble reads using SPAdes
+    ####################################################################################################################
     # Merge reads for SPAdes assembly CJJ
     if args.merged:
         print(f'Merging reads for SPAdes assembly')
@@ -729,11 +747,11 @@ def main():
             print("ERROR: Please specify either one (unpaired) or two (paired) read files! Exiting!")
             return
         if not spades_genelist:
-            print("ERROR: No genes had assembleRunning Exonerate to generate sequencesd contigs! Exiting!")
+            print("ERROR: No genes had assembled contigs! Exiting!")
             return
-
-############################################## RUN EXONERATE ###########################################################
-    # Exonerate hits
+    ####################################################################################################################
+    # Run exonerate on the assembled SPAdes contigs
+    ####################################################################################################################
     if args.exonerate:
         genes = [x.rstrip() for x in open(exonerate_genefilename).readlines()]
         exitcode = exonerate(genes, basename, run_dir, cpu=args.cpu, thresh=args.thresh, length_pct=args.length_pct,
@@ -744,9 +762,9 @@ def main():
         if exitcode:
             return
 
-########################################################################################################################
-
-    # Collate all supercontig and discordant read information in to one file:
+    ####################################################################################################################
+    # Collate all supercontig and discordant read reports into one file
+    ####################################################################################################################
     collate_supercontig_reports = f'find .  -name "genes_with_supercontigs.csv" -exec cat {{}} \; | tee ' \
                                   f'{basename}_genes_with_supercontigs.csv'
     subprocess.call(collate_supercontig_reports, shell=True)
@@ -755,6 +773,9 @@ def main():
                                              f'{basename}_supercontigs_with_discordant_reads.csv'
     subprocess.call(collate_discordant_supercontig_reports, shell=True)
 
+    ####################################################################################################################
+    # Report paralog warning and write a paralog warning file
+    ####################################################################################################################
     sys.stderr.write("Generated sequences from {} genes!\n".format(len(open("genes_with_seqs.txt").readlines())))
     paralog_warnings = [x for x in os.listdir(".") if os.path.isfile(os.path.join(x, basename, "paralog_warning.txt"))]
     with open("genes_with_paralog_warnings.txt", 'w') as pw:
@@ -762,5 +783,10 @@ def main():
     sys.stderr.write("WARNING: Potential paralogs detected for {} genes!".format(len(paralog_warnings)))
 
 
+########################################################################################################################
+# Run script
+#######################################################################################################################
 if __name__ == "__main__":
     main()
+
+################################################## END OF SCRIPT #######################################################
