@@ -932,9 +932,12 @@ def main():
         logger.debug(prot)
         logger.debug("Initial hits: %s" % len(proteinHits[prot]["assemblyHits"]))
 
+        ################################################################################################################
+        # Perform a paralog test and generate warnings
+        ################################################################################################################
         paralog_test(proteinHits[prot], protein_dict[prot], prefix)
-        proteinHits[prot]["reflength"] = len(protein_dict[prot])
 
+        proteinHits[prot]["reflength"] = len(protein_dict[prot])
         proteinHits[prot] = get_contig_order(proteinHits[prot])
         logger.debug("After get_contig_order: %d" % len(proteinHits[prot]["assemblyHits"]))
         # Remove contigs that are suboptimal hits. Only one protein hit allowed per contig.
