@@ -409,23 +409,29 @@ def fullContigs(prot, sequence_dict, assembly_dict, protein_dict, prefix, thresh
     supercontig = SeqRecord(Seq("".join(str(b.seq) for b in sequence_list)), id=prot["name"])
     logger.debug(">supercontig\n{}".format(supercontig.seq))
     # Need to remove contigs if they have the same basename
-    supercontig_cds = supercontig_exonerate(supercontig, protein_dict[prot["name"]], prefix, thresh)
+
+    ####################################################################################################################
+    # Run Exonerate for a second time using the same protein query and the supercontig as subject
+    ####################################################################################################################
+    supercontig_cds = supercontig_exonerate(supercontig, protein_dict[prot["name"]], prefix, thresh)  # Returns a
+    # list. Can return multiple fasta hits.
     if not supercontig_cds:
         sys.stderr.write("Supercontig below percent identity threshold!\n")
         return None
     logger.debug(" ".join(str(len(x)) for x in supercontig_cds))
     # Sort the supercontigs by hit location to the protein.
-    joined_supercontig_cds = [b for b in supercontig_cds]
+    joined_supercontig_cds = [b for b in supercontig_cds]  # CJJ: does this do anything? 07March2021
     joined_supercontig_cds.sort(key=sort_byhitloc)
     # Get rid of supercontig sequences that are subsumed by longer sequences on the same stretch.
     joined_supercontig_cds = subsume_supercontigs(joined_supercontig_cds)
-    SeqIO.write(joined_supercontig_cds, '%s/supercontig_exonerate.fasta' % prefix, 'fasta')
+    SeqIO.write(joined_supercontig_cds, '%s/supercontig_exonerate.fasta' % prefix, 'fasta') # This can be multiple
+    # fasta seqs written to the same file.
     discordant_reads = 0
     discordant_cutoff = discordant_cutoff    # CJJ user modifiable
     edit_distance = edit_distance            # CJJ user modifiable
     maxindel = 0
     minid = 0.76                             # CJJ should be user modifiable
-    if len(joined_supercontig_cds) == 1:
+    if len(joined_supercontig_cds) == 1:  # CJJ: i.e. if file supercontig_exonerate.fasta contains a single fast seq.
 
         ################ CJJ mapping check 1: if only one sequence left after filtering above ##########################
         supercontig_reference = joined_supercontig_cds
@@ -761,7 +767,7 @@ def reciprocal_best_hit(prot, proteinHits):
     return keep_indicies(kept_indicies, prot)
 
 
-def paralog_test(exonerate_hits, prot, prefix):
+def paralog_test(exonerate_hits, prot, prefix, paralog_warning_min_cutoff):
     """Gives a warning if there are multiple hits of long length to the same protein"""
     logger = logging.getLogger("pipeline")
     protlength = len(prot)
@@ -769,7 +775,8 @@ def paralog_test(exonerate_hits, prot, prefix):
     logger.debug("protein length: {}".format(protlength))
     logger.debug("Hit lengths:")
     logger.debug(hitlengths)
-    longhits = [x > 0.75 * protlength for x in hitlengths]
+    # longhits = [x > 0.75 * protlength for x in hitlengths]
+    longhits = [x > paralog_warning_min_cutoff * protlength for x in hitlengths]  # CJJ
     if sum(longhits) > 1:
         sys.stderr.write("WARNING: Multiple long-length exonerate hits for {}. Check for paralogs!\n".format(prot.id))
         with open("{}/paralog_warning.txt".format(prefix), 'w') as pw:
@@ -796,6 +803,10 @@ def help():
     print("A protein and a nucleotide directory will be created in the current directory with the prefix.")
     return
 
+
+########################################################################################################################
+# Define main(), including argparse options
+########################################################################################################################
 
 def main():
     parser = argparse.ArgumentParser(
@@ -830,6 +841,9 @@ def main():
     parser.add_argument("--discordant_reads_cutoff",
                         help="minimum number of discordant reads pairs required to flag a supercontigs as a potential "
                              "hybrid of contigs from multiple paralogs", default=100, type=int)  # CJJ
+    parser.add_argument("--paralog_warning_min_cutoff", default=0.75, type=float,
+                        help="Minimum length percentage of a contig vs reference protein length for a paralog warning "
+                             "to be generated. Default is %(default)s")  # CJJ
 
     args = parser.parse_args()
 
@@ -935,7 +949,7 @@ def main():
         ################################################################################################################
         # Perform a paralog test and generate warnings
         ################################################################################################################
-        paralog_test(proteinHits[prot], protein_dict[prot], prefix)
+        paralog_test(proteinHits[prot], protein_dict[prot], prefix, args.paralog_warning_min_cutoff)
 
         proteinHits[prot]["reflength"] = len(protein_dict[prot])
         proteinHits[prot] = get_contig_order(proteinHits[prot])

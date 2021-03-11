@@ -1,19 +1,26 @@
 #!/usr/bin/env python
 
-import argparse, os, sys, importlib, shutil, subprocess, glob, re
-import gzip
-
-helptext = """
-
+"""
 HybPiper Version 1.2 (March 2017)
+
+RBGV modified 2021 - Chris Jackson chris.jackson@rbg.vic.gov.au
 
 This script is a wrapper around several scripts in the HybSeqPipeline.
 It can check whether you have the appropriate dependencies available (see --check-depend).
 It makes sure that the other scripts needed are in the same directory as this one.
 Command line options are passed to the other executables.
 Unless --prefix is set, output will be put within a directory named after your read files.
+
+To see parameters and help type:
+
+python reads_first.py -h
 """
 
+import argparse, os, sys, importlib, shutil, subprocess, glob, re
+import gzip
+
+
+# Hard coded filename used in function below:
 exonerate_genefilename = "exonerate_genelist.txt"
 spades_genefilename = "spades_genelist.txt"
 
@@ -346,7 +353,7 @@ def spades(genes, run_dir, cov_cutoff=8, cpu=None, paired=True, kvals=None, time
 
 def exonerate(genes, basename, run_dir, replace=True, cpu=None, thresh=55, use_velvet=False, depth_multiplier=0,
               length_pct=100, timeout=None, nosupercontigs=False, memory=1, discordant_reads_edit_distance=7,
-              discordant_reads_cutoff=100):
+              discordant_reads_cutoff=100, paralog_warning_min_cutoff=0.75):
     """
     CJJ: runs the `exonerate_hits.py script via GNU parallel.
     """
@@ -380,6 +387,7 @@ def exonerate(genes, basename, run_dir, replace=True, cpu=None, thresh=55, use_v
                               "-t {}".format(thresh),
                               "--depth_multiplier {}".format(depth_multiplier),
                               "--length_pct {}".format(length_pct), "--nosupercontigs",
+                              "paralog_warning_min_cutoff {}".format(paralog_warning_min_cutoff),
                               "::::",
                               exonerate_genefilename,
                               "> genes_with_seqs.txt"]
@@ -394,6 +402,7 @@ def exonerate(genes, basename, run_dir, replace=True, cpu=None, thresh=55, use_v
                               "--memory {}".format(memory),
                               "--discordant_reads_edit_distance {}".format(discordant_reads_edit_distance),
                               "--discordant_reads_cutoff {}".format(discordant_reads_cutoff),
+                              "paralog_warning_min_cutoff {}".format(paralog_warning_min_cutoff),
                               "--debug",
                               "::::",
                               exonerate_genefilename,
@@ -469,10 +478,10 @@ def bwa(readfiles, baitfile, basename, cpu, unpaired=None):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=helptext, formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--check-depend", dest='check_depend',
-                        help="Check for dependencies (executables and Python packages) and exit. May not work at all on"
-                             "Windows.", action='store_true')
+                        help="Check for dependencies (executables and Python packages) and exit. May not work at all "
+                             "on Windows.", action='store_true')
     parser.add_argument("--bwa", dest="bwa", action='store_true',
                         help="Use BWA to search reads for hits to target. Requires BWA and a bait file that is "
                              "nucleotides!", default=False)
@@ -500,18 +509,19 @@ def main():
                         help="e-value threshold for blastx hits, default: %(default)s")
     parser.add_argument('--max_target_seqs', type=int, default=10,
                         help='Max target seqs to save in blast search, default: %(default)s')
-    parser.add_argument('--cov_cutoff', type=int, default=8, help="Coverage cutoff for velvetg. default: %(default)s")
-    parser.add_argument('--ins_length', type=int, default=200, help="Insert length for velvetg. default: %(default)s")
+    parser.add_argument('--cov_cutoff', type=int, default=8, help="Coverage cutoff for SPAdes. default: %(default)s")
     parser.add_argument("--kvals", nargs='+',
-                        help="Values of k for velvet assemblies. Velvet needs to be compiled to handle larger k-values!"
-                             " Default auto-dectection by SPAdes.", default=None)
+                        help="Values of k for SPAdes assemblies. SPAdes needs to be compiled to handle larger k-values!"
+                             " Default auto-detection by SPAdes.", default=None)
     parser.add_argument("--thresh", type=int,
                         help="Percent Identity Threshold for stitching together exonerate results. Default is 55, but "
                              "increase this if you are worried about contaminant sequences.", default=55)  # CJJ:
     # changed from 65 to 55 as I noticed cases with real hits falling beneath cutoff threshold
-    parser.add_argument("--length_pct",
-                        help="Include an exonerate hit if it is at least as long as X percentage of the reference "
-                             "protein length. Default = 90%%", default=90, type=int)
+    parser.add_argument("--paralog_warning_min_length_percentage", default=0.75, type=float,
+                        help="Minimum length percentage of a contig vs reference protein length for a paralog warning "
+                             "to be generated. Default is %(default)s")
+    parser.add_argument("--length_pct", help="Include an exonerate hit if it is at least as long as X percentage of "
+                                             "the reference protein length. Default = 90%%", default=90, type=int)
     parser.add_argument("--depth_multiplier",
                         help="Accept any full-length exonerate hit if it has a coverage depth X times the next best "
                              "hit. Set to zero to not use depth. Default = 10", default=10, type=int)
@@ -533,8 +543,8 @@ def main():
     parser.add_argument("--nosupercontigs", dest="nosupercontigs", action='store_true',
                         help="Do not create any supercontigs. The longest single Exonerate hit will be used",
                         default=False)
-    parser.add_argument("--memory", help="memory (RAM ) to use for bbmap.sh with exonerate_hits.py", default=1,
-                        type=int)
+    parser.add_argument("--memory", help="GB memory (RAM ) to use for bbmap.sh with exonerate_hits.py. Default is 1",
+                        default=1, type=int)
     parser.add_argument("--discordant_reads_edit_distance",
                         help="Minimum number of differences between one read of a read pair vs the supercontig "
                              "reference for a read pair to be flagged as discordant", default=7, type=int)
@@ -544,11 +554,10 @@ def main():
     parser.add_argument("--merged", help="For assembly with both merged and unmerged (interleaved) reads",
                         action="store_true", default=False)
 
-    parser.set_defaults(check_depend=False, blast=True, distribute=True, velvet=False, cap3=False, assemble=True,
-                        use_velvet=False, exonerate=True, )
+    parser.set_defaults(check_depend=False, blast=True, distribute=True, assemble=True, exonerate=True, )
 
     if len(sys.argv) == 1:
-        parser.print_help()
+        print(__doc__)
         sys.exit(1)
     args = parser.parse_args()
 
@@ -581,7 +590,7 @@ def main():
     if args.baitfile:
         baitfile = os.path.abspath(args.baitfile)
     else:
-        parser.print_help()
+        # parser.print_help()
         return
     readfiles = [os.path.abspath(x) for x in args.readfiles]
     if args.unpaired:
@@ -756,9 +765,11 @@ def main():
         genes = [x.rstrip() for x in open(exonerate_genefilename).readlines()]
         exitcode = exonerate(genes, basename, run_dir, cpu=args.cpu, thresh=args.thresh, length_pct=args.length_pct,
                              depth_multiplier=args.depth_multiplier, timeout=args.timeout,
-                             nosupercontigs=args.nosupercontigs, memory=args.memory,
+                             nosupercontigs=args.nosupercontigs,
+                             memory=args.memory,
                              discordant_reads_edit_distance=args.discordant_reads_edit_distance,
-                             discordant_reads_cutoff=args.discordant_reads_cutoff)
+                             discordant_reads_cutoff=args.discordant_reads_cutoff,
+                             paralog_warning_min_cutoff=args.paralog_warning_min_length_percentage)
         if exitcode:
             return
 
