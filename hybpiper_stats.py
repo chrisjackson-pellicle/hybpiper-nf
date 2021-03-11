@@ -4,13 +4,13 @@
 # HybPiper Stats Script #
 #########################
 
-helptext = '''Gather statistics about HybPiper run.
+"""
+Gather statistics about HybPiper run.
 
 Supply the output of get_seq_lengths.py and a list of HybPiper directories
 
 For an explanation of columns, see github.com/mossmatters/HybPiper/wiki
-
-'''
+"""
 
 import argparse, os, sys, subprocess, re
 
@@ -25,7 +25,9 @@ def file_len(fname):
 
 
 def enrich_efficiency_blastx(blastxfilename):
-    '''Parse BLASTX results to calculate enrichment effiiency'''
+    """
+    Parse BLASTX results to calculate enrichment efficiency.
+    """
     reads_with_hits = [x.split()[0] for x in open(blastxfilename)]
     if os.path.isfile(blastxfilename.replace(".blastx", "_unpaired.blastx")):
         reads_with_hits += [x.split()[0] for x in open(blastxfilename.replace(".blastx", "_unpaired.blastx"))]
@@ -35,7 +37,9 @@ def enrich_efficiency_blastx(blastxfilename):
 
 
 def enrich_efficiency_bwa(bamfilename):
-    '''Run and parse samtools flagstat output, return number of reads and number on target'''
+    """
+    Run and parse samtools flagstat output, return number of reads and number on target.
+    """
     samtools_cmd = "samtools flagstat {}".format(bamfilename)
     child = subprocess.Popen(samtools_cmd, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
     flagstat_results = [line for line in child.stdout.readlines()]
@@ -54,13 +58,12 @@ def enrich_efficiency_bwa(bamfilename):
 
 
 def recovery_efficiency(name):
-    '''Report the number of genes with mapping hits, contigs, and exon sequences'''
-
+    """
+    Report the number of genes with mapping hits, contigs, and exon sequences.
+    """
     txt_files = ["spades_genelist.txt",
                  "exonerate_genelist.txt",
-                 "genes_with_seqs.txt"
-
-                 ]
+                 "genes_with_seqs.txt"]
 
     my_stats = []
     for txt in txt_files:
@@ -72,12 +75,19 @@ def recovery_efficiency(name):
     return [str(a) for a in my_stats]
 
 
-def seq_length_calc(seq_lengths_fn):
-    '''From the output of get_seq_lengths.py, calculate the number of genes with seqs, and at least a pct of the reference length'''
+def seq_length_calc(seq_lengths_fn, blastx_adjustment):  # CJJ: added blastx_adjustment parameter
+    """
+    From the output of get_seq_lengths.py, calculate the number of genes with seqs, and at least a pct of the reference
+    length.
+    """
     seq_length_dict = {}
     with open(seq_lengths_fn) as seq_len:
         gene_names = seq_len.readline()
-        target_lengths = seq_len.readline().split()[1:]
+        if blastx_adjustment:
+            # target_lengths = seq_len.readline().split()[1:]
+            target_lengths = [value * 3 for value in seq_len.readline().split()[1:]]  # CJJ
+        else:
+            target_lengths = seq_len.readline().split()[1:]
         for line in seq_len:
             line = line.split()
             name = line.pop(0)
@@ -101,9 +111,12 @@ def seq_length_calc(seq_lengths_fn):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=helptext, formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("seq_lengths", help="output of get_seq_lengths.py")
     parser.add_argument("namelist", help="text file with names of HybPiper output directories, one per line")
+    parser.add_argument("--blastx_adjustment", dest="blastx_adjustment", action='store_true',
+                        help="Adjust stats for when blastx is used i.e. protein reference",
+                        default=False)  # CJJ
     args = parser.parse_args()
 
     categories = ["Name",
@@ -126,10 +139,7 @@ def main():
                   ]
     sys.stdout.write("{}\n".format("\t".join(categories)))
 
-    # Pterochaeta_paniculata_genes_with_supercontigs.csv
-
-
-    seq_length_dict = seq_length_calc(args.seq_lengths)
+    seq_length_dict = seq_length_calc(args.seq_lengths, args.blastx_adjustment)
     stats_dict = {}
 
     for line in open(args.namelist):
@@ -195,11 +205,9 @@ def main():
                         discordant_supercontigs += 1
         stats_dict[name].append(str(discordant_supercontigs))
 
-
-
     for name in stats_dict:
         sys.stdout.write("{}\t{}\n".format(name, "\t".join(stats_dict[name])))
 
-
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    main()
 
