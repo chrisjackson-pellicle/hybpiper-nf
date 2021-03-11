@@ -85,7 +85,7 @@ def seq_length_calc(seq_lengths_fn, blastx_adjustment):  # CJJ: added blastx_adj
         gene_names = seq_len.readline()
         if blastx_adjustment:
             # target_lengths = seq_len.readline().split()[1:]
-            target_lengths = [value * 3 for value in seq_len.readline().split()[1:]]  # CJJ
+            target_lengths = [float(value) * 3 for value in seq_len.readline().split()[1:]]  # CJJ
         else:
             target_lengths = seq_len.readline().split()[1:]
         for line in seq_len:
