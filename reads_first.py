@@ -20,14 +20,14 @@ import argparse, os, sys, importlib, shutil, subprocess, glob, re
 import gzip
 
 
-# Hard coded filename used in function below:
+# Hard coded filenames used in function below:
 exonerate_genefilename = "exonerate_genelist.txt"
 spades_genefilename = "spades_genelist.txt"
+
 
 ########################################################################################################################
 # Define functions
 ########################################################################################################################
-
 
 def py_which(cmd, mode=os.F_OK | os.X_OK, path=None):
     """
@@ -128,8 +128,8 @@ def check_dependencies():
 
 def blastx(readfiles, baitfile, evalue, basename, cpu=None, max_target_seqs=10, unpaired=False):
     """
-    CJJ: creates a blast database from protein target file, and performs BLASTx searches of sample nucleotide read
-    files against the protein database.
+    CJJ: creates a blast database from the complete protein target file, and performs BLASTx searches of sample
+    nucleotide read files against the protein database.
     """
     dna = set("ATCGN")
     if os.path.isfile(baitfile):
@@ -175,7 +175,6 @@ def blastx(readfiles, baitfile, evalue, basename, cpu=None, max_target_seqs=10, 
         print(full_command)
         exitcode = subprocess.call(full_command, shell=True)
         if exitcode:
-            # Concatenate the two blastfiles.
             return None
         return basename + "_unpaired.blastx"
 
@@ -198,7 +197,6 @@ def blastx(readfiles, baitfile, evalue, basename, cpu=None, max_target_seqs=10, 
             print(full_command)
             exitcode = subprocess.call(full_command, shell=True)
             if exitcode:
-                # Concatenate the two blastfiles.
                 return None
 
     return basename + '.blastx'
@@ -208,7 +206,7 @@ def distribute(blastx_outputfile, readfiles, baitfile, run_dir, target=None, unp
     """
     CJJ: when using blastx, distribute sample reads to their corresponding target file hits.
     """
-    # NEED TO ADD SOMETHING ABOUT DIRECTORIES HERE.
+    # NEED TO ADD SOMETHING ABOUT DIRECTORIES HERE. # CJJ: I'm not sure what this comment means.
     read_cmd = "time python {} {} {}".format(os.path.join(run_dir, "distribute_reads_to_targets.py"), blastx_outputfile,
                                              " ".join(readfiles))
     exitcode = subprocess.call(read_cmd, shell=True)
@@ -237,9 +235,9 @@ def distribute(blastx_outputfile, readfiles, baitfile, run_dir, target=None, unp
 
 def distribute_bwa(bamfile, readfiles, baitfile, run_dir, target=None, unpaired=None, exclude=None):
     """
-    CJJ: when using BWA mapping, distribute sample reads to their corresponding target file matches.
+    CJJ: when using BWA mapping, distribute sample reads to their corresponding target file gene matches.
     """
-    # NEED TO ADD SOMETHING ABOUT DIRECTORIES HERE.
+    # NEED TO ADD SOMETHING ABOUT DIRECTORIES HERE. # CJJ: I'm not sure what this comment means.
     read_cmd = "time python {} {} {}".format(os.path.join(run_dir, "distribute_reads_to_targets_bwa.py"), bamfile,
                                              " ".join(readfiles))
     print(("[CMD] {}\n".format(read_cmd)))
@@ -298,8 +296,7 @@ def spades(genes, run_dir, cov_cutoff=8, cpu=None, paired=True, kvals=None, time
     Run SPAdes on each gene separately using GNU parallel.
     """
 
-    with open(spades_genefilename, 'w') as spadesfile:  # CJJ Note that <spades_genefilename> is defined as a global
-        # variable
+    with open(spades_genefilename, 'w') as spadesfile:  # CJJ Note <spades_genefilename> is defined as a global variable
         spadesfile.write("\n".join(genes) + "\n")
 
     if os.path.isfile("spades.log"):
@@ -340,12 +337,10 @@ def spades(genes, run_dir, cov_cutoff=8, cpu=None, paired=True, kvals=None, time
 
     spades_genelist = []
     for gene in genes:
-        #        if gene not in set(spades_failed):
         if gene not in set(spades_duds):
-            #                if gene not in set(spades_failed_redos):
             spades_genelist.append(gene)
 
-    with open(exonerate_genefilename, 'w') as genefile:
+    with open(exonerate_genefilename, 'w') as genefile:  # CJJ 'exonerate_genefilename' is hardcoded at top of script.
         genefile.write("\n".join(spades_genelist) + "\n")
 
     return spades_genelist
@@ -421,8 +416,8 @@ def exonerate(genes, basename, run_dir, replace=True, cpu=None, thresh=55, use_v
 
 def bwa(readfiles, baitfile, basename, cpu, unpaired=None):
     """
-    Conduct BWA search of reads against the baitfile.
-    Returns an error if the second line of the baitfile contains characters other than ACTGN
+    Conduct BWA search of reads against the baitfile. Returns an error if the second line of the baitfile contains
+    characters other than ACTGN.
     """
 
     dna = set("ATCGN")
@@ -668,7 +663,9 @@ def main():
             # bamfile = basename + ".bam" #CJJ added
             print(f'CJJ: bamfile is: {bamfile}')
             if args.unpaired:
-                unpaired_bamfile = bwa(unpaired_readfile, baitfile, basename, cpu=args.cpu, unpaired=True)
+                unpaired_bamfile = bwa(unpaired_readfile, baitfile, basename, cpu=args.cpu, unpaired=True)  # NOTE the
+                # variable {unpaired_bamfile} isn't used, but the output bamfile is used in function distribute_bwa()
+
             if not bamfile:
                 print("ERROR: Something went wrong with the BWA step, exiting!")
                 return
@@ -678,12 +675,12 @@ def main():
     ####################################################################################################################
     # Map reads to protein targets with BLASTx
     ####################################################################################################################
-    # bamfile = basename + ".bam"
-    # BLAST
+    # bamfile = basename + ".bam" CJJ: used this as a speedup when troubleshooting
     if args.blast:
         if args.unpaired:
             unpaired_blastxfile = blastx(unpaired_readfile, baitfile, args.evalue, basename, cpu=args.cpu,
-                                         max_target_seqs=args.max_target_seqs, unpaired=True)
+                                         max_target_seqs=args.max_target_seqs, unpaired=True) # NOTE the
+                # variable {unpaired_blastxfile} isn't used, but the output bamfile is used in function distribute()
         blastx_outputfile = blastx(readfiles, baitfile, args.evalue, basename, cpu=args.cpu,
                                    max_target_seqs=args.max_target_seqs)
         if not blastx_outputfile:
@@ -691,7 +688,6 @@ def main():
             return
     else:
         blastx_outputfile = basename + ".blastx"
-    # Distribute
 
     ####################################################################################################################
     # Distribute reads to genes for either BLASTx or BWA mappings
@@ -703,14 +699,13 @@ def main():
         if args.bwa:
             exitcode = distribute_bwa(bamfile, readfiles, baitfile, run_dir, args.target, unpaired_readfile,
                                       args.exclude)
-        else:
+        else:  # CJJ: distribute BLASTx results
             exitcode = distribute(blastx_outputfile, readfiles, baitfile, run_dir, args.target, unpaired_readfile,
                                   args.exclude)
         if exitcode:
             sys.exit(1)
     if len(readfiles) == 2:
         genes = [x for x in os.listdir(".") if os.path.isfile(os.path.join(x, x + "_interleaved.fasta"))]
-        # print(f'CJJ genes: {genes}')
     else:
         genes = [x for x in os.listdir(".") if os.path.isfile(os.path.join(x, x + "_unpaired.fasta"))]
     if len(genes) == 0:
@@ -725,6 +720,7 @@ def main():
         print(f'Merging reads for SPAdes assembly')
         for gene in genes:
             interleaved_reads_for_merged = f'{gene}/{gene}_interleaved.fastq'
+            print(f'interleaved_reads_for_merged file is {interleaved_reads_for_merged}\n')
             merged_out = f'{gene}/{gene}_merged.fastq'
             unmerged_out = f'{gene}/{gene}_unmerged.fastq'
             bbmerge_command = f'bbmerge.sh interleaved=true in={interleaved_reads_for_merged} out={merged_out} ' \
