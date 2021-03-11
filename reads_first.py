@@ -590,7 +590,7 @@ def main():
     if args.baitfile:
         baitfile = os.path.abspath(args.baitfile)
     else:
-        # parser.print_help()
+        print(__doc__)
         return
     readfiles = [os.path.abspath(x) for x in args.readfiles]
     if args.unpaired:
