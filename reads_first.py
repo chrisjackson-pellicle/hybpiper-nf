@@ -387,7 +387,7 @@ def exonerate(genes, basename, run_dir, replace=True, cpu=None, thresh=55, use_v
                               "-t {}".format(thresh),
                               "--depth_multiplier {}".format(depth_multiplier),
                               "--length_pct {}".format(length_pct), "--nosupercontigs",
-                              "paralog_warning_min_cutoff {}".format(paralog_warning_min_cutoff),
+                              "--paralog_warning_min_cutoff {}".format(paralog_warning_min_cutoff),
                               "::::",
                               exonerate_genefilename,
                               "> genes_with_seqs.txt"]
@@ -402,7 +402,7 @@ def exonerate(genes, basename, run_dir, replace=True, cpu=None, thresh=55, use_v
                               "--memory {}".format(memory),
                               "--discordant_reads_edit_distance {}".format(discordant_reads_edit_distance),
                               "--discordant_reads_cutoff {}".format(discordant_reads_cutoff),
-                              "paralog_warning_min_cutoff {}".format(paralog_warning_min_cutoff),
+                              "--paralog_warning_min_cutoff {}".format(paralog_warning_min_cutoff),
                               "--debug",
                               "::::",
                               exonerate_genefilename,
@@ -759,7 +759,7 @@ def main():
             print("ERROR: No genes had assembled contigs! Exiting!")
             return
     ####################################################################################################################
-    # Run exonerate on the assembled SPAdes contigs
+    # Run Exonerate on the assembled SPAdes contigs
     ####################################################################################################################
     if args.exonerate:
         genes = [x.rstrip() for x in open(exonerate_genefilename).readlines()]
