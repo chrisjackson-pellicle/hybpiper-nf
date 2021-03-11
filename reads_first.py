@@ -725,7 +725,8 @@ def main():
             unmerged_out = f'{gene}/{gene}_unmerged.fastq'
             bbmerge_command = f'bbmerge.sh interleaved=true in={interleaved_reads_for_merged} out={merged_out} ' \
                               f'outu={unmerged_out}'
-            bbmerge_capture = subprocess.run(bbmerge_command, capture_output=True, shell=True)
+            # bbmerge_capture = subprocess.run(bbmerge_command, capture_output=True, shell=True)
+            bbmerge_capture = subprocess.run(bbmerge_command, shell=True)
 
     if args.assemble:
         if len(readfiles) == 1:
