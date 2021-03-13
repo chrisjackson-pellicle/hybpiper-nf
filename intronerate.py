@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-helptext = '''
+"""
 This script will take the output of a run of HybSeqPipeline (exon sequences) and attempt
-to extract intron sequences from the velvet assemblies. It is important that the
+to extract intron sequences from the SPAdes assemblies. It is important that the
 directory structure of HybSeqPipeline was not disturbed, so that it can be used to collect
 information and re-execute exonerate.
-'''
+"""
 
 import sys, os, argparse
 from Bio import SeqIO
@@ -15,7 +15,9 @@ from exonerate_hits import range_connectivity, tuple_overlap
 
 
 def get_contig_info():
-    '''Given the prefix of a run of HybSeqPipeline, retreive the stats from exonerate'''
+    """
+    Given the prefix of a run of HybSeqPipeline, retrieve the stats from Exonerate
+    """
     statspath = "exonerate_stats.csv"
     contig_info = [x.rstrip().split(',') for x in open(statspath).readlines()]
     # print contig_info
@@ -25,13 +27,20 @@ def get_contig_info():
 
 
 def make_intron_supercontig(contig_info, gene, prefix, add_N=False):
-    cap3contigs = SeqIO.to_dict(SeqIO.parse("../{}_contigs.fasta".format(gene), 'fasta'))
+    """
+    CJJ: reads the SPAdes contigs to a dictionary. If a contig had Exonerate hits after filtering (list recovered via
+    function get_contig_info() above), concatenate such contigs to create an 'intron supercontig' and write it to a
+    fasta file.
+
+    add_N=False by default.
+    """
+    spades_contigs = SeqIO.to_dict(SeqIO.parse("../{}_contigs.fasta".format(gene), 'fasta'))
     intron_supercontig = SeqRecord(Seq(''))
     for i in contig_info:
         if i[5] == "(+)":
-            intron_supercontig += cap3contigs[i[0]]
+            intron_supercontig += spades_contigs[i[0]]
         elif i[5] == "(-)":
-            intron_supercontig += cap3contigs[i[0]].reverse_complement()
+            intron_supercontig += spades_contigs[i[0]].reverse_complement()
         else:
             sys.stderr.write("Strandedness not found!")
             sys.exit(1)
@@ -43,18 +52,29 @@ def make_intron_supercontig(contig_info, gene, prefix, add_N=False):
 
 
 def re_run_exonerate(gene, target="new_faa"):
+    """
+    CJJ: uses the protien gene.FAA sequence created by reads_first.py, and uses it as a query against the
+    'intron-supercontig' in a protein2genome Exonerate search. Writes a gff file of results called
+    'intronerate_raw.gff'.
+
+    target="new_faa" by default.
+    """
     if target == "new_faa":
-        exonerate_cmd = "exonerate -m protein2genome -q sequences/FAA/{}.FAA -t sequences/intron/{}_supercontig.fasta --verbose 0 --showalignment no --showvulgar no --showtargetgff yes > intronerate_raw.gff".format(
-            gene, gene)
+        exonerate_cmd = "exonerate -m protein2genome -q sequences/FAA/{}.FAA -t sequences/intron/{}_supercontig.fasta " \
+                        "--verbose 0 --showalignment no --showvulgar no --showtargetgff yes > " \
+                        "intronerate_raw.gff".format(gene, gene)
     else:
-        exonerate_cmd = "exonerate -m protein2genome -q ../{}_baits.fasta -t sequences/intron/{}_supercontig.fasta --verbose 0 --showalignment no --showvulgar no --showtargetgff yes > intronerate_raw.gff".format(
-            gene, gene)
+        exonerate_cmd = "exonerate -m protein2genome -q ../{}_baits.fasta -t sequences/intron/{}_supercontig.fasta " \
+                        "--verbose 0 --showalignment no --showvulgar no --showtargetgff yes > " \
+                        "intronerate_raw.gff".format(gene, gene)
     sys.stderr.write("[CMD] {}\n".format(exonerate_cmd))
     os.system(exonerate_cmd)
 
 
 def parse_gff(filename):
-    '''Parse a GFF file created for a single gene, return a list of lists containing the annotation info'''
+    """
+    Parse a GFF file created for a single gene, return a list of lists containing the annotation info.
+    """
     with open(filename) as gff_file:
         gff_dump = gff_file.read()
         gff_split = gff_dump.split("# --- END OF GFF DUMP ---")
@@ -70,7 +90,12 @@ def parse_gff(filename):
 
 
 def longest_hit(hits):
-    '''Given a list of hits, return the longest one'''
+    """
+    Given a list of hits, return the longest one.
+
+    CJJ: looks like it returns an integer corresponding to an index, to me - is this a bug? Looks like it'll just
+    return the last value for 'hrange' - meant to return 'longest_hit'?
+    """
     print("Using longest hit for {}\n".format(hits[0][0][0]))
     ranges = [(int(hit[0][3]), int(hit[0][4])) for hit in hits]
     max_length = 0
@@ -79,12 +104,15 @@ def longest_hit(hits):
         if hit_length > max_length:
             max_length = hit_length
             longest_hit = hrange
-    return hrange
+    # return hrange
+    return longest_hit  # CJJ
 
 
 def score_filter(hits, score_multiplier=2):
-    '''Given the GFF hits with overlapping ranges, determine if one has a score far
-    exceeding the others and return that one, else return None'''
+    """
+    Given the GFF hits with overlapping ranges, determine if one has a score far
+    exceeding the others and return that one, else return None.
+    """
     print("Searching for hit with score {} times better\n".format(score_multiplier))
     scores = [int(x[0][5]) for x in hits]
     # print(scores)
@@ -99,7 +127,9 @@ def score_filter(hits, score_multiplier=2):
 
 
 def join_zones(hits):
-    '''Join the hits together'''
+    """
+    Join the hits together.
+    """
     min_start = 10000000
     max_end = 0
     for h in hits:
@@ -115,7 +145,9 @@ def join_zones(hits):
 
 
 def filter_gff(hits, merge=True):
-    hits_to_keep = []
+    """
+    CJJ:
+    """
     hits = sorted(hits, key=lambda x: int(x[0][3]))
     # Get only the features annotated as genes
     gene_annotations = [x for y in hits for x in y if x[2] == 'gene']
@@ -204,6 +236,9 @@ def filter_gff(hits, merge=True):
 
 
 def get_new_gff(kept_hits):
+    """
+    CJJ:
+    """
     flatter_list = []
     for hit in kept_hits:
         for line in hit:
@@ -212,7 +247,10 @@ def get_new_gff(kept_hits):
 
 
 def remove_exons(gff_filename, supercontig_filename, mode="all"):
-    '''Given a supercontig and corresponding annotation, remove the exon sequences. In "intron" mode, only return sequences specifically annotated as introns'''
+    """
+    Given a supercontig and corresponding annotation, remove the exon sequences. In "intron" mode, only return
+    sequences specifically annotated as introns.
+    """
     exon_starts = []
     exon_ends = []
     gff = open(gff_filename).readlines()
@@ -234,7 +272,9 @@ def remove_exons(gff_filename, supercontig_filename, mode="all"):
 
 
 def check_for_files(gene, prefix):
-    '''Check to see if the files needed for intronerate are really present'''
+    """
+    Check to see if the files needed for intronerate are really present.
+    """
     if os.path.isfile("{}/{}/exonerate_stats.csv".format(gene, prefix)):
         if os.path.isfile("{}/{}/sequences/FAA/{}.FAA".format(gene, prefix, gene)):
             if os.path.isfile("{}/{}_contigs.fasta".format(gene, gene)):
@@ -248,29 +288,32 @@ def check_for_files(gene, prefix):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=helptext, formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--genelist",
-                        help="Optional list of genes to retreive coverage. Default is to use genes_with_seqs.txt")
+                        help="Optional list of genes to retrieve coverage. Default is to use genes_with_seqs.txt")
     parser.add_argument("--prefix", help="Prefix of sample directory generated by HybSeqPipeline", required=True)
     parser.add_argument("--no-exonerate", help="Don't re-run exonerate, use existing intronerate gff files.",
                         action='store_true', default=False)
     parser.add_argument("--use_target",
-                        help="Align the supercontig to the original target sequences, rather than the newly generated FAA",
-                        default=False, action="store_true")
+                        help="Align the supercontig to the original target sequences, rather than the newly generated "
+                             "FAA", default=False, action="store_true")
     parser.add_argument("--merge",
-                        help="Merge overlapping annotations for genes, exons, and introns. Default is to pick the longest annotation",
-                        action="store_true", default=False)
+                        help="Merge overlapping annotations for genes, exons, and introns. Default is to pick the "
+                             "longest annotation", action="store_true", default=False)
     parser.add_argument("--addN",
-                        help="Insert 10 Ns between the contigs when constructing the supercontig. Useful to identify where intron recovery fails.",
-                        default=False, action="store_true")
-    # parser.add_argument("--introns-only",help = "In the intron.fasta file for each gene, only write regions annotated as introns by exonerate. Default: all non-exon regions are written to introns.fasta.",action="store_true",default=False)
+                        help="Insert 10 Ns between the contigs when constructing the supercontig. Useful to identify "
+                             "where intron recovery fails.", default=False, action="store_true")
+    # parser.add_argument("--introns-only",help = "In the intron.fasta file for each gene, only write regions annotated
+    # as introns by exonerate. Default: all non-exon regions are written to introns.fasta.",action="store_true",
+    # default=False)
+
     args = parser.parse_args()
 
-    if args.genelist:
+    if args.genelist:  # CJJ: defaults to file 'genes_with_seqs.txt' created by reads_first.py otherwise.
         genelist_fn = os.path.abspath(args.genelist)
 
     if len(sys.argv) < 2:
-        print(helptext)
+        print(__doc__)
         sys.exit(1)
 
     if os.path.isdir(args.prefix):
@@ -280,6 +323,10 @@ def main():
     else:
         sys.stderr.write("Directory {} not found!\n".format(args.prefix))
 
+    ####################################################################################################################
+    # CJJ: recover a list of gene names that have seqs recovered via reads_first.py (listed in file
+    # 'genes_with_seqs.txt')
+    ####################################################################################################################
     if args.genelist:
         genelist = [x.split()[0] for x in open(genelist_fn).readlines()]
     else:
@@ -289,23 +336,32 @@ def main():
             sys.stderr.write(f'No "genes_with_seqs.txt" file found, exiting!')
             sys.exit(0)
 
+    ####################################################################################################################
+    # CJJ: placeholder
+    ####################################################################################################################
     with open("intron_stats.txt", 'w') as intron_stats_file:
         full_gff = ''
         for gene in genelist:
             if check_for_files(gene, prefix):
                 os.chdir("{}/{}".format(gene, prefix))
-                contig_info = get_contig_info()
+                contig_info = get_contig_info()  # CJJ: get a list of SPAdes contigs that had Exonerate hits after
+                # filtering.
                 if not os.path.exists("sequences/intron"):
                     os.makedirs("sequences/intron")
-                make_intron_supercontig(contig_info, gene, prefix, add_N=args.addN)
+                make_intron_supercontig(contig_info, gene, prefix, add_N=args.addN)  # CJJ: write a fasta file of
+                # concatenated SPADes contigs (i.e. those that had Exonerate hits after filtering).
                 if not args.no_exonerate:
                     if args.use_target:
                         re_run_exonerate(gene, target="bait")
                     else:
-                        re_run_exonerate(gene, target="new_faa")
-                hits = parse_gff("intronerate_raw.gff")
+                        re_run_exonerate(gene, target="new_faa")  # CJJ: default via argparse
+                hits = parse_gff("intronerate_raw.gff")  # CJJ: from a gff Exonerate result, return a list of lists
+                # containing the annotation info (split on tabs?).
+
                 # print([h[0] for h in hits])
-                kept_hits = filter_gff(hits, merge=args.merge)
+                kept_hits = filter_gff(hits, merge=args.merge)  # CJJ: args.merge is False by default. Default is to
+                # pick the longest annotation.
+
                 # print([h[0] for h in kept_hits])
                 with open("intronerate.gff", 'w') as new_gff:
                     new_gff_string = get_new_gff(kept_hits)
@@ -325,4 +381,5 @@ def main():
         all_gff.write(full_gff)
 
 
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    main()
