@@ -542,10 +542,10 @@ def main():
                         default=1, type=int)
     parser.add_argument("--discordant_reads_edit_distance",
                         help="Minimum number of differences between one read of a read pair vs the supercontig "
-                             "reference for a read pair to be flagged as discordant", default=7, type=int)
+                             "reference for a read pair to be flagged as discordant", default=5, type=int)
     parser.add_argument("--discordant_reads_cutoff",
                         help="minimum number of discordant reads pairs required to flag a supercontigs as a potential "
-                             "hybrid of contigs from multiple paralogs", default=100, type=int)
+                             "hybrid of contigs from multiple paralogs", default=5, type=int)
     parser.add_argument("--merged", help="For assembly with both merged and unmerged (interleaved) reads",
                         action="store_true", default=False)
 
