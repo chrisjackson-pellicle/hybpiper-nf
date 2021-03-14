@@ -54,6 +54,10 @@ def enrich_efficiency_bwa(bamfilename):
         numReads += float(flagstat_results[0].split()[0])
         mappedReads += float(flagstat_results[4].split()[0])
 
+    #  CJJ: insert check for value '0' for either numReads or mappedReads
+    if numReads == 0 or mappedReads == 0:
+        return str(int(numReads)), str(int(mappedReads)), "NA"
+
     return str(int(numReads)), str(int(mappedReads)), "{0:.3f}".format(mappedReads / numReads)
 
 
