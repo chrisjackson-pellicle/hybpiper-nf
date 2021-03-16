@@ -54,7 +54,7 @@ OR
 
 ## Running on Linux
 
-Please see the Wiki entry [Running on Linux][2]
+Please see the Wiki entry [Running on Linux][3]
 
 ## Running on a Mac (macOS)
 
