@@ -44,6 +44,14 @@ Please see the Wiki entry [Running on a Mac][1]
 
 ## Nextflow pipeline options and parameters
 
+Example run command:
+
+    nextflow run hybpiper_pipeline_v1_7.nf -c hybpiper_v1_7.config --illumina_reads_directory reads_for_hybpiper --target_file Angiosperms353_targetSequences.fasta
+
+
+Options:
+
+
     Mandatory arguments:
 
     ##############################################################################
