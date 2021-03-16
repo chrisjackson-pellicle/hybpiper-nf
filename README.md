@@ -10,9 +10,9 @@ For an explanation of the general purpose of HybPiper, and the approach it takes
 
 ## HybPiper-RBGV: containerised and pipelined using Singularity and Nextflow
 
-To simplify running HybPiper, I’ve made a Singularity container containing the Linux distribution Ubuntu 18.04, containing all the scripts required to run the HybPiper pipeline (including modifications and bug fixes, see below for details), as well as all the dependencies (BioPython, BWA, BBmap [new requirement compared to default HybPiper], Exonerate, SPAdes, Samtools). The container is called `hybpiper_only.sif`.
+To simplify running HybPiper, I’ve made a Singularity container containing the Linux distribution Ubuntu 18.04, containing all the scripts required to run the HybPiper pipeline (including modifications, additions and bug fixes, see below for details), as well as all the dependencies (BioPython, BWA, BBmap, Exonerate, SPAdes, Samtools). The container is called `hybpiper_only.sif`.
 
-To run the pipeline, I’ve made a Nextflow script that uses the software in the Singularity container. This script runs all HybPiper steps with a single command. The script is currently called `hybpiper_pipeline_v1_7.nf`. It comes with an associated config file called `hybpiper_v1.7.config`. The only input required is a folder of sequencing reads for your samples, and a target file in fasta format. The Nextflow pipeline will automatically generate the `namelist.txt` file, and will run all HybPiper scripts on each sample in parallel. The number of parallel processes running at any time, as well as computing resources given to each process (e.g. number of CPUs, amount of RAM etc) can be configured by the user by modifying a config file that comes with the Nextflow pipeline script. The pipeline can be run directly on your local computer, and on an HPC system submitting jobs via a scheduler (e.g. SLURM, PBS, etc).
+To run HybPiper using this container, I’ve made a Nextflow pipeline that uses the software in the Singularity container. This pipeline runs all HybPiper steps with a single command. The pipeline is called `hybpiper_pipeline_v1_7.nf`. It comes with an associated config file called `hybpiper_v1.7.config`. The only input required is a folder of sequencing reads for your samples, and a target file in fasta format. The Nextflow pipeline will automatically generate the `namelist.txt` file, and will run all HybPiper scripts on each sample in parallel. It also includes an optional read-trimmming step to QC your reads prior to running HybPiper, using the software Trimmomatic. The number of parallel processes running at any time, as well as computing resources given to each process (e.g. number of CPUs, amount of RAM etc) can be configured by the user by modifying the provided config file. The pipeline can be run directly on your local computer, and on an HPC system submitting jobs via a scheduler (e.g. SLURM, PBS, etc). 
 
 ## Name formatting of input read files
 You will need to provide the `hybpiper_pipeline_v1_7.nf` pipeline with either:
@@ -33,9 +33,9 @@ OR
     *_single.fq (optional - will be used if running with the flag `--unpaired`)
 
 **NOTE:**
-- It’s fine if there’s text after the R1/R1 and before the .fastq/.fq.
-- It’s fine if the input files are gzipped (i.e. suffix .gz). 
-- You can also specify the pattern used for file matching via the parameters `--read_pairs_pattern <pattern>` or  `--single_pattern <pattern>`. You can also just provide a folder of single-end reads (use the flag `--single_only` if you do)
+- It’s fine if there’s text after the `R1`/`R1` and before the `.fastq`/`.fq`, as long as it's the same for both read files.
+- It’s fine if the input files are gzipped (i.e. suffix `.gz`). 
+- You can also specify the pattern used for file matching via the parameters `--read_pairs_pattern <pattern>` or  `--single_pattern <pattern>`. You can also just provide a folder of single-end reads (use the flag `--single_only` if you do).
 
 
 - The pipeline will concatenate samples that have been run on different lanes, e.g. read files:
