@@ -17,7 +17,7 @@ To run HybPiper using this container, I’ve provided a [Nextflow][16] pipeline 
 ## Name formatting of input read files
 You will need to provide the `hybpiper_pipeline_v1_7.nf` pipeline with either:
 
-a) A directory of forwards and reverse reads (and, optionally, a file of single reads) for each sample; or
+a) A directory of paired-end forwards and reverse reads (and, optionally, a file of single-end reads) for each sample; or
 
 b) A directory of single-end reads.
 
