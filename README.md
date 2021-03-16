@@ -2,11 +2,11 @@
 
 ## Original HybPiper github, wiki and tutorial:
 
-https://github.com/mossmatters/HybPiper/
+For an explanation of the general purpose of HybPiper, and the approach it takes to generate sequences for target loci, please see the excellent documentation, wiki and tutorial at the `mossmatters` repo:
 
-https://github.com/mossmatters/HybPiper/wiki
-
-https://github.com/mossmatters/HybPiper/wiki/Tutorial
+- https://github.com/mossmatters/HybPiper/
+- https://github.com/mossmatters/HybPiper/wiki
+- https://github.com/mossmatters/HybPiper/wiki/Tutorial
 
 ## RBGB-modified HybPiper: containerised and pipelined using Singularity and Nextflow
 
