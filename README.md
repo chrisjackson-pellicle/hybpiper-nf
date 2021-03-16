@@ -33,6 +33,20 @@ It’s fine if the input files are gzipped (i.e. suffix .gz).
 
 You can also specify the pattern used for file matching via the parameters `--read_pairs_pattern <pattern>` or  `--single_pattern <pattern>`. You can also just provide a folder of single-end reads (use the flag `--single_only` if you do)
 
+**NOTE:**
+The pipeline will concatenate samples that have been run on different lanes, e.g. read files:
+
+    79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L001_R1.fastq
+    79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L001_R2.fastq
+    79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L002_R1.fastq
+    79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L002_R2.fastq
+    79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L001_R1.fastq
+    79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L001_R2.fastq
+    79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L002_R1.fastq
+    79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L002_R2.fastq
+
+It does this by grouping forwards and reverse reads (or single reads if you’re providing a folder of single reads and using the `--single_only` flag) via the common prefix preceding the first underscore (‘_’). So, 79678 and 79679 in this case.
+
 
 ## Running on Linux
 
@@ -133,7 +147,8 @@ Options:
      --run_intronerate                         Run intronerate.py to recover (hopefully) intron and supercontig sequences.
                                                Default is off, and so results subfolders 09_sequences_intron and 
                                                10_sequences_supercontig will be empty
-                                               
+                                            
+Please see the Wiki entry [Additional pipeline features and details] for further explanation of the parameters above, and general pipeline functionality.
                                                
 ## General notes
 
@@ -141,6 +156,8 @@ Options:
 - Description of overlapping Exonerate hits issue
 
 ## Bug fixed and changes (WIP)
+
+Please see the Wiki entry [Bug fixed and changes][]
 
 - Read mapping to detect putative chimeras
 - Exonerate -refine full with fallback
@@ -157,6 +174,8 @@ Options:
 - Additional stats reporting
 
 ## Issues still to deal with
+
+Please see the Wiki entry [Issues]
 
 - SPAdes can fail during assembly of some kmer lengths in a manner that isn’t detected by HybPiper (looks like this is a bug in SPAdes), meaning that real contigs are missed for some loci.
 - SPAdes can hang indefinitely at the kmer coverage model stage (see https://github.com/ablab/spades/issues/653), meaning the pipeline never finishes. Running SPAdes in single-cell mode (--SC) seems to fix this, but it can also create many more spurious contigs than running without single-cell mode, which can in turn sometimes cause errors in the loci sequence output.
