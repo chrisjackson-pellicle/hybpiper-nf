@@ -127,4 +127,36 @@ Please see the Wiki entry [Running on a Mac]
                                                10_sequences_supercontig will be empty
                                                
                                                
-# General notes
+## General notes
+
+## Bug fixed and changes (WIP)
+
+- Read mapping to detect putative chimeras
+- Exonerate -refine full with fallback
+- SPAdes SC mode? 
+- Reporting when supercontigs are made for a sample/locus (i.e. when multiple SPAdes contigs are concatenated together) 
+- Reporting when supercontig creation requires trimming of overlaps between concatenated contigs (cause by overlaps in Exonerate hits, likely due to the contigs originating from different paralogs rather than being exons of the same gene)
+- Misc fixes
+   - Fixed a ‘ZeroDivisionError: float division by zero’ error in hybpiper_stats.py, cause when no reads map to the target file (see function enrich_efficiency_bwa())
+   - Range tests fix so that good contigs with same exonerate hits aren’t both thrown out (see function tuple_subsume())
+   - 
+- No supercontigs option i.e. just return the longest single SPAdes contig
+- Merged option - optionally merge paired end reads and run SPAdes assembly with merged and unmerged - gives better results when your Illumina library fragment size is small enough for R1 and R2 reads to overlap
+- .gz file input option - allows input read files to be compressed in .gz format
+- Additional stats reporting
+
+## Issues still to deal with
+
+- SPAdes can fail during assembly of some kmer lengths in a manner that isn’t detected by HybPiper (looks like this is a bug in SPAdes), meaning that real contigs are missed for some loci.
+- SPAdes can hang indefinitely at the kmer coverage model stage (see https://github.com/ablab/spades/issues/653), meaning the pipeline never finishes. Running SPAdes in single-cell mode (--SC) seems to fix this, but it can also create many more spurious contigs than running without single-cell mode, which can in turn sometimes cause errors in the loci sequence output.
+- Detection of paralogs - it’s currently very rough, and will miss many paralogs.
+- Intronerate.py can error out - needs further investigation but looks like a bug in the way Exonerate output is parsed, which throws its results into question even when it does run successfully. UPDATE v1.7: I think I’ve fixed the bug causing the error, but I still wouldn’t use the output of intronerate unless you’ve manually vetted AND QC’d all the sequences.
+- How does Intronerate.py work with the changes I’ve made to supercontig assembly (i.e. trimming overlaps between contigs before they’re concatenated, to avoid the introduction of repeats in the output loci sequence)? UPDATE v1.7: I’ve now checked on this, and it shouldn’t be negatively affected. The Intronerate.py script uses the protein .FAA sequence output by the reads_first.py script as a query, and re-runs Exonerate using the full SPAdes contigs as subjects (those that returned Exonerate hits in the reads_first.py run, anyway). So, the changes I’ve made should just (theoretically) improve the quality of input protein for the Intronerate.py run. 
+- If a target file sequence for a particular gene has a low-complexity area, many reads can map to it and it will be selected and translated as the protein reference for a particular sample/gene, and then used in Exonerate searches of SPAdes contigs. This protein reference may not be the most similar to the particular sample/gene, meaning that Exonerate fails to identify (or simply truncates) real contigs for this locus. 
+- Paralog tests do not remove flagged contigs from downstream assembly, so they can still get stitched into a supercontig to form a likely chimera.
+
+
+
+
+
+
