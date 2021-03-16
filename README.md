@@ -2,7 +2,7 @@
 
 ## Original HybPiper github, wiki and tutorial:
 
-For an explanation of the general purpose of [HybPiper][17], and the approach it takes to generate sequences for target loci, please see the excellent documentation, wiki and tutorial at the `mossmatters` repo:
+For an explanation of the general purpose of [HybPiper][17], and the approach it takes to generate sequences for HybSeq target loci, please see the excellent documentation, wiki and tutorial at the `mossmatters` repo:
 
 - https://github.com/mossmatters/HybPiper/
 - https://github.com/mossmatters/HybPiper/wiki
