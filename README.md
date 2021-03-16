@@ -40,7 +40,7 @@ Please see the Wiki entry [Running on Linux]
 
 ## Running on a Mac (macOS)
 
-Please see the Wiki entry [Running on a Mac]
+Please see the Wiki entry [Running on a Mac][1]
 
 ## Nextflow pipeline options and parameters
 
@@ -159,7 +159,7 @@ Please see the Wiki entry [Running on a Mac]
 - Paralog tests do not remove flagged contigs from downstream assembly, so they can still get stitched into a supercontig to form a likely chimera.
 
 
-
+[1]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-a-Mac-(macOS)-with-Vagrant "Link to Running on a Mac Wiki"
 
 
 
