@@ -21,7 +21,7 @@ a) A directory of paired-end forwards and reverse reads (and, optionally, a file
 
 b) A directory of single-end reads.
 
-For the read files to be recognised by the script, they should be named according to the default convention:
+For the read files to be recognised by the pipeline, they should be named according to the default convention:
 
     *_R1.fastq 
     *_R2.fastq
