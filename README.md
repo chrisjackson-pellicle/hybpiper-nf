@@ -171,7 +171,7 @@ For a full explanation of output folders and files, please see the Wiki entry [O
 
 ## Bug fixes and changes (WIP)
 
-Please see the Wiki entry [Bug fixed and changes][2]
+Please see the Wiki entry [Bug fixes and changes][2]
 
 
 
