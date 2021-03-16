@@ -10,7 +10,7 @@ For an explanation of the general purpose of HybPiper, and the approach it takes
 
 ## HybPiper-RBGV: containerised and pipelined using Singularity and Nextflow
 
-To simplify running HybPiper, I’ve provided a Singularity container containing the Linux distribution Ubuntu 18.04, containing all the scripts required to run the HybPiper pipeline (including modifications, additions and bug fixes, see below for details), as well as all the dependencies (BioPython, BLAST, BWA, BBmap, Exonerate, SPAdes, Samtools). The container is called `hybpiper_only.sif`.
+To simplify running HybPiper, I’ve provided a Singularity container containing the Linux distribution Ubuntu 18.04, containing all the scripts required to run the HybPiper pipeline (including modifications, additions and bug fixes, see below for details), as well as all the dependencies ([BioPython][9], [BLAST][8], BWA[11], BBmap[12], Exonerate[13], SPAdes[10], Samtools[14]). The container is called `hybpiper_only.sif`.
 
 To run HybPiper using this container, I’ve provided a Nextflow pipeline that uses the software in the Singularity container. This pipeline runs all HybPiper steps with a single command. The pipeline is called `hybpiper_pipeline_v1_7.nf`. It comes with an associated config file called `hybpiper_v1.7.config`. The only input required is a folder of sequencing reads for your samples, and a target file in fasta format. The Nextflow pipeline will automatically generate the `namelist.txt` file, and will run all HybPiper scripts on each sample in parallel. It also includes an optional read-trimmming step to QC your reads prior to running HybPiper, using the software [Trimmomatic][7]. The number of parallel processes running at any time, as well as computing resources given to each process (e.g. number of CPUs, amount of RAM etc) can be configured by the user by modifying the provided config file. The pipeline can be run directly on your local computer, and on an HPC system submitting jobs via a scheduler (e.g. SLURM, PBS, etc). 
 
@@ -190,3 +190,11 @@ Please see the Wiki entry [Issues][4]
 [5]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Additional-pipeline-features-and-details "Link to Additional pipeline features and details Wiki"
 [6]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Output-folders-and-files "Link to Output folders and files Wiki"
 [7]:http://www.usadellab.org/cms/?page=trimmomatic "Link to Trimmomatic website"
+[8]:https://www.ncbi.nlm.nih.gov/books/NBK279690/ "Link to BLAST command line documentation"
+[9]:https://biopython.org/ "Link to BioPython website"
+[10]:https://github.com/ablab/spades "Link to SPAdes assembler website"
+[11]:http://bio-bwa.sourceforge.net/ "Link to BWA mapper website"
+[12]:https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbmap-guide/ "Link to bbmap documentation"
+[13]:https://www.ebi.ac.uk/about/vertebrate-genomics/software/exonerate "Link to Exonerate website"
+[14]:http://www.htslib.org/ "Link to htslib website for Samtools"
+
