@@ -163,7 +163,7 @@ Please see the Wiki entry [Bug fixed and changes][2]
 
 ## Issues still to deal with
 
-Please see the Wiki entry [Issues]
+Please see the Wiki entry [Issues][4]
 
 
 
@@ -171,5 +171,5 @@ Please see the Wiki entry [Issues]
 [1]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-a-Mac-(macOS)-with-Vagrant "Link to Running on a Mac Wiki"
 [2]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Bug-fixes-and-changes-(WIP) "Link to bug fixes and changes Wiki"
 [3]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-Linux "Link to Running on Linux Wiki"
-
+[4]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Issues "Link to Issues Wiki"
 
