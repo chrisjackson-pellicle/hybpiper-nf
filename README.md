@@ -129,6 +129,9 @@ Please see the Wiki entry [Running on a Mac]
                                                
 ## General notes
 
+- Link to Chimera detection approach
+- Description of overlapping Exonerate hits issue
+
 ## Bug fixed and changes (WIP)
 
 - Read mapping to detect putative chimeras
