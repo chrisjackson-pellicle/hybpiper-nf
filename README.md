@@ -157,21 +157,9 @@ Please see the Wiki entry [Additional pipeline features and details] for further
 
 ## Bug fixed and changes (WIP)
 
-Please see the Wiki entry [Bug fixed and changes][]
+Please see the Wiki entry [Bug fixed and changes][2]
 
-- Read mapping to detect putative chimeras
-- Exonerate -refine full with fallback
-- SPAdes SC mode? 
-- Reporting when supercontigs are made for a sample/locus (i.e. when multiple SPAdes contigs are concatenated together) 
-- Reporting when supercontig creation requires trimming of overlaps between concatenated contigs (cause by overlaps in Exonerate hits, likely due to the contigs originating from different paralogs rather than being exons of the same gene)
-- Misc fixes
-   - Fixed a ‘ZeroDivisionError: float division by zero’ error in hybpiper_stats.py, cause when no reads map to the target file (see function enrich_efficiency_bwa())
-   - Range tests fix so that good contigs with same exonerate hits aren’t both thrown out (see function tuple_subsume())
-   - 
-- No supercontigs option i.e. just return the longest single SPAdes contig
-- Merged option - optionally merge paired end reads and run SPAdes assembly with merged and unmerged - gives better results when your Illumina library fragment size is small enough for R1 and R2 reads to overlap
-- .gz file input option - allows input read files to be compressed in .gz format
-- Additional stats reporting
+
 
 ## Issues still to deal with
 
@@ -187,6 +175,6 @@ Please see the Wiki entry [Issues]
 
 
 [1]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-a-Mac-(macOS)-with-Vagrant "Link to Running on a Mac Wiki"
-
+[2]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Bug-fixes-and-changes-(WIP) "Link to bug fixes and changes Wiki"
 
 
