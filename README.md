@@ -45,7 +45,7 @@ The pipeline will concatenate samples that have been run on different lanes, e.g
     79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L002_R1.fastq
     79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L002_R2.fastq
 
-It does this by grouping forwards and reverse reads (or single reads if you’re providing a folder of single reads and using the `--single_only` flag) via the common prefix preceding the first underscore (‘_’). So, 79678 and 79679 in this case.
+It does this by grouping forwards and reverse reads (or single reads if you’re providing a folder of single reads and using the `--single_only` flag) via the common prefix preceding the first underscore (‘_’). So, `79678` and `79679` in this case.
 
 
 ## Running on Linux
@@ -148,7 +148,7 @@ Options:
                                                Default is off, and so results subfolders 09_sequences_intron and 
                                                10_sequences_supercontig will be empty
                                             
-Please see the Wiki entry [Additional pipeline features and details] for further explanation of the parameters above, and general pipeline functionality.
+Please see the Wiki entry [Additional pipeline features and details][5] for further explanation of the parameters above, and general pipeline functionality.
                                                
 ## General notes
 
@@ -172,4 +172,5 @@ Please see the Wiki entry [Issues][4]
 [2]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Bug-fixes-and-changes-(WIP) "Link to bug fixes and changes Wiki"
 [3]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-Linux "Link to Running on Linux Wiki"
 [4]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Issues "Link to Issues Wiki"
+[5]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Additional-pipeline-features-and-details "Link to Additional pipeline features and details Wiki"
 
