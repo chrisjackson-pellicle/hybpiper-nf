@@ -88,6 +88,10 @@ Please see the Wiki entry [Running on Linux][3]
 
 Please see the Wiki entry [Running on a Mac][1]
 
+## Running on a PC
+
+Work in progress
+
 ## Nextflow pipeline options and parameters
 
 Example run command:
