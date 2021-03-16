@@ -167,7 +167,7 @@ For a full explanation of output folders and files, please see the Wiki entry [O
              
 ## General notes
 
-- Placeholder
+For details on adapting the pipeline to run on local and HPC computing resources, see [here][18]
 
 ## Bug fixes and changes (WIP)
 
@@ -199,4 +199,5 @@ Please see the Wiki entry [Issues][4]
 [15]:https://sylabs.io/docs/ "Link to Singularity website"
 [16]:https://www.nextflow.io/ "Link to Nextflow website"
 [17]:https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4948903/ "Link to HybPiper manuscript"
+[18]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Additional-pipeline-features-and-details#managing-computing-resources "Link to managing computing resources"
 
