@@ -122,7 +122,7 @@ Please see the Wiki entry [Running on a Mac]
      --trimmomatic_sliding_window_quality <int>
                                                Specifies the average quality required within the sliding window. Default is 20
 
-     --run_intronerate                         Run intronerate.py to recover (allegedly) intron and supercontig sequences.
+     --run_intronerate                         Run intronerate.py to recover (hopefully) intron and supercontig sequences.
                                                Default is off, and so results subfolders 09_sequences_intron and 
                                                10_sequences_supercontig will be empty
                                                
