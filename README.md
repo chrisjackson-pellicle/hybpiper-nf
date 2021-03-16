@@ -15,7 +15,12 @@ To simplify running HybPiper, I’ve made a Singularity container containing the
 To run the pipeline, I’ve made a Nextflow script that uses the software in the Singularity container. This script runs all HybPiper steps with a single command. The script is currently called `hybpiper_pipeline_v1_7.nf`. It comes with an associated config file called `hybpiper_v1.7.config`. The only input required is a folder of sequencing reads for your samples, and a target file in fasta format. The Nextflow pipeline will automatically generate the `namelist.txt` file, and will run all HybPiper scripts on each sample in parallel. The number of parallel processes running at any time, as well as computing resources given to each process (e.g. number of CPUs, amount of RAM etc) can be configured by the user by modifying a config file that comes with the Nextflow pipeline script. The pipeline can be run directly on your local computer, and on an HPC system submitting jobs via a scheduler (e.g. SLURM, PBS, etc).
 
 ## Name formatting of input read files
-You will need to provide the `hybpiper_pipeline_v1_7.nf` script with a directory of forwards and reverse reads (and, optionally, a file of single reads) for each sample. See below for run command details. For the read files to be recognised by the script, they should be named according to the default convention:
+You will need to provide the `hybpiper_pipeline_v1_7.nf` pipeline with either:
+
+a) A directory of forwards and reverse reads (and, optionally, a file of single reads) for each sample; or
+b) A directory of single-end reads.
+
+For the read files to be recognised by the script, they should be named according to the default convention:
 
     *_R1.fastq 
     *_R2.fastq
@@ -27,25 +32,24 @@ OR
     *_R2.fq
     *_single.fq (optional - will be used if running with the flag `--unpaired`)
 
-
-It’s fine if there’s text after the R1/R1 and before the .fastq/.fq.
-It’s fine if the input files are gzipped (i.e. suffix .gz). 
-
-You can also specify the pattern used for file matching via the parameters `--read_pairs_pattern <pattern>` or  `--single_pattern <pattern>`. You can also just provide a folder of single-end reads (use the flag `--single_only` if you do)
-
 **NOTE:**
-The pipeline will concatenate samples that have been run on different lanes, e.g. read files:
+- It’s fine if there’s text after the R1/R1 and before the .fastq/.fq.
+- It’s fine if the input files are gzipped (i.e. suffix .gz). 
+- You can also specify the pattern used for file matching via the parameters `--read_pairs_pattern <pattern>` or  `--single_pattern <pattern>`. You can also just provide a folder of single-end reads (use the flag `--single_only` if you do)
 
-    79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L001_R1.fastq
-    79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L001_R2.fastq
-    79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L002_R1.fastq
-    79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L002_R2.fastq
-    79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L001_R1.fastq
-    79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L001_R2.fastq
-    79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L002_R1.fastq
-    79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L002_R2.fastq
 
-It does this by grouping forwards and reverse reads (or single reads if you’re providing a folder of single reads and using the `--single_only` flag) via the common prefix preceding the first underscore (‘_’). So, `79678` and `79679` in this case.
+- The pipeline will concatenate samples that have been run on different lanes, e.g. read files:
+
+      79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L001_R1.fastq
+      79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L001_R2.fastq
+      79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L002_R1.fastq
+      79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L002_R2.fastq
+      79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L001_R1.fastq
+      79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L001_R2.fastq
+      79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L002_R1.fastq
+      79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L002_R2.fastq
+
+  It does this by grouping forwards and reverse reads (or single reads if you’re providing a folder of single reads and using the `--single_only` flag) via the common prefix preceding the first underscore (‘_’). So, `79678` and `79679` in this case.
 
 
 ## Running on Linux
