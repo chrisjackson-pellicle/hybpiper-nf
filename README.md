@@ -14,7 +14,26 @@ To simplify running HybPiper, I’ve provided a [Singularity][15] container cont
 
 To run HybPiper using this container, I’ve provided a [Nextflow][16] pipeline that uses the software in the Singularity container. This pipeline runs all HybPiper steps with a single command. The pipeline is called `hybpiper_pipeline_v1_7.nf`. It comes with an associated config file called `hybpiper_v1_7.config`. The only input required is a folder of sequencing reads for your samples, and a target file in fasta format. The Nextflow pipeline will automatically generate the `namelist.txt` file, and will run all HybPiper scripts on each sample in parallel. It also includes an optional read-trimmming step to QC your reads prior to running HybPiper, using the software [Trimmomatic][7]. The number of parallel processes running at any time, as well as computing resources given to each process (e.g. number of CPUs, amount of RAM etc) can be configured by the user by modifying the provided config file. The pipeline can be run directly on your local computer, and on an HPC system submitting jobs via a scheduler (e.g. SLURM, PBS, etc). 
 
-## Name formatting of input read files
+## Input data
+
+### Target file
+
+Your **`target file`**, which can contain either nucleotide OR protein sequences (see below for corresponding pipeline options), should follow the formatting described for HybPiper [here][19]. Briefly, your target genes should be grouped and differentiated by a suffix in the fasta header, consisting of a dash followed by an ID unique to each gene, e.g.:
+
+    >AJFN-4471
+    AATGTTATACAGGATGAAGAGAAACTGAATACTGCAAACTCCGATTGGATGCGGAAATACAAAGGCT...
+    >Ambtr-4471
+    AGTGTTATTCAAGATGAAGATGTATTGTCGACAGCCAATGTGGATTGGATGCGGAAATATAAGGGCA...
+    >Ambtr-4527
+    GAGGAGCGGGTGATTGCCTTGGTCGTTGGTGGTGGGGGTAGAGAACATGCTCTATGCTATGCTTTGC...
+    >Arath-4691
+    GAGCTTGGATCTATCGCTTGCGCAGCTCTCTGTGCTTGCACTCTTACAATAGCTTCTCCTGTTATTG...
+    >BHYC-4691
+    GAAGTGAACTGTGTTGCTTGTGGGTTTCTTGCTGCTCTTGCTGTCACTGCTTCTCCCGTAATCGCTG...
+    etc...
+
+### Read files
+
 You will need to provide the `hybpiper_pipeline_v1_7.nf` pipeline with either:
 
 a) A directory of paired-end forwards and reverse reads (and, optionally, a file of single-end reads) for each sample; or
@@ -204,4 +223,5 @@ Please see the Wiki entry [Issues][4]
 [16]:https://www.nextflow.io/ "Link to Nextflow website"
 [17]:https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4948903/ "Link to HybPiper manuscript"
 [18]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Additional-pipeline-features-and-details#managing-computing-resources "Link to managing computing resources"
+[19]:https://github.com/mossmatters/HybPiper/wiki#target-file "Link to HybPiper Wiki target file details"
 
