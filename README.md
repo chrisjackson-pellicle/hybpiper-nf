@@ -186,7 +186,7 @@ Please see the Wiki entry [Issues][4]
 [1]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-a-Mac-(macOS)-with-Vagrant "Link to Running on a Mac Wiki"
 [2]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Bug-fixes-and-changes-(WIP) "Link to bug fixes and changes Wiki"
 [3]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-Linux "Link to Running on Linux Wiki"
-[4]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Issues "Link to Issues Wiki"
+[4]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Issues-(WIP) "Link to Issues Wiki"
 [5]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Additional-pipeline-features-and-details "Link to Additional pipeline features and details Wiki"
 [6]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Output-folders-and-files "Link to Output folders and files Wiki"
 [7]:http://www.usadellab.org/cms/?page=trimmomatic "Link to Trimmomatic website"
