@@ -1,0 +1,65 @@
+BootStrap: library 
+From: ubuntu:18.04
+
+%files
+
+%post
+	apt-get install -y software-properties-common
+	add-apt-repository universe
+	apt-get -y update 
+	apt-get -y install curl
+	apt-get -y install wget
+	apt-get -y install git
+	apt-get -y install time
+	apt-get -y install locales
+	apt-get -y install fonts-dejavu
+	apt-get -y install build-essential
+
+	locale-gen en_US.UTF-8
+	echo "LANG=en_US.UTF-8" >> /etc/default/locale
+
+	# Install HybPiper and set up to run:
+	git clone https://github.com/mossmatters/HybPiper.git
+	git clone https://github.com/chrisjackson-pellicle/HybPiper-RBGV-scripts.git
+	cp /HybPiper-RBGV-scripts/* /HybPiper
+
+    if [ ! -d /usr/local/miniconda3 ]; then
+         curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+         bash Miniconda3-latest-Linux-x86_64.sh -b -p /usr/local/miniconda3 && \
+         rm Miniconda3-latest-Linux-x86_64.sh
+    fi
+	
+    # set conda path:
+	export PATH="/usr/local/miniconda3/bin:$PATH"
+
+	# add bioconda channel:
+	conda config --add channels defaults
+	conda config --add channels bioconda
+	conda config --add channels conda-forge
+
+	# install programs using conda:
+	conda install -y bioconda::bbmap=38.86
+	conda install -y conda-forge::biopython=1.74
+	conda install -y bioconda::bowtie2=2.4.1
+    conda install -y bioconda::samtools=1.9
+	conda install -y bioconda::exonerate=2.4.0
+	conda install -y bioconda::blast=2.9.0
+	conda install -y conda-forge::parallel=20190922
+	conda install -y bioconda::spades=3.13.1
+	conda install -y bioconda::bwa=0.7.17
+	conda install -y conda-forge::r-base=3.5.1
+	conda install -y conda-forge::r-gplots=3.0.1
+	conda install -y conda-forge::r-heatmap.plus=1.3
+	conda install -y conda-forge::r-ggplot2=3.1.1
+	conda install -y conda-forge::r-reshape2=1.4.3	
+    conda install -y bioconda::trimmomatic=0.39
+
+%environment  
+	export PATH="/usr/local/miniconda3/bin:$PATH"
+	export PATH="/HybPiper":$PATH
+
+%runscript 
+	echo "This Singularity image is for use with the hybpiper-RBGV_pipeline.nf script"
+
+%labels 
+	Author Chris Jackson 2021 chris.jackson@rbg.vic.gov.au
