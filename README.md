@@ -8,7 +8,7 @@ For an explanation of the general purpose of HybPiper, and the approach it takes
 - https://github.com/mossmatters/HybPiper/wiki
 - https://github.com/mossmatters/HybPiper/wiki/Tutorial
 
-## RBGB-modified HybPiper: containerised and pipelined using Singularity and Nextflow
+## HybPiper-RBGV: containerised and pipelined using Singularity and Nextflow
 
 To simplify running HybPiper, I’ve made a Singularity container containing the Linux distribution Ubuntu 18.04, containing all the scripts required to run the HybPiper pipeline (including modifications and bug fixes, see below for details), as well as all the dependencies (BioPython, BWA, BBmap [new requirement compared to default HybPiper], Exonerate, SPAdes, Samtools). The container is called `hybpiper_only.sif`.
 
