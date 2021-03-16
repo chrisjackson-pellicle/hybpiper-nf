@@ -149,7 +149,17 @@ Options:
                                                10_sequences_supercontig will be empty
                                             
 Please see the Wiki entry [Additional pipeline features and details][5] for further explanation of the parameters above, and general pipeline functionality.
-                                               
+             
+
+## Output folders and files
+
+If you're just after the unaligned `.fasta` files for each of your target genes, ready for concatenation or coalescent-based analyses, the two main output folders of interest are probably:
+
+- 07_sequences_dna
+- 08_sequences_aa
+
+For a full explanation of output folders and files, please see the Wiki entry [Output folders and files][6]
+             
 ## General notes
 
 - Link to Chimera detection approach
@@ -173,4 +183,4 @@ Please see the Wiki entry [Issues][4]
 [3]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-Linux "Link to Running on Linux Wiki"
 [4]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Issues "Link to Issues Wiki"
 [5]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Additional-pipeline-features-and-details "Link to Additional pipeline features and details Wiki"
-
+[6]:
