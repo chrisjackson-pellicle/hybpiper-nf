@@ -158,7 +158,7 @@ Please see the Wiki entry [Additional pipeline features and details][5] for furt
 
 ## Output folders and files
 
-If you're just after the unaligned `.fasta` files for each of your target genes, ready for concatenation or coalescent-based analyses, the two main output folders of interest are probably:
+If you're just after the unaligned `.fasta` files for each of your target genes, the two main output folders of interest are probably:
 
 - `07_sequences_dna`
 - `08_sequences_aa`
