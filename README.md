@@ -55,7 +55,8 @@ OR
 **NOTE:**
 - It’s fine if there’s text after the `R1`/`R1` and before the `.fastq`/`.fq`, as long as it's the same for both read files.
 - It’s fine if the input files are gzipped (i.e. suffix `.gz`). 
-- You can specify a custom pattern used for read file matching via the parameters `--read_pairs_pattern <pattern>` or  `--single_pattern <pattern>`. You can also just provide a folder of single-end reads (use the flag `--single_only` if you do).
+- You can specify a custom pattern used for read file matching via the parameters `--read_pairs_pattern <pattern>` or  `--single_pattern <pattern>`. 
+- You can provide a folder of single-end reads only (use the flag `--single_only` if you do).
 
 
 - The pipeline will concatenate samples that have been run on different lanes, e.g. read files:
