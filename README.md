@@ -130,16 +130,19 @@ Options:
 
      --paralog_warning_min_len_percent <decimal>
                                               Minimum length percentage of a contig vs reference protein length for 
-                                              a paralog warning to be generated and a putative paralog contig to be recovered.
-                                              Default is 0.75
+                                              a paralog warning to be generated and a putative paralog contig to be 
+                                              recovered. Default is 0.75
 
-     --translate_target_file_for_blastx       Translate a nucleotide target file. If set, the --use_blastx is set by default. Default is off
+     --translate_target_file_for_blastx       Translate a nucleotide target file. If set, the --use_blastx is set 
+                                              by default. Default is off
 
      --use_trimmomatic                        Trim forwards and reverse reads using Trimmomatic. Default is off
 
-     --trimmomatic_leading_quality <int>      Cut bases off the start of a read, if below this threshold quality. Default is 3
+     --trimmomatic_leading_quality <int>      Cut bases off the start of a read, if below this threshold quality. 
+                                              Default is 3
 
-     --trimmomatic_trailing_quality <int>     Cut bases off the end of a read, if below this threshold quality. Default 3
+     --trimmomatic_trailing_quality <int>     Cut bases off the end of a read, if below this threshold quality. 
+                                              Default is 3
 
      --trimmomatic_min_length <int>           Drop a read if it is below this specified length. Default is 36
 
@@ -147,7 +150,8 @@ Options:
                                               bases to average across. Default is 4
 
      --trimmomatic_sliding_window_quality <int>
-                                              Specifies the average quality required within the sliding window. Default is 20
+                                              Specifies the average quality required within the sliding window. 
+                                              Default is 20
 
      --run_intronerate                        Run intronerate.py to recover (hopefully) intron and supercontig sequences.
                                               Default is off, and so results `subfolders 09_sequences_intron` and 
