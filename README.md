@@ -169,13 +169,13 @@ For a full explanation of output folders and files, please see the Wiki entry [O
 - Link to Chimera detection approach
 - Description of overlapping Exonerate hits issue
 
-## Bug fixed and changes (WIP)
+## Bug fixes and changes (WIP)
 
 Please see the Wiki entry [Bug fixed and changes][2]
 
 
 
-## Issues still to deal with
+## Issues still to deal with (WIP)
 
 Please see the Wiki entry [Issues][4]
 
