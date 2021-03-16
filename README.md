@@ -50,7 +50,7 @@ It does this by grouping forwards and reverse reads (or single reads if you’re
 
 ## Running on Linux
 
-Please see the Wiki entry [Running on Linux]
+Please see the Wiki entry [Running on Linux][2]
 
 ## Running on a Mac (macOS)
 
@@ -165,16 +165,11 @@ Please see the Wiki entry [Bug fixed and changes][2]
 
 Please see the Wiki entry [Issues]
 
-- SPAdes can fail during assembly of some kmer lengths in a manner that isn’t detected by HybPiper (looks like this is a bug in SPAdes), meaning that real contigs are missed for some loci.
-- SPAdes can hang indefinitely at the kmer coverage model stage (see https://github.com/ablab/spades/issues/653), meaning the pipeline never finishes. Running SPAdes in single-cell mode (--SC) seems to fix this, but it can also create many more spurious contigs than running without single-cell mode, which can in turn sometimes cause errors in the loci sequence output.
-- Detection of paralogs - it’s currently very rough, and will miss many paralogs.
-- Intronerate.py can error out - needs further investigation but looks like a bug in the way Exonerate output is parsed, which throws its results into question even when it does run successfully. UPDATE v1.7: I think I’ve fixed the bug causing the error, but I still wouldn’t use the output of intronerate unless you’ve manually vetted AND QC’d all the sequences.
-- How does Intronerate.py work with the changes I’ve made to supercontig assembly (i.e. trimming overlaps between contigs before they’re concatenated, to avoid the introduction of repeats in the output loci sequence)? UPDATE v1.7: I’ve now checked on this, and it shouldn’t be negatively affected. The Intronerate.py script uses the protein .FAA sequence output by the reads_first.py script as a query, and re-runs Exonerate using the full SPAdes contigs as subjects (those that returned Exonerate hits in the reads_first.py run, anyway). So, the changes I’ve made should just (theoretically) improve the quality of input protein for the Intronerate.py run. 
-- If a target file sequence for a particular gene has a low-complexity area, many reads can map to it and it will be selected and translated as the protein reference for a particular sample/gene, and then used in Exonerate searches of SPAdes contigs. This protein reference may not be the most similar to the particular sample/gene, meaning that Exonerate fails to identify (or simply truncates) real contigs for this locus. 
-- Paralog tests do not remove flagged contigs from downstream assembly, so they can still get stitched into a supercontig to form a likely chimera.
+
 
 
 [1]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-a-Mac-(macOS)-with-Vagrant "Link to Running on a Mac Wiki"
 [2]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Bug-fixes-and-changes-(WIP) "Link to bug fixes and changes Wiki"
+[3]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-Linux "Link to Running on Linux Wiki"
 
 
