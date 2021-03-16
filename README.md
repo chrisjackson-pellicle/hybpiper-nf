@@ -12,7 +12,7 @@ For an explanation of the general purpose of HybPiper, and the approach it takes
 
 To simplify running HybPiper, I’ve provided a Singularity container containing the Linux distribution Ubuntu 18.04, containing all the scripts required to run the HybPiper pipeline (including modifications, additions and bug fixes, see below for details), as well as all the dependencies (BioPython, BWA, BBmap, Exonerate, SPAdes, Samtools). The container is called `hybpiper_only.sif`.
 
-To run HybPiper using this container, I’ve provided a Nextflow pipeline that uses the software in the Singularity container. This pipeline runs all HybPiper steps with a single command. The pipeline is called `hybpiper_pipeline_v1_7.nf`. It comes with an associated config file called `hybpiper_v1.7.config`. The only input required is a folder of sequencing reads for your samples, and a target file in fasta format. The Nextflow pipeline will automatically generate the `namelist.txt` file, and will run all HybPiper scripts on each sample in parallel. It also includes an optional read-trimmming step to QC your reads prior to running HybPiper, using the software Trimmomatic. The number of parallel processes running at any time, as well as computing resources given to each process (e.g. number of CPUs, amount of RAM etc) can be configured by the user by modifying the provided config file. The pipeline can be run directly on your local computer, and on an HPC system submitting jobs via a scheduler (e.g. SLURM, PBS, etc). 
+To run HybPiper using this container, I’ve provided a Nextflow pipeline that uses the software in the Singularity container. This pipeline runs all HybPiper steps with a single command. The pipeline is called `hybpiper_pipeline_v1_7.nf`. It comes with an associated config file called `hybpiper_v1.7.config`. The only input required is a folder of sequencing reads for your samples, and a target file in fasta format. The Nextflow pipeline will automatically generate the `namelist.txt` file, and will run all HybPiper scripts on each sample in parallel. It also includes an optional read-trimmming step to QC your reads prior to running HybPiper, using the software [Trimmomatic][7]. The number of parallel processes running at any time, as well as computing resources given to each process (e.g. number of CPUs, amount of RAM etc) can be configured by the user by modifying the provided config file. The pipeline can be run directly on your local computer, and on an HPC system submitting jobs via a scheduler (e.g. SLURM, PBS, etc). 
 
 ## Name formatting of input read files
 You will need to provide the `hybpiper_pipeline_v1_7.nf` pipeline with either:
@@ -149,8 +149,8 @@ Options:
                                               Specifies the average quality required within the sliding window. Default is 20
 
      --run_intronerate                        Run intronerate.py to recover (hopefully) intron and supercontig sequences.
-                                              Default is off, and so results subfolders 09_sequences_intron and 
-                                              10_sequences_supercontig will be empty
+                                              Default is off, and so results `subfolders 09_sequences_intron` and 
+                                              `10_sequences_supercontig` will be empty
                                             
 Please see the Wiki entry [Additional pipeline features and details][5] for further explanation of the parameters above, and general pipeline functionality.
              
@@ -188,3 +188,4 @@ Please see the Wiki entry [Issues][4]
 [4]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Issues "Link to Issues Wiki"
 [5]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Additional-pipeline-features-and-details "Link to Additional pipeline features and details Wiki"
 [6]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Output-folders-and-files "Link to Output folders and files Wiki"
+[7]:http://www.usadellab.org/cms/?page=trimmomatic "Link to Trimmomatic website"
