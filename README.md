@@ -167,8 +167,7 @@ For a full explanation of output folders and files, please see the Wiki entry [O
              
 ## General notes
 
-- Link to Chimera detection approach
-- Description of overlapping Exonerate hits issue
+- Placeholder
 
 ## Bug fixes and changes (WIP)
 
