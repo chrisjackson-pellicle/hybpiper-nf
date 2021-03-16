@@ -2,7 +2,7 @@
 
 ## Original HybPiper github, wiki and tutorial:
 
-For an explanation of the general purpose of HybPiper, and the approach it takes to generate sequences for target loci, please see the excellent documentation, wiki and tutorial at the `mossmatters` repo:
+For an explanation of the general purpose of [HybPiper][17], and the approach it takes to generate sequences for target loci, please see the excellent documentation, wiki and tutorial at the `mossmatters` repo:
 
 - https://github.com/mossmatters/HybPiper/
 - https://github.com/mossmatters/HybPiper/wiki
@@ -199,4 +199,5 @@ Please see the Wiki entry [Issues][4]
 [14]:http://www.htslib.org/ "Link to htslib website for Samtools"
 [15]:https://sylabs.io/docs/ "Link to Singularity website"
 [16]:https://www.nextflow.io/ "Link to Nextflow website"
+[17]:https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4948903/ "Link to HybPiper manuscript"
 
