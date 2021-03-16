@@ -116,6 +116,9 @@ Options:
 
      -profile <profile>                       Configuration profile to use. Can use multiple (comma separated)
                                               Available: standard (default), slurm
+     
+     -resume                                  If restarting the pipeline, use cached results from previously completed 
+                                              processes
 
      --cleanup                                Run 'cleanup.py' for each gene directory after 'reads_first.py'
 
