@@ -69,7 +69,14 @@ OR
       79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L002_R1.fastq
       79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L002_R2.fastq
 
-  It does this by grouping forwards and reverse reads (or single reads if you’re providing a folder of single reads and using the `--single_only` flag) via the common prefix preceding the first underscore (`_`). So, `79678` and `79679` in this case.
+  It does this by grouping forwards and reverse reads (or single reads if you’re providing a folder of single reads and using the `--single_only` flag) via the common prefix preceding the first underscore (`_`). So, `79678` and `79679` in this case, resulting in the files:
+  
+      79678_combinedLanes_R1.fastq
+      79678_combinedLanes_R2.fastq
+      79679_combinedLanes_R1.fastq
+      79679_combinedLanes_R2.fastq
+      
+   These combined read files will be used as input to HybPiper-RBGV.
 
 
 ## Running on Linux
