@@ -82,15 +82,15 @@ OR
 
 ## Running on Linux
 
-Please see the Wiki entry [Running on Linux][3]
+Please see the Wiki entry [Running on Linux][3].
 
 ## Running on a Mac (macOS)
 
-Please see the Wiki entry [Running on a Mac][1]
+Please see the Wiki entry [Running on a Mac][1].
 
 ## Running on a PC (Windows)
 
-Please see the Wiki entry [Running on a PC][20]
+Please see the Wiki entry [Running on a PC][20].
 
 ## Nextflow pipeline options and parameters
 
@@ -201,21 +201,21 @@ If you're just after the unaligned `.fasta` files for each of your target genes,
 - `07_sequences_dna`
 - `08_sequences_aa`
 
-For a full explanation of output folders and files, please see the Wiki entry [Output folders and files][6]
+For a full explanation of output folders and files, please see the Wiki entry [Output folders and files][6].
              
 ## General notes
 
-For details on adapting the pipeline to run on local and HPC computing resources, see [here][18]
+For details on adapting the pipeline to run on local and HPC computing resources, see [here][18].
 
 ## Bug fixes and changes (WIP)
 
-Please see the Wiki entry [Bug fixes and changes][2]
+Please see the Wiki entry [Bug fixes and changes][2].
 
 
 
 ## Issues still to deal with (WIP)
 
-Please see the Wiki entry [Issues][4]
+Please see the Wiki entry [Issues][4].
 
 
 
