@@ -85,7 +85,7 @@ Vagrant.configure("2") do |config|
     runuser -l vagrant -c 'mkdir nextflow_install'
     runuser -l vagrant -c 'cd nextflow_install; curl -s https://get.nextflow.io | bash; cd ..'
     runuser -l vagrant -c 'git clone https://github.com/chrisjackson-pellicle/HybPiper-RBGV.git'
-    runuser -l vagrant -c 'cp HybPiper-RBGV/{hybpiper_pipeline_v1_7.nf,hybpiper_v1_7.config} .'
+    runuser -l vagrant -c 'cp HybPiper-RBGV/{hybpiper-rbgv-pipeline.nf,hybpiper-rbgv.config} .'
     echo 'export PATH="$PATH:/home/vagrant/nextflow_install"' >> /home/vagrant/.bashrc
     echo 'caption always "%{= kw}%-w%{= BW}%n %t%{-}%+w %-= @%H - %LD %d %LM - %c"' > /home/vagrant/.screenrc
   SHELL
