@@ -88,7 +88,7 @@ Please see the Wiki entry [Running on Linux][3]
 
 Please see the Wiki entry [Running on a Mac][1]
 
-## Running on a PC
+## Running on a PC (Windows)
 
 Please see the Wiki entry [Running on a PC][20]
 
