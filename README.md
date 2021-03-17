@@ -239,7 +239,7 @@ Please see the Wiki entry [Issues][4].
 [17]:https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4948903/ "Link to HybPiper manuscript"
 [18]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Additional-pipeline-features-and-details#managing-computing-resources "Link to managing computing resources"
 [19]:https://github.com/mossmatters/HybPiper/wiki#target-file "Link to HybPiper Wiki target file details"
-[20]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-a-PC-(Windows) "Link to Running on a PC Wiki"
+[20]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-a-PC-(Windows)-with-Vagrant "Link to Running on a PC Wiki"
 [21]:https://slurm.schedmd.com/overview.html "Link to SLURM website"
 
 
