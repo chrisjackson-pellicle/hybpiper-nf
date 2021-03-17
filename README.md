@@ -88,6 +88,10 @@ Please see the Wiki entry [Running on Linux][3]
 
 Please see the Wiki entry [Running on a Mac][1]
 
+## Running on a PC
+
+Please see the Wiki entry [Running on a PC][20]
+
 ## Nextflow pipeline options and parameters
 
 Example run command:
@@ -112,6 +116,9 @@ Options:
 
      -profile <profile>                       Configuration profile to use. Can use multiple (comma separated)
                                               Available: standard (default), slurm
+     
+     -resume                                  If restarting the pipeline, use cached results from previously completed 
+                                              processes
 
      --cleanup                                Run 'cleanup.py' for each gene directory after 'reads_first.py'
 
@@ -232,4 +239,5 @@ Please see the Wiki entry [Issues][4]
 [17]:https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4948903/ "Link to HybPiper manuscript"
 [18]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Additional-pipeline-features-and-details#managing-computing-resources "Link to managing computing resources"
 [19]:https://github.com/mossmatters/HybPiper/wiki#target-file "Link to HybPiper Wiki target file details"
+[20]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-a-PC-(Windows) "Link to Running on a PC Wiki"
 
