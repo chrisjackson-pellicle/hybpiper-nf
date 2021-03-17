@@ -382,9 +382,10 @@ process combine_lanes_single_only {
 process trimmomatic_paired {
   // echo true
   label 'in_container'
+  publishDir "$params.outdir/03a_trimmomatic_logs", mode: 'copy', pattern: "*.log"
   publishDir "$params.outdir/03b_trimmomatic_paired_and_single_reads", mode: 'copy', pattern: "*_paired.fq*"
   publishDir "$params.outdir/03b_trimmomatic_paired_and_single_reads", mode: 'copy', pattern: "*_both_unpaired.fq*"
-  publishDir "$params.outdir/03c_trimmomatic_logs", mode: 'copy', pattern: "*.log"
+
 
   if (params.num_forks) {
       maxForks params.num_forks
@@ -438,8 +439,8 @@ process trimmomatic_paired {
 process trimmomatic_single {
   // echo true
   label 'in_container'
-  publishDir "$params.outdir/03a_trimmomatic_single_reads", mode: 'copy', pattern: "*_single*"
-  publishDir "$params.outdir/03b_trimmomatic_logs", mode: 'copy', pattern: "*.log"
+  publishDir "$params.outdir/03a_trimmomatic_logs", mode: 'copy', pattern: "*.log"
+  publishDir "$params.outdir/03c_trimmomatic_single_reads", mode: 'copy', pattern: "*_single*"
 
   if (params.num_forks) {
       maxForks params.num_forks
