@@ -33,6 +33,8 @@ def helpMessage() {
 
       --nosupercontigs                          Do not create supercontigs. Use longest Exonerate hit only. Default is off.  
 
+      --min_id <float>                          Minimum identity for read-pair mapping to supercontig reference (bbmap.sh). Default is 0.85
+
       --memory <int>                            Memory (RAM) amount in GB to use for bbmap.sh with exonerate_hits.py. Default is 1 GB
       
       --discordant_reads_edit_distance <int>    Minimum number of base differences between one read of a read pair vs the supercontig reference for a read pair to be flagged as discordant. Default is 5
@@ -136,7 +138,7 @@ if (params.paired_and_single && params.use_trimmomatic) {
 }
 
 // Check for unrecognised pararmeters
-allowed_params = ["cleanup", "nosupercontigs", "memory","discordant_reads_edit_distance", "discordant_reads_cutoff", "merged", "paired_and_single", "single_only", "outdir", "illumina_reads_directory", "target_file", "help", "memory", "read_pairs_pattern", "single_pattern", "use_blastx", "num_forks", "cov_cutoff", "blastx_evalue", "paralog_warning_min_len_percent", "translate_target_file_for_blastx", "use_trimmomatic", "trimmomatic_leading_quality", "trimmomatic_trailing_quality", "trimmomatic_min_length", "trimmomatic_sliding_window_size", "trimmomatic_sliding_window_quality", "run_intronerate"]
+allowed_params = ["cleanup", "nosupercontigs", "memory","discordant_reads_edit_distance", "discordant_reads_cutoff", "merged", "paired_and_single", "single_only", "outdir", "illumina_reads_directory", "target_file", "help", "memory", "read_pairs_pattern", "single_pattern", "use_blastx", "num_forks", "cov_cutoff", "blastx_evalue", "paralog_warning_min_len_percent", "translate_target_file_for_blastx", "use_trimmomatic", "trimmomatic_leading_quality", "trimmomatic_trailing_quality", "trimmomatic_min_length", "trimmomatic_sliding_window_size", "trimmomatic_sliding_window_quality", "run_intronerate", "min_id"]
 
 params.each { entry ->
   if (! allowed_params.contains(entry.key)) {
@@ -591,6 +593,9 @@ process reads_first_with_unpaired {
   if (params.memory) {
      command_list << "--memory ${params.memory}"
      }
+  if (params.min_id) {
+     command_list << "--min_id ${params.min_id}"
+     }
   if (params.discordant_reads_edit_distance) {
      command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
      }
@@ -662,6 +667,9 @@ process reads_first_no_unpaired {
      }
   if (params.memory) {
      command_list << "--memory ${params.memory}"
+     }
+  if (params.min_id) {
+     command_list << "--min_id ${params.min_id}"
      }
   if (params.discordant_reads_edit_distance) {
      command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
