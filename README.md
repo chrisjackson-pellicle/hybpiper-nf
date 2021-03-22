@@ -206,7 +206,7 @@ If you're just after the unaligned `.fasta` files for each of your target genes,
 
 For a full explanation of output folders and files, please see the Wiki entry [Output folders and files][6].
              
-## General notes
+## General information
 
 For details on adapting the pipeline to run on local and HPC computing resources, see [here][18].
 
