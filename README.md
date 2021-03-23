@@ -123,6 +123,9 @@ Options:
      --cleanup                                Run 'cleanup.py' for each gene directory after 'reads_first.py'
 
      --nosupercontigs                         Do not create supercontigs. Use longest Exonerate hit only. Default is off.
+     
+     --bbmap_subfilter <int>                  Ban alignments with more than this many substitutions when performing 
+                                              read-pair mapping to supercontig reference (bbmap.sh). Default is 7
 
      --memory <int>                           Memory (RAM) amount in GB to use for bbmap.sh with exonerate_hits.py. 
                                               Default is 1 GB
@@ -196,14 +199,18 @@ Please see the Wiki entry [Additional pipeline features and details][5] for furt
 
 ## Output folders and files
 
-If you're just after the unaligned `.fasta` files for each of your target genes, the two main output folders of interest are probably:
+If you're just after the unaligned `.fasta` files for each of your target genes (not including putative paralogs), the two main output folders of interest are probably:
 
 - `07_sequences_dna`
 - `08_sequences_aa`
 
+If you need the per-sample output folders produced by a standard HybPiper run, these can be found in folder:
+
+- `04_processed_gene_directories`
+
 For a full explanation of output folders and files, please see the Wiki entry [Output folders and files][6].
              
-## General notes
+## General information
 
 For details on adapting the pipeline to run on local and HPC computing resources, see [here][18].
 
