@@ -33,7 +33,7 @@ def helpMessage() {
 
       --nosupercontigs                          Do not create supercontigs. Use longest Exonerate hit only. Default is off.  
 
-      --bbmap_subfilter <int>                 Ban alignments with more than this many substitutions when performing read-pair mapping to supercontig reference (bbmap.sh). Default is 7
+      --bbmap_subfilter <int>                   Ban alignments with more than this many substitutions when performing read-pair mapping to supercontig reference (bbmap.sh). Default is 7
 
       --memory <int>                            Memory (RAM) amount in GB to use for bbmap.sh with exonerate_hits.py. Default is 1 GB
       
