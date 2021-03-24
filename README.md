@@ -44,13 +44,13 @@ For the read files to be recognised by the pipeline, they should be named accord
 
     *_R1.fastq 
     *_R2.fastq
-    *_single.fastq (optional - will be used if running with the flag `--unpaired`)
+    *_single.fastq (optional; will be used if running with the flag `--unpaired`)
 
 OR
 
     *_R1.fq 
     *_R2.fq
-    *_single.fq (optional - will be used if running with the flag `--unpaired`)
+    *_single.fq (optional; will be used if running with the flag `--unpaired`)
 
 **NOTE:**
 
