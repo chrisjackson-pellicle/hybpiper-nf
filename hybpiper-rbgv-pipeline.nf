@@ -12,8 +12,8 @@ def helpMessage() {
     Usage:
     The typical command for running the pipeline is as follows:
 
-    nextflow run hybpiper_pipeline_v1_7_NO_INTRONERATE.nf -c hybpiper.config --illumina_reads_directory <directory> --target_file <file>
-    -profile <profile>
+    nextflow run hybpiper-rbgv-pipeline.nf -c hybpiper-rbgv.config --illumina_reads_directory <directory> \
+    --target_file <fasta_file> -profile <profile>
 
     Mandatory arguments:
 
