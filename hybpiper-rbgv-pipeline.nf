@@ -79,8 +79,11 @@ def helpMessage() {
       --trimmomatic_sliding_window_quality <int>
                                                 Specifies the average quality required within the sliding window. Default is 20
 
-      --run_intronerate                        Run intronerate.py to recover (hopefully) intron and supercontig  sequences. Default is off, and so results `subfolders 09_sequences_intron` and `10_sequences_supercontig` will be empty
+      --run_intronerate                         Run intronerate.py to recover (hopefully) intron and supercontig  sequences. Default is off, and so results `subfolders 09_sequences_intron` and `10_sequences_supercontig` will be empty
 
+      --combine_read_files                      Group and concatenate read-files via a common prefix. Useful if samples have been run across multiple lanes. Default prefix is all text preceding the first underscore (_) in read filenames
+
+      --combine_read_files_num_fields <int>     Number of fields (delimited by an underscore) to use for combining read files when using the `--combine_read_files` flag. Default is 1
 
     """.stripIndent()
 }
@@ -138,7 +141,7 @@ if (params.paired_and_single && params.use_trimmomatic) {
 }
 
 // Check for unrecognised pararmeters
-allowed_params = ["cleanup", "nosupercontigs", "memory","discordant_reads_edit_distance", "discordant_reads_cutoff", "merged", "paired_and_single", "single_only", "outdir", "illumina_reads_directory", "target_file", "help", "memory", "read_pairs_pattern", "single_pattern", "use_blastx", "num_forks", "cov_cutoff", "blastx_evalue", "paralog_warning_min_len_percent", "translate_target_file_for_blastx", "use_trimmomatic", "trimmomatic_leading_quality", "trimmomatic_trailing_quality", "trimmomatic_min_length", "trimmomatic_sliding_window_size", "trimmomatic_sliding_window_quality", "run_intronerate", "bbmap_subfilter"]
+allowed_params = ["cleanup", "nosupercontigs", "memory","discordant_reads_edit_distance", "discordant_reads_cutoff", "merged", "paired_and_single", "single_only", "outdir", "illumina_reads_directory", "target_file", "help", "memory", "read_pairs_pattern", "single_pattern", "use_blastx", "num_forks", "cov_cutoff", "blastx_evalue", "paralog_warning_min_len_percent", "translate_target_file_for_blastx", "use_trimmomatic", "trimmomatic_leading_quality", "trimmomatic_trailing_quality", "trimmomatic_min_length", "trimmomatic_sliding_window_size", "trimmomatic_sliding_window_quality", "run_intronerate", "bbmap_subfilter", "combine_read_files", "combine_read_files_num_fields"]
 
 params.each { entry ->
   if (! allowed_params.contains(entry.key)) {
@@ -168,22 +171,36 @@ Channel
 
 // Function for grouping reads from multiple lanes, based on shared filename prefix preceeding the first 
 // underscore
+
+end_field = params.combine_read_files_num_fields - 1  // Due to zero-based indexing
+
 def getLibraryId( prefix ){
-  prefix.split("_")[0]
+  filename_list = prefix.split("_")
+  groupby_select = filename_list[0..end_field]
+  groupby_joined = groupby_select.join("_")
 }
 
 // Unpaired reads only
-if (params.single_only) {
+// Don't group reads from multi-lane (default)
+if (params.single_only && !params.combine_read_files) {
   Channel
   .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
     checkIfExists: true)
-  .map { file -> tuple(file.baseName.split('_')[0], file) }
+  .map { file -> tuple(file.baseName.split("_${params.single_pattern}")[0], file) } // THIS NEEDS TO BE UNIQUE
+  .into { illumina_reads_single_only_ch_1; illumina_reads_single_only_ch_2; illumina_reads_single_only_ch_3 }
+} else if (params.single_only && params.combine_read_files) {
+  Channel
+  .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+  checkIfExists: true)
+  .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
   .groupTuple(sort:true)
-  // .view()
-  .set { illumina_reads_single_only_ch }
+  .into { illumina_reads_single_only_ch_1; illumina_reads_single_only_ch_2; illumina_reads_single_only_ch_3 }
 } else {
-  illumina_reads_single_only_ch = Channel.empty()
+  illumina_reads_single_only_ch_1 = Channel.empty()
+  illumina_reads_single_only_ch_2 = Channel.empty()
+  illumina_reads_single_only_ch_3 = Channel.empty()
 }
+  // illumina_reads_single_only_ch_1.view()
 
 
 // Paired reads and a file of unpaired reads
@@ -198,24 +215,40 @@ if (params.paired_and_single) {
 
 
 // Paired read only
-// Gather the pairs of R1/R2 according to sample ID
-if (!params.paired_and_single && !params.single_only) {
-Channel
-     .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-    flat : true, checkIfExists: true)
-     .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
-     .groupTuple(sort:true)
-     .set{ illumina_paired_reads_ch_1 }
+// Don't group reads from multi-lane (default)
+if (!params.paired_and_single && !params.single_only  && !params.combine_read_files) {
+  Channel
+  .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+  flat : true, checkIfExists: true)
+  .into { illumina_paired_reads_ch_1; illumina_paired_reads_ch_2;  illumina_paired_reads_ch_3}
+} else if (!params.paired_and_single && !params.single_only && params.combine_read_files) {
+  Channel
+  .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+  flat : true, checkIfExists: true)
+ .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+ .groupTuple(sort:true)
+ .into { illumina_paired_reads_ch_1; illumina_paired_reads_ch_2;  illumina_paired_reads_ch_3 }
 } else {
   illumina_paired_reads_ch_1 = Channel.empty()
+  illumina_paired_reads_ch_2 = Channel.empty()
+  illumina_paired_reads_ch_3 = Channel.empty()
 }
+  // illumina_paired_reads_ch_1.view()
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Create 'namelist.txt' file and associated channel
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-if (!params.single_only) {
+// Don't group reads from multi-lane (default)
+if (!params.single_only && !params.combine_read_files) {
+  Channel
+  .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+    flat : true, checkIfExists: true)
+  .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
+  .first()
+  .set { namelist_ch }
+} else if (!params.single_only && params.combine_read_files) {
   Channel
   .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
     flat : true, checkIfExists: true)
@@ -224,16 +257,26 @@ if (!params.single_only) {
   .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
   .first()
   .set { namelist_ch }
-} else {
+} else if (params.single_only && !params.combine_read_files) {
   Channel
   .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
     checkIfExists: true)
-  .map { file -> tuple(file.baseName.split('_')[0], file) }
+  .map { file -> file.baseName.split("_${params.single_pattern}")[0] } // THIS NEEDS TO BE UNIQUE
+  .unique()
+  .collectFile(name: "${params.outdir}/01_namelist/namelist.txt", newLine: true)
+  .first()
+  .set { namelist_ch }
+} else if (params.single_only && params.combine_read_files) {
+  Channel
+  .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+    checkIfExists: true)
+  .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
   .groupTuple(sort:true)
   .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
   .first()
   .set { namelist_ch }
 }
+// namelist_ch.view()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Channel of gene names for 'paralog_retriever.py' script
@@ -304,7 +347,7 @@ if (!params.translate_target_file_for_blastx) {
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Concatenate sample files from multiple lanes if necessary
+// Concatenate sample files from multiple lanes if --combine_read_files` flag used
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //Paired R1 and R2 reads only:
@@ -316,6 +359,9 @@ process combine_lanes_paired_only {
   if (params.num_forks) {
       maxForks params.num_forks
   }
+
+  when:
+  params.combine_read_files
 
   input:
   tuple val(prefix), file(reads_R1), file(reads_R2) from illumina_paired_reads_ch_1
@@ -353,8 +399,11 @@ process combine_lanes_single_only {
       maxForks params.num_forks
   }
 
+  when:
+  params.combine_read_files
+
   input:
-  tuple val(prefix), file(reads_single) from illumina_reads_single_only_ch
+  tuple val(prefix), file(reads_single) from illumina_reads_single_only_ch_1
 
   output:
   tuple val(prefix), file("*single.fastq*")  into combined_lane_single_reads_ch_1, combined_lane_single_reads_ch_2
@@ -381,6 +430,15 @@ process combine_lanes_single_only {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // R1 and R2 reads
+// Set up correct channel for paired-end reads (combined vs non-combined)
+
+if (params.combine_read_files) {
+  trimmomatic_PE_input_ch = combined_lane_paired_reads_ch_1
+} else {
+  trimmomatic_PE_input_ch = illumina_paired_reads_ch_2
+}
+// trimmomatic_PE_input_ch.view()
+
 process trimmomatic_paired {
   // echo true
   label 'in_container'
@@ -397,7 +455,7 @@ process trimmomatic_paired {
   params.use_trimmomatic
 
   input:
-  tuple val(prefix), file(combined_reads_R1), file(combined_reads_R2) from combined_lane_paired_reads_ch_1
+  tuple val(prefix), file(combined_reads_R1), file(combined_reads_R2) from trimmomatic_PE_input_ch
 
   output:
   file("*")
@@ -438,6 +496,15 @@ process trimmomatic_paired {
 
 
 // Single reads only
+// Set up correct channel for paired-end reads (combined vs non-combined)
+
+if (params.combine_read_files) {
+  trimmomatic_SE_input_ch = combined_lane_single_reads_ch_1
+} else {
+  trimmomatic_SE_input_ch = illumina_reads_single_only_ch_2
+}
+// trimmomatic_SE_input_ch.view()
+
 process trimmomatic_single {
   // echo true
   label 'in_container'
@@ -452,7 +519,7 @@ process trimmomatic_single {
   params.use_trimmomatic
 
   input:
-  tuple val(prefix), file(combined_reads_single) from combined_lane_single_reads_ch_1
+  tuple val(prefix), file(combined_reads_single) from trimmomatic_SE_input_ch
 
   output:
   file("*")
@@ -476,16 +543,6 @@ process trimmomatic_single {
   """
 }
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Set up conditional channels for single end reads (trimmed vs non-trimmed)
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-(single_channel_1, single_channel_2) = (params.use_trimmomatic ? 
-  [Channel.empty(), trimmed_single_ch] : [combined_lane_single_reads_ch_2, Channel.empty()] )
-
-
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////  Run HybPiper  ///////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -494,12 +551,23 @@ process trimmomatic_single {
 // reads_first.py
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Single-end reads only:
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+if (params.use_trimmomatic) {
+  reads_first_with_single_end_only_input_ch = trimmed_single_ch
+} else if (params.combine_read_files) {
+  reads_first_with_single_end_only_input_ch = combined_lane_single_reads_ch_2
+} else {
+  reads_first_with_single_end_only_input_ch = illumina_reads_single_only_ch_3
+}
+
 process reads_first_with_single_end_only {
   // echo true
   label 'in_container'
-  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_supercontigs.csv"
-  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_supercontigs_with_discordant_reads.csv"
+  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${prefix}/${prefix}_genes_with_supercontigs.csv"
+  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${prefix}/${prefix}_supercontigs_with_discordant_reads.csv"
 
   if (params.num_forks) {
       maxForks params.num_forks
@@ -510,12 +578,12 @@ process reads_first_with_single_end_only {
 
   input:
   file(target_file) from target_file_ch
-  tuple val(prefix), file(reads_single) from single_channel_1.mix(single_channel_2)
+  tuple val(prefix), file(reads_single) from reads_first_with_single_end_only_input_ch
 
   output:
   file("${prefix}") optional true into (reads_first_with_single_only_ch_1, reads_first_with_single_only_ch_2, reads_first_with_single_only_ch_3, reads_first_with_single_only_ch_4)
-  file("${prefix}/${pair_id}_genes_with_supercontigs.csv") optional true
-  file("${prefix}/${pair_id}_supercontigs_with_discordant_reads.csv") optional true
+  file("${prefix}/${prefix}_genes_with_supercontigs.csv") optional true
+  file("${prefix}/${prefix}_supercontigs_with_discordant_reads.csv") optional true
 
   script:
 
@@ -562,7 +630,17 @@ process reads_first_with_single_end_only {
  }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // R1 and R2 reads and a file of single-end reads:
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Note no support for merged paired-end and single-end merged with no Trimmomatic yet.
+if (params.use_trimmomatic) {
+  reads_first_with_unpaired_input_ch = trimmed_paired_and_orphaned_ch
+} else {
+  reads_first_with_unpaired_input_ch = illumina_paired_reads_with_unpaired_ch
+}
+
 process reads_first_with_unpaired {
   //echo true
   label 'in_container'
@@ -578,7 +656,7 @@ process reads_first_with_unpaired {
 
   input:
   file(target_file) from target_file_ch
-  tuple pair_id, file(reads_R1), file(reads_R2), file(reads_unpaired) from illumina_paired_reads_with_unpaired_ch.mix(trimmed_paired_and_orphaned_ch)
+  tuple pair_id, file(reads_R1), file(reads_R2), file(reads_unpaired) from reads_first_with_unpaired_input_ch
 
   output:
   file("${pair_id}") optional true into (reads_first_with_unPaired_ch_1, reads_first_with_unPaired_ch_2, reads_first_with_unPaired_ch_3, reads_first_with_unPaired_ch_4)
@@ -637,6 +715,13 @@ process reads_first_with_unpaired {
 // Just R1 and R2 reads:
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Note that this process doesn't get used if Trimmomatic is run (produces pairs and orphans).
+if (params.combine_read_files) {
+  reads_first_no_unpaired_input_ch = combined_lane_paired_reads_ch_2
+} else {
+  reads_first_no_unpaired_input_ch = illumina_paired_reads_ch_3
+}
+
 process reads_first_no_unpaired {
   // echo true
   label 'in_container'
@@ -652,7 +737,7 @@ process reads_first_no_unpaired {
 
   input:
   file(target_file) from target_file_ch
-  tuple pair_id, file(reads_R1), file(reads_R2) from combined_lane_paired_reads_ch_2
+  tuple pair_id, file(reads_R1), file(reads_R2) from reads_first_no_unpaired_input_ch
 
   output:
   file("${pair_id}") optional true into (reads_first_ch_1, reads_first_ch_2, reads_first_ch_3)
@@ -771,6 +856,7 @@ process summary_stats {
 
 (reads_first_channel_1, reads_first_channel_2) = (params.run_intronerate ? 
   [Channel.empty(), reads_first_ch_3.mix(reads_first_with_unPaired_ch_3).mix(reads_first_with_single_only_ch_3)] : [reads_first_ch_3.mix(reads_first_with_unPaired_ch_3).mix(reads_first_with_single_only_ch_3), Channel.empty()] )
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // intronerate.py
