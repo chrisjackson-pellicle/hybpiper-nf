@@ -53,31 +53,12 @@ OR
     *_single.fq (optional - will be used if running with the flag `--unpaired`)
 
 **NOTE:**
+
 - It’s fine if there’s text after the `R1`/`R1` and before the `.fastq`/`.fq`, as long as it's the same for both read files.
 - It’s fine if the input files are gzipped (i.e. suffix `.gz`). 
 - You can specify a custom pattern used for read file matching via the parameters `--read_pairs_pattern <pattern>` or  `--single_pattern <pattern>`. 
 - You can provide a folder of single-end reads only (use the flag `--single_only` if you do).
-
-
-- The pipeline will concatenate samples that have been run on different lanes, e.g. read files:
-
-      79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L001_R1.fastq
-      79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L001_R2.fastq
-      79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L002_R1.fastq
-      79678_LibID81729_HF7CKAFX2_TGAATGCC-TGTCTAGT_L002_R2.fastq
-      79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L001_R1.fastq
-      79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L001_R2.fastq
-      79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L002_R1.fastq
-      79679_LibID81730_HF7CKAFX2_GCAACTAT-TCGTTGAA_L002_R2.fastq
-
-  It does this by grouping forwards and reverse reads (or single reads if you’re providing a folder of single reads and using the `--single_only` flag) via the common prefix preceding the first underscore (`_`). So, `79678` and `79679` in this case, resulting in the files:
-  
-      79678_combinedLanes_R1.fastq
-      79678_combinedLanes_R2.fastq
-      79679_combinedLanes_R1.fastq
-      79679_combinedLanes_R2.fastq
-      
-   These combined read files will be used as input to Trimmomatic (optional) and HybPiper.
+- If your samples have been run across multiple lanes, you'll likely want to combine read files for each sample before processing. The pipeline can do this for you - see [here][22] for details.
 
 
 ## Running on Linux
@@ -193,6 +174,14 @@ Options:
      --run_intronerate                        Run intronerate.py to recover (hopefully) intron and supercontig sequences.
                                               Default is off, and so results `subfolders 09_sequences_intron` and 
                                               `10_sequences_supercontig` will be empty
+                                          
+     --combine_read_files                     Group and concatenate read-files via a common prefix. Useful if samples 
+                                              have been run across multiple lanes. Default prefix is all text preceding 
+                                              the first underscore (_) in read filenames
+                                              
+     --combine_read_files_num_fields <int>    Number of fields (delimited by an underscore) to use for combining read 
+                                              files when using the `--combine_read_files` flag. Default is 1
+                                            
                                             
 Please see the Wiki entry [Additional pipeline features and details][5] for further explanation of the parameters above, and general pipeline functionality.
              
@@ -248,5 +237,5 @@ Please see the Wiki entry [Issues][4].
 [19]:https://github.com/mossmatters/HybPiper/wiki#target-file "Link to HybPiper Wiki target file details"
 [20]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-a-PC-(Windows)-with-Vagrant "Link to Running on a PC Wiki"
 [21]:https://slurm.schedmd.com/overview.html "Link to SLURM website"
-
+[22]: https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Additional-pipeline-features-and-details#combining-read-files-for-samples-run-across-multiple-lanes "Link to Wiki section combining-read-files-for-samples-run-across-multiple-lane"
 
