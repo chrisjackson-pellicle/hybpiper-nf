@@ -44,20 +44,21 @@ For the read files to be recognised by the pipeline, they should be named accord
 
     *_R1.fastq 
     *_R2.fastq
-    *_single.fastq (optional; will be used if running with the flag `--unpaired`)
+    *_single.fastq (optional; will be used if running with the flag `--paired_and_single`)
 
 OR
 
     *_R1.fq 
     *_R2.fq
-    *_single.fq (optional; will be used if running with the flag `--unpaired`)
+    *_single.fq (optional; will be used if running with the flag `--paired_and_single`)
+    
 
 **NOTE:**
 
 - It’s fine if there’s text after the `R1`/`R1` and before the `.fastq`/`.fq`, as long as it's the same for both read files.
 - It’s fine if the input files are gzipped (i.e. suffix `.gz`). 
-- You can specify a custom pattern used for read file matching via the parameters `--read_pairs_pattern <pattern>` or  `--single_pattern <pattern>`. 
-- You can provide a folder of single-end reads only (use the flag `--single_only` if you do).
+- You can provide a folder of single-end reads only (use the flag `--single_only` if you do). Your read files should be named `*_single.fastq` (or `.fastq.gz`, `.fq`, `.fq.gz`).  
+- You can specify a custom pattern used for read file matching via the parameters `--read_pairs_pattern <pattern>` or `--single_pattern <pattern>`.
 - If your samples have been run across multiple lanes, you'll likely want to combine read files for each sample before processing. The pipeline can do this for you - see [here][22] for details.
 
 
