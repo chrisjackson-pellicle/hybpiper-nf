@@ -616,7 +616,7 @@ process reads_first_with_single_end_only {
     command_list << "--cov_cutoff ${params.cov_cutoff}"
   }
   if (params.cleanup) {
-     cleanup = "python cleanup.py ${prefix}"
+     cleanup = "python /HybPiper/cleanup.py ${prefix}"
   } else {
      cleanup = ''
   }
@@ -696,7 +696,7 @@ process reads_first_with_unpaired {
     command_list << "--cov_cutoff ${params.cov_cutoff}"
   }
   if (params.cleanup) {
-     cleanup = "python cleanup.py ${pair_id}"
+     cleanup = "python /HybPiper/cleanup.py ${pair_id}"
   } else {
      cleanup = ''
   }
@@ -778,7 +778,7 @@ process reads_first_no_unpaired {
     command_list << "--cov_cutoff ${params.cov_cutoff}"
   }
   if (params.cleanup) {
-     cleanup = "python cleanup.py ${pair_id}"
+     cleanup = "python /HybPiper/cleanup.py ${pair_id}"
   } else {
      cleanup = ''
   }
