@@ -85,6 +85,8 @@ def helpMessage() {
 
       --combine_read_files_num_fields <int>     Number of fields (delimited by an underscore) to use for combining read files when using the `--combine_read_files` flag. Default is 1
 
+      --namelist <file>                         Supply a namelist.txt file containing sample prefixes. Useful if you only want to process selected sample read files from a given folder. Default is to automatically create this file and process all samples in a given folder
+
     """.stripIndent()
 }
 
