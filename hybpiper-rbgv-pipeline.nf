@@ -33,57 +33,82 @@ def helpMessage() {
 
       --nosupercontigs                          Do not create supercontigs. Use longest Exonerate hit only. Default is off.  
 
-      --bbmap_subfilter <int>                   Ban alignments with more than this many substitutions when performing read-pair mapping to supercontig reference (bbmap.sh). Default is 7
+      --bbmap_subfilter <int>                   Ban alignments with more than this many substitutions when performing 
+                                                read-pair mapping to supercontig reference (bbmap.sh). Default is 7
 
-      --memory <int>                            Memory (RAM) amount in GB to use for bbmap.sh with exonerate_hits.py. Default is 1 GB
+      --memory <int>                            Memory (RAM) amount in GB to use for bbmap.sh with exonerate_hits.py. 
+                                                Default is 1 GB
       
-      --discordant_reads_edit_distance <int>    Minimum number of base differences between one read of a read pair vs the supercontig reference for a read pair to be flagged as discordant. Default is 5
+      --discordant_reads_edit_distance <int>    Minimum number of base differences between one read of a read pair vs 
+                                                the supercontig reference for a read pair to be flagged as discordant. 
+                                                Default is 5
       
-      --discordant_reads_cutoff <int>           Minimum number of discordant reads pairs required to flag a supercontigs as a potential hybrid of contigs from multiple paralogs. Default is 5
+      --discordant_reads_cutoff <int>           Minimum number of discordant reads pairs required to flag a supercontigs 
+                                                as a potential hybrid of contigs from multiple paralogs. Default is 5
 
-      --merged                                  Merge forward and reverse reads, and run SPAdes assembly with merged and unmerged (the latter in interleaved format) data. Default is off
+      --merged                                  Merge forward and reverse reads, and run SPAdes assembly with merged and 
+                                                unmerged (the latter in interleaved format) data. Default is off
 
-      --paired_and_single                       Use when providing both paired R1 and R2 read files as well as a file of single-end reads for each sample       
+      --paired_and_single                       Use when providing both paired R1 and R2 read files as well as a file of 
+                                                single-end reads for each sample       
 
       --single_only                             Use when providing providing only a folder of single-end reads 
 
       --outdir <directory_name>                 Specify the name of the pipeline results directory. Default is 'results'                                 
 
-      --read_pairs_pattern <pattern>            Provide a comma-separated read pair pattern for matching fowards and reverse paired-end readfiles. Default is 'R1,R2'
+      --read_pairs_pattern <pattern>            Provide a comma-separated read pair pattern for matching fowards and 
+                                                reverse paired-end readfiles. Default is 'R1,R2'
 
       --single_pattern <pattern>                Provide a pattern for matching single-end read files. Default is 'single'
 
-      --use_blastx                              Use a protein target file and map reads to targets with BLASTx. Default is a nucleotide target file and mapping of reads to targets using BWA
+      --use_blastx                              Use a protein target file and map reads to targets with BLASTx. Default 
+                                                is a nucleotide target file and mapping of reads to targets using BWA
 
-      --num_forks <int>                         Specify the number of parallel processes (e.g. concurrent runs of reads.first.py) to run at any one time. Can be used to prevent Nextflow from using all the threads/cpus on your machine. Default is to use the maximum number possible      
+      --num_forks <int>                         Specify the number of parallel processes (e.g. concurrent runs of 
+                                                reads.first.py) to run at any one time. Can be used to prevent Nextflow 
+                                                from using all the threads/cpus on your machine. Default is to use the 
+                                                maximum number possible      
 
       --cov_cutoff <int>                        Coverage cutoff to pass to the SPAdes assembler. Default is 8
 
-      --blastx_evalue <value>                   Evalue to pass to blastx when using blastx mapping (i.e. when the --use_blastx flag is specified). Default is 1e-4
+      --blastx_evalue <value>                   Evalue to pass to blastx when using blastx mapping (i.e. when the 
+                                                --use_blastx flag is specified). Default is 1e-4
 
       --paralog_warning_min_len_percent <decimal> 
-                                                Minimum length percentage of a contig vs reference protein length for a paralog warning to be generated and a putative paralog contig to be recovered. Default is 0.75 
+                                                Minimum length percentage of a contig vs reference protein length for 
+                                                a paralog warning to be generated and a putative paralog contig to be 
+                                                recovered. Default is 0.75 
 
-      --translate_target_file_for_blastx        Translate a nucleotide target file. If set, the --use_blastx is set by default. Default is off
+      --translate_target_file_for_blastx        Translate a nucleotide target file. If set, the --use_blastx is set by 
+                                                default. Default is off
 
       --use_trimmomatic                         Trim forwards and reverse reads using Trimmomatic. Default is off
 
-      --trimmomatic_leading_quality <int>       Cut bases off the start of a read, if below this threshold quality. Default is 3
+      --trimmomatic_leading_quality <int>       Cut bases off the start of a read, if below this threshold quality. 
+                                                Default is 3
 
-      --trimmomatic_trailing_quality <int>      Cut bases off the end of a read, if below this threshold quality. Default 3
+      --trimmomatic_trailing_quality <int>      Cut bases off the end of a read, if below this threshold quality. 
+                                                Default is 3
 
       --trimmomatic_min_length <int>            Drop a read if it is below this specified length. Default is 36
 
-      --trimmomatic_sliding_window_size <int>   Size of the sliding window used by Trimmomatic; specifies the number of bases to average across. Default is 4
+      --trimmomatic_sliding_window_size <int>   Size of the sliding window used by Trimmomatic; specifies the number of 
+                                                bases to average across. Default is 4
 
       --trimmomatic_sliding_window_quality <int>
-                                                Specifies the average quality required within the sliding window. Default is 20
+                                                Specifies the average quality required within the sliding window. 
+                                                Default is 20
 
-      --run_intronerate                         Run intronerate.py to recover (hopefully) intron and supercontig  sequences. Default is off, and so results `subfolders 09_sequences_intron` and `10_sequences_supercontig` will be empty
+      --run_intronerate                         Run intronerate.py to recover (hopefully) intron and supercontig 
+                                                sequences. Default is off, and so results `subfolders 09_sequences_intron` 
+                                                and `10_sequences_supercontig` will be empty
 
-      --combine_read_files                      Group and concatenate read-files via a common prefix. Useful if samples have been run across multiple lanes. Default prefix is all text preceding the first underscore (_) in read filenames
+      --combine_read_files                      Group and concatenate read-files via a common prefix. Useful if samples 
+                                                have been run across multiple lanes. Default prefix is all text preceding 
+                                                the first underscore (_) in read filenames
 
-      --combine_read_files_num_fields <int>     Number of fields (delimited by an underscore) to use for combining read files when using the `--combine_read_files` flag. Default is 1
+      --combine_read_files_num_fields <int>     Number of fields (delimited by an underscore) to use for combining read 
+                                                files when using the `--combine_read_files` flag. Default is 1
 
     """.stripIndent()
 }
