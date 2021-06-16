@@ -82,23 +82,27 @@ Vagrant.configure("2") do |config|
     apt install -y screen
     apt install -y default-jre
 
+    # Install Nextflow:
     runuser -l vagrant -c 'mkdir nextflow_install'
     runuser -l vagrant -c 'cd nextflow_install; curl -s https://get.nextflow.io | bash; cd ..'
+    echo 'export PATH="$PATH:/home/vagrant/nextflow_install"' >> /home/vagrant/.bashrc
 
+    # Clone the HybPiper-RBGV repo:
     runuser -l vagrant -c 'mkdir 01_hybpiper-rbgv; \
     cd 01_hybpiper-rbgv; \
     git clone https://github.com/chrisjackson-pellicle/HybPiper-RBGV.git; \
     cp HybPiper-RBGV/{hybpiper-rbgv-pipeline.nf,hybpiper-rbgv.config} .; \
     cd ..'
-
+ 
+    # Clone the Yang-and-Smith repo
     runuser -l vagrant -c 'mkdir 02_yang-and-smith; \
     cd 02_yang-and-smith; \
-
     git clone https://github.com/chrisjackson-pellicle/Yang-and-Smith-paralogy-resolution-tutorial.git; \
     cp Yang-and-Smith-paralogy-resolution-tutorial/{yang-and-smith-rbgv-pipeline.nf,yang-and-smith-rbgv.config} .; \
     cd ..'
 
-    echo 'export PATH="$PATH:/home/vagrant/nextflow_install"' >> /home/vagrant/.bashrc
+    # Add screen tab captioning:
     echo 'caption always "%{= kw}%-w%{= BW}%n %t%{-}%+w %-= @%H - %LD %d %LM - %c"' > /home/vagrant/.screenrc
+    
   SHELL
 end
