@@ -93,8 +93,9 @@ Vagrant.configure("2") do |config|
 
     runuser -l vagrant -c 'mkdir 02_yang-and-smith; \
     cd 02_yang-and-smith; \
-    git clone https://github.com/chrisjackson-pellicle/paralogy_resolution_tutorial.git; \
-    cp paralogy_resolution_tutorial/{yang-and-smith-rbgv-pipeline.nf,yang-and-smith-rbgv.config} .; \
+
+    git clone https://github.com/chrisjackson-pellicle/Yang-and-Smith-paralogy-resolution-tutorial.git; \
+    cp Yang-and-Smith-paralogy-resolution-tutorial/{yang-and-smith-rbgv-pipeline.nf,yang-and-smith-rbgv.config} .; \
     cd ..'
 
     echo 'export PATH="$PATH:/home/vagrant/nextflow_install"' >> /home/vagrant/.bashrc
