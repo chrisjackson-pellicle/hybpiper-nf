@@ -250,9 +250,9 @@ if (!params.paired_and_single && !params.single_only  && !params.combine_read_fi
   Channel
   .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
   flat : true, checkIfExists: true)
- .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
- .groupTuple(sort:true)
- .into { illumina_paired_reads_ch_1; illumina_paired_reads_ch_2;  illumina_paired_reads_ch_3 }
+  .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+  .groupTuple(sort:true)
+  .into { illumina_paired_reads_ch_1; illumina_paired_reads_ch_2;  illumina_paired_reads_ch_3 }
 } else {
   illumina_paired_reads_ch_1 = Channel.empty()
   illumina_paired_reads_ch_2 = Channel.empty()
