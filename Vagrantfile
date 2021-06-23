@@ -62,7 +62,7 @@ Vagrant.configure("2") do |config|
     # Customize the amount of memory on the VM:
     vb.memory = "5120"
     vb.cpus = "4"
-    vb.name = "hybpiper-vm"
+    vb.name = "hybpiper-yang-and-smith-vm"
   end
   #
   # View the documentation for the provider you are using for more
