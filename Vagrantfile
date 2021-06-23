@@ -72,20 +72,85 @@ Vagrant.configure("2") do |config|
   # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
+
+    # Re-size disk:
     parted /dev/sda resizepart 1 100%
     pvresize /dev/sda1
     lvresize -rl +100%FREE /dev/mapper/vagrant--vg-root
 
+    
+    # Install general packages:
+    apt-get install -y software-properties-common
     apt-get update
     apt-get install -y curl
     apt install -y vim
     apt install -y screen
     apt install -y default-jre
+    apt install -y unzip
+
+
+    # Install R version 4:
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+    add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
+    apt update
+    apt install -y r-base r-base-core r-recommended r-base-dev
+
+
+    # Install R packages:
+    add-apt-repository ppa:c2d4u.team/c2d4u4.0+
+    apt update
+    apt install -y --no-install-recommends r-cran-ape r-cran-stringr r-cran-seqinr
+
+
+    # Install miniconda:
+    runuser -l vagrant -c '
+    if [ ! -d /home/vagrant/miniconda3 ]; then \
+      curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+      bash Miniconda3-latest-Linux-x86_64.sh -b -p /home/vagrant/miniconda3 && \
+      rm Miniconda3-latest-Linux-x86_64.sh; \
+    fi'
+  
+
+    # Set conda path:
+    echo 'export PATH="$PATH:/home/vagrant/miniconda3/bin"' >> /home/vagrant/.bashrc
+
+
+    # Add bioconda channel:
+    runuser -l vagrant -c '
+    /home/vagrant/miniconda3/bin/conda config --add channels defaults; \
+    /home/vagrant/miniconda3/bin/conda config --add channels bioconda; \
+    /home/vagrant/miniconda3/bin/conda config --add channels conda-forge'
+
+
+    # Install programs using conda:
+    runuser -l vagrant -c '
+    /home/vagrant/miniconda3/bin/conda install -y bioconda::iqtree=2.1.2; \
+    /home/vagrant/miniconda3/bin/conda install -y bioconda::mafft=7.475; \
+    /home/vagrant/miniconda3/bin/conda install -y bioconda::bwa=0.7.17; \
+    /home/vagrant/miniconda3/bin/conda install -y bioconda::samtools=1.9; \
+    /home/vagrant/miniconda3/bin/conda install -y bioconda::bbmap=38.86; \
+    /home/vagrant/miniconda3/bin/conda install -y bioconda::bcftools=1.9'
+
+
+    # Install Astral;
+    runuser -l vagrant -c '
+    mkdir -p /vagrant/WS3 && cd /vagrant/WS3; \
+    curl -OL https://github.com/smirarab/ASTRAL/raw/master/Astral.5.7.7.zip; \
+    unzip Astral.5.7.7.zip; \
+    chmod -R a+rX Astral; \
+    git clone https://github.com/LarsNauheimer/HybPhaser.git; \
+    cd -'
+
+
+    # Pull the Singularity image:
+    # singularity pull library://chrisjackson-pellicle/collection/hybpiper-yang-and-smith-rbgv:latest
+
 
     # Install Nextflow:
     runuser -l vagrant -c 'mkdir nextflow_install'
     runuser -l vagrant -c 'cd nextflow_install; curl -s https://get.nextflow.io | bash; cd ..'
     echo 'export PATH="$PATH:/home/vagrant/nextflow_install"' >> /home/vagrant/.bashrc
+
 
     # Clone the HybPiper-RBGV repo:
     runuser -l vagrant -c 'mkdir 01_hybpiper-rbgv; \
@@ -94,7 +159,8 @@ Vagrant.configure("2") do |config|
     cp HybPiper-RBGV/{hybpiper-rbgv-pipeline.nf,hybpiper-rbgv.config} .; \
     cd ..'
  
-    # Clone the Yang-and-Smith repo
+
+    # Clone the Yang-and-Smith repo:
     runuser -l vagrant -c 'mkdir 02_yang-and-smith; \
     cd 02_yang-and-smith; \
     git clone https://github.com/chrisjackson-pellicle/Yang-and-Smith-paralogy-resolution-tutorial.git; \
@@ -103,6 +169,6 @@ Vagrant.configure("2") do |config|
 
     # Add screen tab captioning:
     echo 'caption always "%{= kw}%-w%{= BW}%n %t%{-}%+w %-= @%H - %LD %d %LM - %c"' > /home/vagrant/.screenrc
-    
+
   SHELL
 end
