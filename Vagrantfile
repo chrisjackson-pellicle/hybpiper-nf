@@ -102,17 +102,21 @@ Vagrant.configure("2") do |config|
     apt install -y --no-install-recommends r-cran-ape r-cran-stringr r-cran-seqinr
 
 
-    # Install miniconda:
+    # Create bin directory in /home/vagrant:
+    runuser -l vagrant -c 'mkdir bin' 
+
+
+    # Install miniconda in /home/vagrant/bin:
     runuser -l vagrant -c '
-    if [ ! -d /home/vagrant/miniconda3 ]; then \
+    if [ ! -d /home/vagrant/bin/miniconda3 ]; then \
       curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-      bash Miniconda3-latest-Linux-x86_64.sh -b -p /home/vagrant/miniconda3 && \
+      bash Miniconda3-latest-Linux-x86_64.sh -b -p /home/vagrant/bin/miniconda3 && \
       rm Miniconda3-latest-Linux-x86_64.sh; \
     fi'
   
 
-    # Set conda path:
-    echo 'export PATH="$PATH:/home/vagrant/miniconda3/bin"' >> /home/vagrant/.bashrc
+    # Add conda to PATH:
+    echo 'export PATH="$PATH:/home/vagrant/bin/miniconda3/bin"' >> /home/vagrant/.bashrc
 
 
     # Add bioconda channel:
@@ -132,40 +136,42 @@ Vagrant.configure("2") do |config|
     /home/vagrant/miniconda3/bin/conda install -y bioconda::bcftools=1.9'
 
 
-    # Install Astral;
+    # Install Astral in /home/vagrant/bin:
     runuser -l vagrant -c '
-    mkdir -p /vagrant/WS3 && cd /vagrant/WS3; \
+    cd bin; \
     curl -OL https://github.com/smirarab/ASTRAL/raw/master/Astral.5.7.7.zip; \
     unzip Astral.5.7.7.zip; \
+    rm Astral.5.7.7.zip; \
     chmod -R a+rX Astral; \
-    git clone https://github.com/LarsNauheimer/HybPhaser.git; \
-    cd -'
+    cd ..'
 
 
-    # Pull the Singularity image:
-    # singularity pull library://chrisjackson-pellicle/collection/hybpiper-yang-and-smith-rbgv:latest
+    # Install Nextflow: 
+    runuser -l vagrant -c '
+    cd bin; \
+    mkdir nextflow_install; \
+    cd nextflow_install; \ 
+    curl -s https://get.nextflow.io | bash; \
+    cd ../..'
 
 
-    # Install Nextflow:
-    runuser -l vagrant -c 'mkdir nextflow_install'
-    runuser -l vagrant -c 'cd nextflow_install; curl -s https://get.nextflow.io | bash; cd ..'
-    echo 'export PATH="$PATH:/home/vagrant/nextflow_install"' >> /home/vagrant/.bashrc
+    # Add Nextflow to PATH:
+    echo 'export PATH="$PATH:/home/vagrant/bin/nextflow_install"' >> /home/vagrant/.bashrc
 
 
     # Clone the HybPiper-RBGV repo:
-    runuser -l vagrant -c 'mkdir 01_hybpiper-rbgv; \
-    cd 01_hybpiper-rbgv; \
+    runuser -l vagrant -c '
+    cd bin; \
     git clone https://github.com/chrisjackson-pellicle/HybPiper-RBGV.git; \
-    cp HybPiper-RBGV/{hybpiper-rbgv-pipeline.nf,hybpiper-rbgv.config} .; \
     cd ..'
  
 
     # Clone the Yang-and-Smith repo:
-    runuser -l vagrant -c 'mkdir 02_yang-and-smith; \
-    cd 02_yang-and-smith; \
-    git clone https://github.com/chrisjackson-pellicle/Yang-and-Smith-paralogy-resolution-tutorial.git; \
-    cp Yang-and-Smith-paralogy-resolution-tutorial/{yang-and-smith-rbgv-pipeline.nf,yang-and-smith-rbgv.config} .; \
+    runuser -l vagrant -c '
+    cd bin; \
+    git clone https://github.com/chrisjackson-pellicle/Yang-and-Smith-paralogy-resolution.git; \
     cd ..'
+
 
     # Add screen tab captioning:
     echo 'caption always "%{= kw}%-w%{= BW}%n %t%{-}%+w %-= @%H - %LD %d %LM - %c"' > /home/vagrant/.screenrc
