@@ -121,19 +121,19 @@ Vagrant.configure("2") do |config|
 
     # Add bioconda channel:
     runuser -l vagrant -c '
-    /home/vagrant/miniconda3/bin/conda config --add channels defaults; \
-    /home/vagrant/miniconda3/bin/conda config --add channels bioconda; \
-    /home/vagrant/miniconda3/bin/conda config --add channels conda-forge'
+    /home/vagrant/bin/miniconda3/bin/conda config --add channels defaults; \
+    /home/vagrant/bin/miniconda3/bin/conda config --add channels bioconda; \
+    /home/vagrant/bin/miniconda3/bin/conda config --add channels conda-forge'
 
 
     # Install programs using conda:
     runuser -l vagrant -c '
-    /home/vagrant/miniconda3/bin/conda install -y bioconda::iqtree=2.1.2; \
-    /home/vagrant/miniconda3/bin/conda install -y bioconda::mafft=7.475; \
-    /home/vagrant/miniconda3/bin/conda install -y bioconda::bwa=0.7.17; \
-    /home/vagrant/miniconda3/bin/conda install -y bioconda::samtools=1.9; \
-    /home/vagrant/miniconda3/bin/conda install -y bioconda::bbmap=38.86; \
-    /home/vagrant/miniconda3/bin/conda install -y bioconda::bcftools=1.9'
+    /home/vagrant/bin/miniconda3/bin/conda install -y bioconda::iqtree=2.1.2; \
+    /home/vagrant/bin/miniconda3/bin/conda install -y bioconda::mafft=7.475; \
+    /home/vagrant/bin/miniconda3/bin/conda install -y bioconda::bwa=0.7.17; \
+    /home/vagrant/bin/miniconda3/bin/conda install -y bioconda::samtools=1.9; \
+    /home/vagrant/bin/miniconda3/bin/conda install -y bioconda::bbmap=38.86; \
+    /home/vagrant/bin/miniconda3/bin/conda install -y bioconda::bcftools=1.9'
 
 
     # Install Astral in /home/vagrant/bin:
@@ -164,7 +164,7 @@ Vagrant.configure("2") do |config|
     cd bin; \
     git clone https://github.com/chrisjackson-pellicle/HybPiper-RBGV.git; \
     cd ..'
- 
+
 
     # Clone the Yang-and-Smith repo:
     runuser -l vagrant -c '
