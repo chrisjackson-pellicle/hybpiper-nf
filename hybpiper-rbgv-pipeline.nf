@@ -116,7 +116,7 @@ def helpMessage() {
                                   --use_blastx is set by default. Default is off
 
       --use_trimmomatic           Trim forwards and reverse reads using Trimmomatic.
-       Default is off
+                                  Default is off
 
       --trimmomatic_leading_quality <int>       
                                   Cut bases off the start of a read, if below this 
@@ -406,19 +406,19 @@ if (!params.paired_and_single && !params.single_end  && !params.combine_read_fil
   Channel
   .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
   flat : true, checkIfExists: true)
- .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
- .groupTuple(sort:true)
- .filter { it[0] in user_provided_namelist_for_filtering }
- // .view()
- .set { illumina_paired_reads_ch }
+  .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+  .groupTuple(sort:true)
+  .filter { it[0] in user_provided_namelist_for_filtering }
+  // .view()
+  .set { illumina_paired_reads_ch }
 
 } else if (!params.paired_and_single && !params.single_end && params.combine_read_files && !user_provided_namelist_for_filtering) {
   Channel
   .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
   flat : true, checkIfExists: true)
- .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
- .groupTuple(sort:true)
- .set { illumina_paired_reads_ch }
+  .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+  .groupTuple(sort:true)
+  .set { illumina_paired_reads_ch }
 
 } else {
   illumina_paired_reads_ch = Channel.empty()
@@ -447,45 +447,45 @@ process TRANSLATE_TARGET_FILE {
   */
 
  // echo true
- label 'in_container'
- publishDir "${params.outdir}/00_translated_target_file", mode: 'copy'
+  label 'in_container'
+  publishDir "${params.outdir}/00_translated_target_file", mode: 'copy'
 
- when:
-  params.translate_target_file_for_blastx
+  when:
+    params.translate_target_file_for_blastx
 
- input:
-  path(target_file_nucleotides)
+  input:
+    path(target_file_nucleotides)
 
- output:
-  path "target_file_translated.fasta", emit: translated_target_file
-  path("translation_warnings.txt")
+  output:
+    path "target_file_translated.fasta", emit: translated_target_file
+    path("translation_warnings.txt")
 
- script:
- """
- #!/usr/bin/env python
+  script:
+    """
+    #!/usr/bin/env python
 
-from Bio import SeqIO
- 
-translated_seqs_to_write = []
-with open("${target_file_nucleotides}", 'r') as target_file_nucleotides:
-  seqs = SeqIO.parse(target_file_nucleotides, 'fasta')
-  with open('translation_warnings.txt', 'w') as translation_warnings:
-    for seq in seqs:
-      if len(seq.seq) % 3 != 0:
-        translation_warnings.write(f"WARNING: sequence for gene {seq.name} is not a multiple of 3. Translating anyway...\\n")
-      protein_translation = seq.translate()
-      protein_translation.name = seq.name
-      protein_translation.id = seq.id
-      protein_translation.description = 'translated sequence from nucleotide target file'
-      num_stop_codons = protein_translation.seq.count('*')
-      if num_stop_codons != 0:
-        translation_warnings.write(f'WARNING: stop codons present in translation of sequence {seq.name}, please check\\n')
-      translated_seqs_to_write.append(protein_translation)
+    from Bio import SeqIO
 
-with open('target_file_translated.fasta', 'w') as translated_handle:
-  SeqIO.write(translated_seqs_to_write, translated_handle, 'fasta')
+    translated_seqs_to_write = []
+    with open("${target_file_nucleotides}", 'r') as target_file_nucleotides:
+      seqs = SeqIO.parse(target_file_nucleotides, 'fasta')
+      with open('translation_warnings.txt', 'w') as translation_warnings:
+        for seq in seqs:
+          if len(seq.seq) % 3 != 0:
+            translation_warnings.write(f"WARNING: sequence for gene {seq.name} is not a multiple of 3. Translating anyway...\\n")
+          protein_translation = seq.translate()
+          protein_translation.name = seq.name
+          protein_translation.id = seq.id
+          protein_translation.description = 'translated sequence from nucleotide target file'
+          num_stop_codons = protein_translation.seq.count('*')
+          if num_stop_codons != 0:
+            translation_warnings.write(f'WARNING: stop codons present in translation of sequence {seq.name}, please check\\n')
+          translated_seqs_to_write.append(protein_translation)
 
-"""
+    with open('target_file_translated.fasta', 'w') as translated_handle:
+      SeqIO.write(translated_seqs_to_write, translated_handle, 'fasta')
+
+    """
 }
 
 
@@ -542,7 +542,7 @@ process COMBINE_LANES_SINGLE_END {
   publishDir "$params.outdir/02_reads_combined_lanes", mode: 'copy', pattern: "*.fastq*"
 
   if (params.num_forks) {
-      maxForks params.num_forks
+    maxForks params.num_forks
   }
 
   when:
@@ -728,20 +728,20 @@ process READS_FIRST_SINGLE_END {
 
   def command_list = []
   if (params.nosupercontigs) {
-     command_list << "--nosupercontigs"
-     }
+    command_list << "--nosupercontigs"
+    }
   if (params.memory) {
-     command_list << "--memory ${params.memory}"
-     }
+    command_list << "--memory ${params.memory}"
+    }
   if (params.discordant_reads_edit_distance) {
-     command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
-     }
+    command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
+    }
   if (params.discordant_reads_cutoff) {
-     command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
-     } 
+    command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
+    } 
   if (params.merged) {
-     command_list << "--merged"
-     }
+    command_list << "--merged"
+    }
   if (!params.use_blastx && !params.translate_target_file_for_blastx) {
     command_list << "--bwa"
   }
@@ -755,9 +755,9 @@ process READS_FIRST_SINGLE_END {
     command_list << "--cov_cutoff ${params.cov_cutoff}"
   }
   if (params.cleanup) {
-     cleanup = "python /HybPiper/cleanup.py ${prefix}"
+    cleanup = "python /HybPiper/cleanup.py ${prefix}"
   } else {
-     cleanup = ''
+    cleanup = ''
   }
   reads_first_command = "python /HybPiper/reads_first.py -b ${target_file} -r ${reads_single} --prefix ${prefix} --cpu ${task.cpus} " + command_list.join(' ')
 
@@ -766,7 +766,7 @@ process READS_FIRST_SINGLE_END {
   ${reads_first_command}
   ${cleanup}
   """
- }
+}
 
 
 process READS_FIRST_PAIRED_AND_SINGLE_END {
@@ -798,23 +798,23 @@ process READS_FIRST_PAIRED_AND_SINGLE_END {
   script:
   def command_list = []
   if (params.nosupercontigs) {
-     command_list << "--nosupercontigs"
-     }
+    command_list << "--nosupercontigs"
+    }
   if (params.memory) {
-     command_list << "--memory ${params.memory}"
-     }
+    command_list << "--memory ${params.memory}"
+    }
   if (params.bbmap_subfilter) {
-     command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
-     }
+    command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
+    }
   if (params.discordant_reads_edit_distance) {
-     command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
-     }
+    command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
+    }
   if (params.discordant_reads_cutoff) {
-     command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
-     } 
+    command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
+    } 
   if (params.merged) {
-     command_list << "--merged"
-     }
+    command_list << "--merged"
+    }
   if (!params.use_blastx && !params.translate_target_file_for_blastx) {
     command_list << "--bwa"
   }
@@ -828,9 +828,9 @@ process READS_FIRST_PAIRED_AND_SINGLE_END {
     command_list << "--cov_cutoff ${params.cov_cutoff}"
   }
   if (params.cleanup) {
-     cleanup = "python /HybPiper/cleanup.py ${pair_id}"
+    cleanup = "python /HybPiper/cleanup.py ${pair_id}"
   } else {
-     cleanup = ''
+    cleanup = ''
   }
   reads_first_command = "python /HybPiper/reads_first.py -b ${target_file} -r ${reads_R1} ${reads_R2} --unpaired ${reads_unpaired} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
 
@@ -873,23 +873,23 @@ process READS_FIRST_PAIRED_END {
 
   def command_list = []
   if (params.nosupercontigs) {
-     command_list << "--nosupercontigs"
-     }
+    command_list << "--nosupercontigs"
+    }
   if (params.memory) {
-     command_list << "--memory ${params.memory}"
-     }
+    command_list << "--memory ${params.memory}"
+    }
   if (params.bbmap_subfilter) {
-     command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
-     }
+    command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
+    }
   if (params.discordant_reads_edit_distance) {
-     command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
-     }
+    command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
+    }
   if (params.discordant_reads_cutoff) {
-     command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
-     }
+    command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
+    }
   if (params.merged) {
-     command_list << "--merged"
-     }
+    command_list << "--merged"
+    }
   if (!params.use_blastx && !params.translate_target_file_for_blastx) {
     command_list << "--bwa"
   }
@@ -903,9 +903,9 @@ process READS_FIRST_PAIRED_END {
     command_list << "--cov_cutoff ${params.cov_cutoff}"
   }
   if (params.cleanup) {
-     cleanup = "python /HybPiper/cleanup.py ${pair_id}"
+    cleanup = "python /HybPiper/cleanup.py ${pair_id}"
   } else {
-     cleanup = ''
+    cleanup = ''
   }
   reads_first_command = "python /HybPiper/reads_first.py -b ${target_file} -r ${reads_R1} ${reads_R2} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
 
@@ -916,7 +916,7 @@ process READS_FIRST_PAIRED_END {
   ${reads_first_command}
   ${cleanup}
   """
- }
+}
 
 
 process VISUALISE {
@@ -925,23 +925,23 @@ process VISUALISE {
   */
 
  // echo true
- label 'in_container'
- publishDir "${params.outdir}/05_visualise", mode: 'copy'
+  label 'in_container'
+  publishDir "${params.outdir}/05_visualise", mode: 'copy'
 
- input:
-  path(reads_first)
-  path(target_file)
-  path(namelist)
+  input:
+    path(reads_first)
+    path(target_file)
+    path(namelist)
 
- output:
-  path("seq_lengths.txt"), emit: seq_lengths_ch
-  path("heatmap.png")
+  output:
+    path("seq_lengths.txt"), emit: seq_lengths_ch
+    path("heatmap.png")
 
- script:
- """
- python /HybPiper/get_seq_lengths.py ${target_file} ${namelist} dna > seq_lengths.txt
- Rscript /HybPiper/gene_recovery_heatmap_ggplot.R
- """
+  script:
+  """
+  python /HybPiper/get_seq_lengths.py ${target_file} ${namelist} dna > seq_lengths.txt
+  Rscript /HybPiper/gene_recovery_heatmap_ggplot.R
+  """
 }
 
 
@@ -950,20 +950,20 @@ process SUMMARY_STATS {
 Run hybpiper_stats.py script.
 */
 
- // echo true
- label 'in_container'
- publishDir "${params.outdir}/06_summary_stats", mode: 'copy'
+  // echo true
+  label 'in_container'
+  publishDir "${params.outdir}/06_summary_stats", mode: 'copy'
 
- input:
-  path(reads_first)
-  path(seq_lengths) 
-  path(namelist)
+  input:
+    path(reads_first)
+    path(seq_lengths) 
+    path(namelist)
 
- output:
-  path("stats.txt"), emit: stats_file
+  output:
+    path("stats.txt"), emit: stats_file
 
- script:
- if (params.translate_target_file_for_blastx || params.use_blastx) {
+  script:
+  if (params.translate_target_file_for_blastx || params.use_blastx) {
   """
   python /HybPiper/hybpiper_stats.py ${seq_lengths} ${namelist} --blastx_adjustment > stats.txt
   """
@@ -971,7 +971,7 @@ Run hybpiper_stats.py script.
   """
   python /HybPiper/hybpiper_stats.py ${seq_lengths} ${namelist} > stats.txt
   """
- } 
+} 
 }
 
 
@@ -981,19 +981,19 @@ process INTRONERATE {
   */
 
  // echo true
- label 'in_container'
+label 'in_container'
 
- input:
-  path(reads_first)
+  input:
+    path(reads_first)
 
- output:
-  path(reads_first), emit: intronerate_ch optional true
+  output:
+    path(reads_first), emit: intronerate_ch optional true
 
- script:
- """
- echo ${reads_first}
- python /HybPiper/intronerate.py --prefix ${reads_first}
- """
+  script:
+  """
+  echo ${reads_first}
+  python /HybPiper/intronerate.py --prefix ${reads_first}
+  """
 }
 
 
@@ -1009,7 +1009,7 @@ process PARALOGS {
 
   if (params.num_forks) {
       maxForks params.num_forks
-   }
+  }
 
   input:
     path(intronerate_complete) 
@@ -1099,23 +1099,23 @@ process LUCY_PROCESS {
   BEAGLE
   */
 
- echo true
- label 'in_container'
- publishDir "${params.outdir}/lucy_beagle_folder", mode: 'copy'
+  echo true
+  label 'in_container'
+  publishDir "${params.outdir}/lucy_beagle_folder", mode: 'copy'
 
 
- input:
-  tuple val(prefix), path(reads_R1), path(reads_R2)
+  input:
+    tuple val(prefix), path(reads_R1), path(reads_R2)
 
- output:
-  path "${reads_R1}", emit: lucy_ch
+  output:
+    path "${reads_R1}", emit: lucy_ch
 
 
- script:
-  """
-  echo ${reads_R1}
+  script:
+    """
+    echo ${reads_R1}
 
-  """
+    """
 } 
 
 
