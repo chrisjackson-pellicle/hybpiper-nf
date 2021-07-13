@@ -446,7 +446,7 @@ process TRANSLATE_TARGET_FILE {
   If the flag `--translate_target_file_for_blastx` is set, translate nucleotide target file.
   */
 
- // echo true
+  // echo true
   label 'in_container'
   publishDir "${params.outdir}/00_translated_target_file", mode: 'copy'
 
