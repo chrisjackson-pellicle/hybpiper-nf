@@ -70,6 +70,8 @@ Please see the Wiki entry [Running on Linux][3].
 
 Please see the Wiki entry [Running on a Mac][1].
 
+**NOTE:** Macs using the new Apple M1 chip are not yet supported. 
+
 ## Running on a PC (Windows)
 
 Please see the Wiki entry [Running on a PC][20].
