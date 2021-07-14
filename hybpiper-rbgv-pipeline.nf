@@ -677,15 +677,15 @@ process TRIMMOMATIC_SINGLE {
   script:
     """
     single=${reads_single}
-  
-  
+
+
     if [[ \$single = *.gz ]]
       then 
         output_single=${prefix}_trimmed_single.fq.gz
       else
         output_single=${prefix}_trimmed_single.fq
     fi
-  
+
     echo -e ">TruSeq3_IndexedAdapter\nAGATCGGAAGAGCACACGTCTGAACTCCAGTCAC\n>TruSeq3_UniversalAdapter\nAGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA\n" > TruSeq3-SE.fa
     trimmomatic SE -phred33 -threads ${task.cpus} \
     ${reads_single} \${output_single} ILLUMINACLIP:TruSeq3-SE.fa:2:30:10:1:true \
@@ -709,7 +709,7 @@ process READS_FIRST_SINGLE_END {
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${prefix}/${prefix}_supercontigs_with_discordant_reads.csv"
 
   if (params.num_forks) {
-      maxForks params.num_forks
+    maxForks params.num_forks
   }
 
   when:
@@ -725,47 +725,47 @@ process READS_FIRST_SINGLE_END {
     path("${prefix}/${prefix}_supercontigs_with_discordant_reads.csv") optional true
 
   script:
+    def command_list = []
 
-  def command_list = []
-  if (params.nosupercontigs) {
-    command_list << "--nosupercontigs"
+    if (params.nosupercontigs) {
+      command_list << "--nosupercontigs"
+      }
+    if (params.memory) {
+      command_list << "--memory ${params.memory}"
+      }
+    if (params.discordant_reads_edit_distance) {
+      command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
+      }
+    if (params.discordant_reads_cutoff) {
+      command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
+      } 
+    if (params.merged) {
+      command_list << "--merged"
+      }
+    if (!params.use_blastx && !params.translate_target_file_for_blastx) {
+      command_list << "--bwa"
     }
-  if (params.memory) {
-    command_list << "--memory ${params.memory}"
+    if (params.blastx_evalue) {
+      command_list << "--evalue ${params.blastx_evalue}"
     }
-  if (params.discordant_reads_edit_distance) {
-    command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
+    if (params.paralog_warning_min_len_percent) {
+      command_list << "--paralog_warning_min_length_percentage ${params.paralog_warning_min_len_percent}"
     }
-  if (params.discordant_reads_cutoff) {
-    command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
-    } 
-  if (params.merged) {
-    command_list << "--merged"
+    if (params.cov_cutoff) {
+      command_list << "--cov_cutoff ${params.cov_cutoff}"
     }
-  if (!params.use_blastx && !params.translate_target_file_for_blastx) {
-    command_list << "--bwa"
-  }
-  if (params.blastx_evalue) {
-    command_list << "--evalue ${params.blastx_evalue}"
-  }
-  if (params.paralog_warning_min_len_percent) {
-    command_list << "--paralog_warning_min_length_percentage ${params.paralog_warning_min_len_percent}"
-  }
-  if (params.cov_cutoff) {
-    command_list << "--cov_cutoff ${params.cov_cutoff}"
-  }
-  if (params.cleanup) {
-    cleanup = "python /HybPiper/cleanup.py ${prefix}"
-  } else {
-    cleanup = ''
-  }
-  reads_first_command = "python /HybPiper/reads_first.py -b ${target_file} -r ${reads_single} --prefix ${prefix} --cpu ${task.cpus} " + command_list.join(' ')
+    if (params.cleanup) {
+      cleanup = "python /HybPiper/cleanup.py ${prefix}"
+    } else {
+      cleanup = ''
+    }
+    reads_first_command = "python /HybPiper/reads_first.py -b ${target_file} -r ${reads_single} --prefix ${prefix} --cpu ${task.cpus} " + command_list.join(' ')
 
-  """
-  echo ${reads_first_command}
-  ${reads_first_command}
-  ${cleanup}
-  """
+    """
+    echo ${reads_first_command}
+    ${reads_first_command}
+    ${cleanup}
+    """
 }
 
 
@@ -780,7 +780,7 @@ process READS_FIRST_PAIRED_AND_SINGLE_END {
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_supercontigs_with_discordant_reads.csv"
 
   if (params.num_forks) {
-      maxForks params.num_forks
+    maxForks params.num_forks
   }
 
   when:
@@ -796,50 +796,51 @@ process READS_FIRST_PAIRED_AND_SINGLE_END {
     path("${pair_id}/${pair_id}_supercontigs_with_discordant_reads.csv") optional true
 
   script:
-  def command_list = []
-  if (params.nosupercontigs) {
-    command_list << "--nosupercontigs"
-    }
-  if (params.memory) {
-    command_list << "--memory ${params.memory}"
-    }
-  if (params.bbmap_subfilter) {
-    command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
-    }
-  if (params.discordant_reads_edit_distance) {
-    command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
-    }
-  if (params.discordant_reads_cutoff) {
-    command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
-    } 
-  if (params.merged) {
-    command_list << "--merged"
-    }
-  if (!params.use_blastx && !params.translate_target_file_for_blastx) {
-    command_list << "--bwa"
-  }
-  if (params.blastx_evalue) {
-    command_list << "--evalue ${params.blastx_evalue}"
-  }
-  if (params.paralog_warning_min_len_percent) {
-    command_list << "--paralog_warning_min_length_percentage ${params.paralog_warning_min_len_percent}"
-  }
-  if (params.cov_cutoff) {
-    command_list << "--cov_cutoff ${params.cov_cutoff}"
-  }
-  if (params.cleanup) {
-    cleanup = "python /HybPiper/cleanup.py ${pair_id}"
-  } else {
-    cleanup = ''
-  }
-  reads_first_command = "python /HybPiper/reads_first.py -b ${target_file} -r ${reads_R1} ${reads_R2} --unpaired ${reads_unpaired} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
+    def command_list = []
 
-  script:
-  """
-  echo ${reads_first_command}
-  ${reads_first_command}
-  ${cleanup}
-  """
+    if (params.nosupercontigs) {
+      command_list << "--nosupercontigs"
+      }
+    if (params.memory) {
+      command_list << "--memory ${params.memory}"
+      }
+    if (params.bbmap_subfilter) {
+      command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
+      }
+    if (params.discordant_reads_edit_distance) {
+      command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
+      }
+    if (params.discordant_reads_cutoff) {
+      command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
+      } 
+    if (params.merged) {
+      command_list << "--merged"
+      }
+    if (!params.use_blastx && !params.translate_target_file_for_blastx) {
+      command_list << "--bwa"
+    }
+    if (params.blastx_evalue) {
+      command_list << "--evalue ${params.blastx_evalue}"
+    }
+    if (params.paralog_warning_min_len_percent) {
+      command_list << "--paralog_warning_min_length_percentage ${params.paralog_warning_min_len_percent}"
+    }
+    if (params.cov_cutoff) {
+      command_list << "--cov_cutoff ${params.cov_cutoff}"
+    }
+    if (params.cleanup) {
+      cleanup = "python /HybPiper/cleanup.py ${pair_id}"
+    } else {
+      cleanup = ''
+    }
+    reads_first_command = "python /HybPiper/reads_first.py -b ${target_file} -r ${reads_R1} ${reads_R2} --unpaired ${reads_unpaired} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
+
+    script:
+    """
+    echo ${reads_first_command}
+    ${reads_first_command}
+    ${cleanup}
+    """
   } 
 
 
@@ -854,7 +855,7 @@ process READS_FIRST_PAIRED_END {
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_supercontigs_with_discordant_reads.csv"
 
   if (params.num_forks) {
-      maxForks params.num_forks
+    maxForks params.num_forks
   }
 
   when:
@@ -870,52 +871,52 @@ process READS_FIRST_PAIRED_END {
     path("${pair_id}/${pair_id}_supercontigs_with_discordant_reads.csv") optional true
 
   script:
+    def command_list = []
 
-  def command_list = []
-  if (params.nosupercontigs) {
-    command_list << "--nosupercontigs"
+    if (params.nosupercontigs) {
+      command_list << "--nosupercontigs"
+      }
+    if (params.memory) {
+      command_list << "--memory ${params.memory}"
+      }
+    if (params.bbmap_subfilter) {
+      command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
+      }
+    if (params.discordant_reads_edit_distance) {
+      command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
+      }
+    if (params.discordant_reads_cutoff) {
+      command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
+      }
+    if (params.merged) {
+      command_list << "--merged"
+      }
+    if (!params.use_blastx && !params.translate_target_file_for_blastx) {
+      command_list << "--bwa"
     }
-  if (params.memory) {
-    command_list << "--memory ${params.memory}"
+    if (params.blastx_evalue) {
+      command_list << "--evalue ${params.blastx_evalue}"
     }
-  if (params.bbmap_subfilter) {
-    command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
+    if (params.paralog_warning_min_len_percent) {
+      command_list << "--paralog_warning_min_length_percentage ${params.paralog_warning_min_len_percent}"
     }
-  if (params.discordant_reads_edit_distance) {
-    command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
+    if (params.cov_cutoff) {
+      command_list << "--cov_cutoff ${params.cov_cutoff}"
     }
-  if (params.discordant_reads_cutoff) {
-    command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
+    if (params.cleanup) {
+      cleanup = "python /HybPiper/cleanup.py ${pair_id}"
+    } else {
+      cleanup = ''
     }
-  if (params.merged) {
-    command_list << "--merged"
-    }
-  if (!params.use_blastx && !params.translate_target_file_for_blastx) {
-    command_list << "--bwa"
-  }
-  if (params.blastx_evalue) {
-    command_list << "--evalue ${params.blastx_evalue}"
-  }
-  if (params.paralog_warning_min_len_percent) {
-    command_list << "--paralog_warning_min_length_percentage ${params.paralog_warning_min_len_percent}"
-  }
-  if (params.cov_cutoff) {
-    command_list << "--cov_cutoff ${params.cov_cutoff}"
-  }
-  if (params.cleanup) {
-    cleanup = "python /HybPiper/cleanup.py ${pair_id}"
-  } else {
-    cleanup = ''
-  }
-  reads_first_command = "python /HybPiper/reads_first.py -b ${target_file} -r ${reads_R1} ${reads_R2} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
+    reads_first_command = "python /HybPiper/reads_first.py -b ${target_file} -r ${reads_R1} ${reads_R2} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
 
 
-  script:
-  """
-  echo "about to try command: ${reads_first_command}"
-  ${reads_first_command}
-  ${cleanup}
-  """
+    script:
+    """
+    echo "about to try command: ${reads_first_command}"
+    ${reads_first_command}
+    ${cleanup}
+    """
 }
 
 
@@ -924,7 +925,7 @@ process VISUALISE {
   Run the get_seq_lengths.py script
   */
 
- // echo true
+  // echo true
   label 'in_container'
   publishDir "${params.outdir}/05_visualise", mode: 'copy'
 
@@ -938,10 +939,10 @@ process VISUALISE {
     path("heatmap.png")
 
   script:
-  """
-  python /HybPiper/get_seq_lengths.py ${target_file} ${namelist} dna > seq_lengths.txt
-  Rscript /HybPiper/gene_recovery_heatmap_ggplot.R
-  """
+    """
+    python /HybPiper/get_seq_lengths.py ${target_file} ${namelist} dna > seq_lengths.txt
+    Rscript /HybPiper/gene_recovery_heatmap_ggplot.R
+    """
 }
 
 
@@ -963,15 +964,15 @@ Run hybpiper_stats.py script.
     path("stats.txt"), emit: stats_file
 
   script:
-  if (params.translate_target_file_for_blastx || params.use_blastx) {
-  """
-  python /HybPiper/hybpiper_stats.py ${seq_lengths} ${namelist} --blastx_adjustment > stats.txt
-  """
-  } else {
-  """
-  python /HybPiper/hybpiper_stats.py ${seq_lengths} ${namelist} > stats.txt
-  """
-} 
+    if (params.translate_target_file_for_blastx || params.use_blastx) {
+    """
+    python /HybPiper/hybpiper_stats.py ${seq_lengths} ${namelist} --blastx_adjustment > stats.txt
+    """
+    } else {
+    """
+    python /HybPiper/hybpiper_stats.py ${seq_lengths} ${namelist} > stats.txt
+    """
+    } 
 }
 
 
@@ -980,7 +981,7 @@ process INTRONERATE {
   Run intronerate.py script.
   */
 
- // echo true
+  // echo true
   label 'in_container'
 
   input:
@@ -990,10 +991,10 @@ process INTRONERATE {
     path(reads_first), emit: intronerate_ch optional true
 
   script:
-  """
-  echo ${reads_first}
-  python /HybPiper/intronerate.py --prefix ${reads_first}
-  """
+    """
+    echo ${reads_first}
+    python /HybPiper/intronerate.py --prefix ${reads_first}
+    """
 }
 
 
@@ -1006,7 +1007,6 @@ process PARALOGS {
   label 'in_container'
   publishDir "${params.outdir}/04_processed_gene_directories", mode: 'copy'
 
-
   if (params.num_forks) {
       maxForks params.num_forks
   }
@@ -1018,9 +1018,9 @@ process PARALOGS {
     path(intronerate_complete), emit: paralogs_ch optional true 
 
   script:
-  """
-  python /HybPiper/paralog_investigator.py ${intronerate_complete}
-  """
+    """
+    python /HybPiper/paralog_investigator.py ${intronerate_complete}
+    """
 }
 
 
@@ -1047,12 +1047,12 @@ process RETRIEVE_SEQUENCES {
     path("*.fasta")
 
   script:
-  """
-  python /HybPiper/retrieve_sequences.py ${target_file} . dna
-  python /HybPiper/retrieve_sequences.py ${target_file} . aa
-  python /HybPiper/retrieve_sequences.py ${target_file} . intron
-  python /HybPiper/retrieve_sequences.py ${target_file} . supercontig
-  """
+    """
+    python /HybPiper/retrieve_sequences.py ${target_file} . dna
+    python /HybPiper/retrieve_sequences.py ${target_file} . aa
+    python /HybPiper/retrieve_sequences.py ${target_file} . intron
+    python /HybPiper/retrieve_sequences.py ${target_file} . supercontig
+    """
 }
 
 
@@ -1078,14 +1078,14 @@ process PARALOG_RETRIEVER {
     path("*.mylog*")  
 
   script:
-  assert (gene_list in List)
-  list_of_names = gene_list.join(' ') // Note that this is necessary so that the list isn't of the form [4471, 4527, etc]
-  """
-  for gene_name in ${list_of_names}
-  do
-    python /HybPiper/paralog_retriever.py ${namelist} \${gene_name} > \${gene_name}.paralogs_noChimeras.fasta 2> \${gene_name}.paralogs.fasta
-  done
-  """
+    assert (gene_list in List)
+    list_of_names = gene_list.join(' ') // Note that this is necessary so that the list isn't of the form [4471, 4527, etc]
+    """
+    for gene_name in ${list_of_names}
+    do
+      python /HybPiper/paralog_retriever.py ${namelist} \${gene_name} > \${gene_name}.paralogs_noChimeras.fasta 2> \${gene_name}.paralogs.fasta
+    done
+    """
 }
 
 
