@@ -389,36 +389,36 @@ Don't group reads from multi-lane (default).
 */
 if (!params.paired_and_single && !params.single_end  && !params.combine_read_files && user_provided_namelist_for_filtering) {
   Channel
-  .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-  flat : true, checkIfExists: true)
-  .filter { it[0] in user_provided_namelist_for_filtering }
-  // .view()
-  .set { illumina_paired_reads_ch }
+    .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+    flat : true, checkIfExists: true)
+    .filter { it[0] in user_provided_namelist_for_filtering }
+    // .view()
+    .set { illumina_paired_reads_ch }
 
 } else if (!params.paired_and_single && !params.single_end  && !params.combine_read_files && !user_provided_namelist_for_filtering) {
-  Channel
-  .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-  flat : true, checkIfExists: true)
-  // .view()
-  .set { illumina_paired_reads_ch }
+    Channel
+    .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+    flat : true, checkIfExists: true)
+    // .view()
+    .set { illumina_paired_reads_ch }
 
 } else if (!params.paired_and_single && !params.single_end  && params.combine_read_files && user_provided_namelist_for_filtering) {
-  Channel
-  .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-  flat : true, checkIfExists: true)
-  .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
-  .groupTuple(sort:true)
-  .filter { it[0] in user_provided_namelist_for_filtering }
-  // .view()
-  .set { illumina_paired_reads_ch }
+    Channel
+    .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+    flat : true, checkIfExists: true)
+    .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+    .groupTuple(sort:true)
+    .filter { it[0] in user_provided_namelist_for_filtering }
+    // .view()
+    .set { illumina_paired_reads_ch }
 
 } else if (!params.paired_and_single && !params.single_end && params.combine_read_files && !user_provided_namelist_for_filtering) {
-  Channel
-  .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-  flat : true, checkIfExists: true)
-  .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
-  .groupTuple(sort:true)
-  .set { illumina_paired_reads_ch }
+    Channel
+    .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+    flat : true, checkIfExists: true)
+    .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+    .groupTuple(sort:true)
+    .set { illumina_paired_reads_ch }
 
 } else {
   illumina_paired_reads_ch = Channel.empty()
@@ -429,12 +429,12 @@ if (!params.paired_and_single && !params.single_end  && !params.combine_read_fil
 Channel of gene names for 'paralog_retriever.py' script
 */
 Channel
-.fromPath("${params.target_file}", checkIfExists: true)
-.splitFasta( record: [id: true, seqString: true ])
-.map { it.id.replaceFirst(~/.*-/, '') }
-.unique()
-.set { gene_names_ch }
-// gene_names_ch.view { "value: $it" }
+  .fromPath("${params.target_file}", checkIfExists: true)
+  .splitFasta( record: [id: true, seqString: true ])
+  .map { it.id.replaceFirst(~/.*-/, '') }
+  .unique()
+  .set { gene_names_ch }
+  // gene_names_ch.view { "value: $it" }
 
 
 /////////////////////////////
@@ -500,7 +500,7 @@ process COMBINE_LANES_PAIRED_END {
   publishDir "$params.outdir/02_reads_combined_lanes", mode: 'copy', pattern: "*.fastq*"
 
   if (params.num_forks) {
-      maxForks params.num_forks
+    maxForks params.num_forks
   }
 
   when:
@@ -513,22 +513,22 @@ process COMBINE_LANES_PAIRED_END {
     tuple val(prefix), path("*R1.fastq*"), path("*R2.fastq*"), emit: combined_lane_paired_reads
 
   script:
-  """
-  first_file=\$(echo $reads_R1 | cut -d' ' -f1)
-  echo \$first_file
+    """
+    first_file=\$(echo $reads_R1 | cut -d' ' -f1)
+    echo \$first_file
 
-  if [[ \$first_file = *.gz ]]
-    then 
-      cat $reads_R1 > ${prefix}_combinedLanes_R1.fastq.gz
-      cat $reads_R2 > ${prefix}_combinedLanes_R2.fastq.gz
-  fi
+    if [[ \$first_file = *.gz ]]
+      then 
+        cat $reads_R1 > ${prefix}_combinedLanes_R1.fastq.gz
+        cat $reads_R2 > ${prefix}_combinedLanes_R2.fastq.gz
+    fi
 
-  if [[ \$first_file = *.fq ]] || [[ \$first_file = *.fastq ]]
-    then 
-      cat $reads_R1 > ${prefix}_combinedLanes_R1.fastq
-      cat $reads_R2 > ${prefix}_combinedLanes_R2.fastq
-  fi
-  """
+    if [[ \$first_file = *.fq ]] || [[ \$first_file = *.fastq ]]
+      then 
+        cat $reads_R1 > ${prefix}_combinedLanes_R1.fastq
+        cat $reads_R2 > ${prefix}_combinedLanes_R2.fastq
+    fi
+    """
 }
 
 
@@ -555,20 +555,20 @@ process COMBINE_LANES_SINGLE_END {
     tuple val(prefix), path("*single.fastq*"), emit: combined_lane_single_reads_ch
 
   script:
-  """
-  first_file=\$(echo $reads_single | cut -d' ' -f1)
-  echo \$first_file
+    """
+    first_file=\$(echo $reads_single | cut -d' ' -f1)
+    echo \$first_file
 
-  if [[ \$first_file = *.gz ]]
-    then 
-      cat $reads_single > ${prefix}_combinedLanes_single.fastq.gz
-  fi
+    if [[ \$first_file = *.gz ]]
+      then 
+        cat $reads_single > ${prefix}_combinedLanes_single.fastq.gz
+    fi
 
-  if [[ \$first_file = *.fq ]] || [[ \$first_file = *.fastq ]]
-    then 
-      cat $reads_single > ${prefix}_combinedLanes_single.fastq
-  fi
-  """
+    if [[ \$first_file = *.fq ]] || [[ \$first_file = *.fastq ]]
+      then 
+        cat $reads_single > ${prefix}_combinedLanes_single.fastq
+    fi
+    """
 }
 
 
@@ -585,7 +585,7 @@ process TRIMMOMATIC_PAIRED {
 
 
   if (params.num_forks) {
-      maxForks params.num_forks
+    maxForks params.num_forks
   }
 
   when:
@@ -599,54 +599,54 @@ process TRIMMOMATIC_PAIRED {
     tuple val(prefix), path("*R1_paired*"), path("*R2_paired*"), path("*R1-R2_unpaired*"), emit: trimmed_paired_and_orphaned_ch
 
   script:
-  read_pairs_pattern_list = params.read_pairs_pattern?.tokenize(',')
+    read_pairs_pattern_list = params.read_pairs_pattern?.tokenize(',')
 
-  """
-  R1=${reads_R1}
-  R2=${reads_R2}
-  sampleID_R1=\${R1%_${read_pairs_pattern_list[0]}*}
-  sampleID_R2=\${R2%_${read_pairs_pattern_list[1]}*}
+    """
+    R1=${reads_R1}
+    R2=${reads_R2}
+    sampleID_R1=\${R1%_${read_pairs_pattern_list[0]}*}
+    sampleID_R2=\${R2%_${read_pairs_pattern_list[1]}*}
 
-  echo \$R1
-  echo \$R2
+    echo \$R1
+    echo \$R2
 
-  if [[ \$R1 = *.gz ]]
-    then 
-      R1_filename_strip_gz="\${R1%.gz}"
-      fastq_extension="\${R1_filename_strip_gz##*.}"
+    if [[ \$R1 = *.gz ]]
+      then 
+        R1_filename_strip_gz="\${R1%.gz}"
+        fastq_extension="\${R1_filename_strip_gz##*.}"
 
-      output_forward_paired=\${sampleID_R1}_R1_paired.fq.gz
-      output_reverse_paired=\${sampleID_R2}_R2_paired.fq.gz
-      output_forward_unpaired=\${sampleID_R1}_R1_unpaired.fq.gz
-      output_reverse_unpaired=\${sampleID_R2}_R2_unpaired.fq.gz
-      output_both_unpaired=\${sampleID_R1}_R1-R2_unpaired.fq.gz
+        output_forward_paired=\${sampleID_R1}_R1_paired.fq.gz
+        output_reverse_paired=\${sampleID_R2}_R2_paired.fq.gz
+        output_forward_unpaired=\${sampleID_R1}_R1_unpaired.fq.gz
+        output_reverse_unpaired=\${sampleID_R2}_R2_unpaired.fq.gz
+        output_both_unpaired=\${sampleID_R1}_R1-R2_unpaired.fq.gz
 
-    else
-      fastq_extension="\${R1##*.}"
+      else
+        fastq_extension="\${R1##*.}"
 
-      output_forward_paired=\${sampleID_R1}_R1_paired.fq
-      output_reverse_paired=\${sampleID_R2}_R2_paired.fq
-      output_forward_unpaired=\${sampleID_R1}_R1_unpaired.fq
-      output_reverse_unpaired=\${sampleID_R2}_R2_unpaired.fq
-      output_both_unpaired=\${sampleID_R1}_R1-R2_unpaired.fq
-  fi
+        output_forward_paired=\${sampleID_R1}_R1_paired.fq
+        output_reverse_paired=\${sampleID_R2}_R2_paired.fq
+        output_forward_unpaired=\${sampleID_R1}_R1_unpaired.fq
+        output_reverse_unpaired=\${sampleID_R2}_R2_unpaired.fq
+        output_both_unpaired=\${sampleID_R1}_R1-R2_unpaired.fq
+    fi
 
-  # Write adapters fasta file:
-  echo -e ">PrefixPE/1\nTACACTCTTTCCCTACACGACGCTCTTCCGATCT\n>PrefixPE/2\nGTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT\n\
-  >PE1\nTACACTCTTTCCCTACACGACGCTCTTCCGATCT\n>PE1_rc\nAGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA\n\
-  >PE2\nGTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT\n>PE2_rc\nAGATCGGAAGAGCACACGTCTGAACTCCAGTCA" > TruSeq3-PE-2.fa
+    # Write adapters fasta file:
+    echo -e ">PrefixPE/1\nTACACTCTTTCCCTACACGACGCTCTTCCGATCT\n>PrefixPE/2\nGTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT\n\
+    >PE1\nTACACTCTTTCCCTACACGACGCTCTTCCGATCT\n>PE1_rc\nAGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA\n\
+    >PE2\nGTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT\n>PE2_rc\nAGATCGGAAGAGCACACGTCTGAACTCCAGTCA" > TruSeq3-PE-2.fa
 
-  # Run Trimmomtic:
-  trimmomatic PE -phred33 -threads ${task.cpus} \
-  ${reads_R1} ${reads_R2} \${output_forward_paired} \${output_forward_unpaired} \
-  \${output_reverse_paired} \${output_reverse_unpaired} \
-  ILLUMINACLIP:TruSeq3-PE-2.fa:2:30:10:1:true \
-  LEADING:${params.trimmomatic_leading_quality} \
-  TRAILING:${params.trimmomatic_trailing_quality} \
-  SLIDINGWINDOW:${params.trimmomatic_sliding_window_size}:${params.trimmomatic_sliding_window_quality} \
-  MINLEN:${params.trimmomatic_min_length} 2>&1 | tee \${sampleID_R1}.log 
-  cat \${output_forward_unpaired} \${output_reverse_unpaired} > \${output_both_unpaired}
-  """
+    # Run Trimmomtic:
+    trimmomatic PE -phred33 -threads ${task.cpus} \
+    ${reads_R1} ${reads_R2} \${output_forward_paired} \${output_forward_unpaired} \
+    \${output_reverse_paired} \${output_reverse_unpaired} \
+    ILLUMINACLIP:TruSeq3-PE-2.fa:2:30:10:1:true \
+    LEADING:${params.trimmomatic_leading_quality} \
+    TRAILING:${params.trimmomatic_trailing_quality} \
+    SLIDINGWINDOW:${params.trimmomatic_sliding_window_size}:${params.trimmomatic_sliding_window_quality} \
+    MINLEN:${params.trimmomatic_min_length} 2>&1 | tee \${sampleID_R1}.log 
+    cat \${output_forward_unpaired} \${output_reverse_unpaired} > \${output_both_unpaired}
+    """
 }
 
 
@@ -661,7 +661,7 @@ process TRIMMOMATIC_SINGLE {
   publishDir "$params.outdir/03c_trimmomatic_single_reads", mode: 'copy', pattern: "*_single*"
 
   if (params.num_forks) {
-      maxForks params.num_forks
+    maxForks params.num_forks
   }
 
   when:
@@ -675,25 +675,25 @@ process TRIMMOMATIC_SINGLE {
     tuple val(prefix), file("*single*"), emit: trimmed_single_ch
 
   script:
-  """
-  single=${reads_single}
-
-
-  if [[ \$single = *.gz ]]
-    then 
-      output_single=${prefix}_trimmed_single.fq.gz
-    else
-      output_single=${prefix}_trimmed_single.fq
-  fi
-
-  echo -e ">TruSeq3_IndexedAdapter\nAGATCGGAAGAGCACACGTCTGAACTCCAGTCAC\n>TruSeq3_UniversalAdapter\nAGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA\n" > TruSeq3-SE.fa
-  trimmomatic SE -phred33 -threads ${task.cpus} \
-  ${reads_single} \${output_single} ILLUMINACLIP:TruSeq3-SE.fa:2:30:10:1:true \
-  LEADING:${params.trimmomatic_leading_quality} \
-  TRAILING:${params.trimmomatic_trailing_quality} \
-  SLIDINGWINDOW:${params.trimmomatic_sliding_window_size}:${params.trimmomatic_sliding_window_quality} \
-  MINLEN:${params.trimmomatic_min_length} 2>&1 | tee ${prefix}.log 
-  """
+    """
+    single=${reads_single}
+  
+  
+    if [[ \$single = *.gz ]]
+      then 
+        output_single=${prefix}_trimmed_single.fq.gz
+      else
+        output_single=${prefix}_trimmed_single.fq
+    fi
+  
+    echo -e ">TruSeq3_IndexedAdapter\nAGATCGGAAGAGCACACGTCTGAACTCCAGTCAC\n>TruSeq3_UniversalAdapter\nAGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA\n" > TruSeq3-SE.fa
+    trimmomatic SE -phred33 -threads ${task.cpus} \
+    ${reads_single} \${output_single} ILLUMINACLIP:TruSeq3-SE.fa:2:30:10:1:true \
+    LEADING:${params.trimmomatic_leading_quality} \
+    TRAILING:${params.trimmomatic_trailing_quality} \
+    SLIDINGWINDOW:${params.trimmomatic_sliding_window_size}:${params.trimmomatic_sliding_window_quality} \
+    MINLEN:${params.trimmomatic_min_length} 2>&1 | tee ${prefix}.log 
+    """
 }
 
 
@@ -840,7 +840,7 @@ process READS_FIRST_PAIRED_AND_SINGLE_END {
   ${reads_first_command}
   ${cleanup}
   """
- } 
+  } 
 
 
 process READS_FIRST_PAIRED_END {
@@ -981,7 +981,7 @@ process INTRONERATE {
   */
 
  // echo true
-label 'in_container'
+  label 'in_container'
 
   input:
     path(reads_first)
