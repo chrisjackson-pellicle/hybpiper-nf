@@ -24,8 +24,8 @@ def helpMessage() {
 
       --illumina_reads_directory <directory>    
                                   Path to folder containing illumina read file(s)
-      --target_file <file>                     
-                                  File containing fasta sequences of target genes
+
+      --target_file <file>        File containing fasta sequences of target genes
 
       #############################################################################
 
@@ -52,7 +52,7 @@ def helpMessage() {
 
       --memory <int>              Memory (RAM) amount in GB to use for bbmap.sh with 
                                   'exonerate_hits.py'. Default is 1 GB
-      
+
       --discordant_reads_edit_distance <int>    
                                   Minimum number of base differences between one read 
                                   of a read pair vs the supercontig reference for a 
@@ -632,9 +632,7 @@ process TRIMMOMATIC_PAIRED {
     fi
 
     # Write adapters fasta file:
-    echo -e ">PrefixPE/1\nTACACTCTTTCCCTACACGACGCTCTTCCGATCT\n>PrefixPE/2\nGTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT\n\
-    >PE1\nTACACTCTTTCCCTACACGACGCTCTTCCGATCT\n>PE1_rc\nAGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA\n\
-    >PE2\nGTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT\n>PE2_rc\nAGATCGGAAGAGCACACGTCTGAACTCCAGTCA" > TruSeq3-PE-2.fa
+    echo -e ">PrefixPE/1\nTACACTCTTTCCCTACACGACGCTCTTCCGATCT\n>PrefixPE/2\nGTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT\n>PE1\nTACACTCTTTCCCTACACGACGCTCTTCCGATCT\n>PE1_rc\nAGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA\n>PE2\nGTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT\n>PE2_rc\nAGATCGGAAGAGCACACGTCTGAACTCCAGTCA" > TruSeq3-PE-2.fa
 
     # Run Trimmomtic:
     trimmomatic PE -phred33 -threads ${task.cpus} \
