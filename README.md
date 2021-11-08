@@ -10,7 +10,7 @@ For an explanation of the general purpose of [HybPiper][17], and the approach it
 
 ## HybPiper-RBGV: containerised and pipelined using Singularity and Nextflow
 
-To simplify running HybPiper, I’ve provided a [Singularity][15] container based on the Linux distribution Ubuntu 18.04, with all the scripts required to run the HybPiper pipeline (including modifications, additions and bug fixes, see below for details), as well as all the dependencies ([BioPython][9], [BLAST][8], [BWA][11], [BBmap][12], [Exonerate][13], [SPAdes][10], [Samtools][14]). The container is called `hybpiper-yang-and-smith-rbgv.sif`.
+To simplify running HybPiper, I’ve provided a [Singularity][15] container based on the Linux distribution Ubuntu 20.04, with all the scripts required to run the HybPiper pipeline (including modifications, additions and bug fixes, see below for details), as well as all the dependencies ([BioPython][9], [BLAST][8], [BWA][11], [BBmap][12], [Exonerate][13], [SPAdes][10], [Samtools][14]). The container is called `hybpiper-yang-and-smith-rbgv.sif`.
 
 To run HybPiper using this container, I’ve provided a [Nextflow][16] pipeline that uses the software in the Singularity container. This pipeline runs all HybPiper steps with a single command. The pipeline script is called `hybpiper-rbgv-pipeline.nf`. It comes with an associated config file called `hybpiper-rbgv.config`. The only input required is a folder of sequencing reads for your samples, and a target file in `.fasta` format. The Nextflow pipeline will automatically generate the `namelist.txt` file required by some of the HybPiper scripts, and will run all HybPiper scripts on each sample in parallel. It also includes an optional read-trimmming step to QC your reads prior to running HybPiper, using the software [Trimmomatic][7]. The number of parallel processes running at any time, as well as computing resources given to each process (e.g. number of CPUs, amount of RAM etc) can be configured by the user by modifying the provided config file. The pipeline can be run directly on your local computer, and on an HPC system submitting jobs via a scheduler (e.g. [SLURM][21], PBS, etc). 
 
@@ -215,6 +215,15 @@ Please see the Wiki entry [Bug fixes and changes][2].
 ## Issues still to deal with (WIP)
 
 Please see the Wiki entry [Issues][4].
+
+
+## Changelog
+
+*09 November 2021* 
+
+- Nextflow script updated to DSL2. **NOTE:** Nextflow version >= 21.04.1 is now required!
+- Singularity *.def file updated to use Ubuntu 20.04, and to install Muscle and FastTreeMP.
+
 
 
 
