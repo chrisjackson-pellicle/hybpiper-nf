@@ -1040,7 +1040,6 @@ Run `hybpiper stats`.
     path(namelist)
 
   output:
-  seq_lengths
     path("hybpiper_stats.tsv"), emit: stats_file
     path("seq_lengths.tsv"), emit: seq_lengths_file
 
