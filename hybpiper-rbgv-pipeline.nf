@@ -307,7 +307,7 @@ allowed_params = ["no_stitched_contigs", "chimera_test_memory","chimeric_stitche
 "bbmap_subfilter", "combine_read_files", "combine_read_files_num_fields", "namelist", \
 "keep_intermediate_files", "distribute_hi_mem", "use_diamond", "diamond_sensitivity", "single_cell_assembly",\
 "timeout_assemble", "timeout_exonerate_contigs", "target", "exclude", "no_padding_supercontigs",\
-"verbose_logging", "targetfile_aa", "targetfile_dna"]
+"verbose_logging", "targetfile_aa", "targetfile_dna", "bwa"]
 
 params.each { entry ->
   if (! allowed_params.contains(entry.key)) {
