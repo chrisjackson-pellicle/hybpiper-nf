@@ -15,7 +15,7 @@ def helpMessage() {
     nextflow run hybpiper-rbgv-pipeline.nf \
     -c hybpiper-rbgv.config \
     --illumina_reads_directory <directory> \
-    --target_file <fasta_file> \
+    --targetfile_dna <fasta_file> \
     -profile <profile>
 
     Mandatory arguments:
@@ -25,10 +25,11 @@ def helpMessage() {
       --illumina_reads_directory <directory>    
                                   Path to folder containing illumina read file(s)
 
+      AND
+
       --targetfile_dna <file>    File containing fasta sequences of target genes
                                   (nucleotides)
                                         
-
       OR
 
       --targetfile_aa <file>     File containing fasta sequences of target genes
@@ -1094,37 +1095,42 @@ process RETRIEVE_SEQUENCES {
 }
 
 
-// process PARALOG_RETRIEVER {
-//   /*
-//   Run paralog_retriever.py script.
-//   */
+process PARALOG_RETRIEVER {
+  /*
+  Run hybpiper `paralog_retriever` command.
+  */
 
-//   //echo true
-//   label 'in_container'
-//   publishDir "${params.outdir}/11_paralogs", mode: 'copy', pattern: "*.paralogs.fasta"
-//   publishDir "${params.outdir}/12_paralogs_noChimeras", mode: 'copy', pattern: "*.paralogs_noChimeras.fasta"
-//   publishDir "${params.outdir}/12_paralogs_noChimeras/logs", mode: 'copy', pattern: "*mylog*"
+  //echo true
+  label 'in_container'
+  publishDir "${params.outdir}/05_visualise", mode: 'copy', pattern: "paralog_heatmap.png"
+  publishDir "${params.outdir}/11_paralogs", mode: 'copy', pattern: "paralogs_all/*paralogs_all.fasta", saveAs: { filename -> file(filename).getName() }
+  publishDir "${params.outdir}/12_paralogs_no_chimeras", mode: 'copy', pattern: "paralogs_no_chimeras/*paralogs_no_chimeras.fasta", saveAs: { filename -> file(filename).getName() }
+  publishDir "${params.outdir}/12_paralogs/logs", mode: 'copy', pattern: "*report*"
 
-//   input:
-//     path(paralog_complete_list)
-//     path(namelist)
-//     val(gene_list)
+  input:
+    // path(paralog_complete_list)
+    path(assemble)
+    path(namelist)
+    path(target_file)
 
 
-//   output:
-//     path("*.fasta")
-//     path("*.mylog*")  
+  output:
+    path("paralogs_all/*paralogs_all.fasta")
+    path("paralogs_no_chimeras/*paralogs_no_chimeras.fasta")
+    path("paralog_report.tsv")
+    path("paralogs_above_threshold_report.txt") 
 
-//   script:
-//     assert (gene_list in List)
-//     list_of_names = gene_list.join(' ') // Note that this is necessary so that the list isn't of the form [4471, 4527, etc]
-//     """
-//     for gene_name in ${list_of_names}
-//     do
-//       python /HybPiper/paralog_retriever.py ${namelist} \${gene_name} > \${gene_name}.paralogs_noChimeras.fasta 2> \${gene_name}.paralogs.fasta
-//     done
-//     """
-// }
+  script:
+    if (params.targetfile_dna) {
+      """
+      hybpiper paralog_retriever  ${namelist} -t_dna ${target_file}
+      """
+    } else if (params.targetfile_aa) {
+      """
+      hybpiper paralog_retriever  ${namelist} -t_aa ${target_file}
+      """
+    }
+}
 
 
 
@@ -1187,21 +1193,11 @@ workflow {
   // Run hybpiper recovery_heatmap: 
   VISUALISE( SUMMARY_STATS.out.seq_lengths_file ) 
 
-  // // Set up conditional channels to skip or include intronerate.py:
-  // (assemble_channel_1, assemble_channel_2) = (params.run_intronerate ? 
-  // [Channel.empty(), ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.mix(ASSEMBLE_PAIRED_END.out.assemble_ch).mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch)] : [ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.mix(ASSEMBLE_PAIRED_END.out.assemble_ch).mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch), Channel.empty()] )
-
-  // // Run OPTIONAL Intronerate step:
-  // INTRONERATE( assemble_channel_2 )
-
-  // // Run paralog_investigator.py script:
-  // PARALOGS( INTRONERATE.out.intronerate_ch.mix(assemble_channel_1) )
-
   // Run retrieve_sequences.py script for all sequence types:
   RETRIEVE_SEQUENCES( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), target_file_ch, namelist_ch )
 
-  // // Run paralog_retriever.py script: 
-  // PARALOG_RETRIEVER( PARALOGS.out.paralogs_ch.collect(), namelist_ch, gene_names_ch.collect() )
+  // Run hybpiper paralog_retriever: 
+  PARALOG_RETRIEVER( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), namelist_ch, target_file_ch )
 } 
 
 ///////////////////////////////////////////////////
