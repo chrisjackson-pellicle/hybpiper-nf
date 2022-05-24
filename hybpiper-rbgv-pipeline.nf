@@ -728,7 +728,7 @@ process TRIMMOMATIC_SINGLE {
 
 process ASSEMBLE_SINGLE_END {
   /*
-  Run assemble.py for input files: [single_end]
+  Run the `hybpiper assemble` command for input files: [single_end]
   */
 
   // echo true
@@ -799,7 +799,7 @@ process ASSEMBLE_SINGLE_END {
 
 process ASSEMBLE_PAIRED_AND_SINGLE_END {
   /*
-  Run `hybpiper assemble` for input files: [R1, R1, R1-R2_unpaired]
+  Run the `hybpiper assemble` command for input files: [R1, R1, R1-R2_unpaired]
   */
 
   //echo true
@@ -878,7 +878,7 @@ process ASSEMBLE_PAIRED_AND_SINGLE_END {
 
 process ASSEMBLE_PAIRED_END {
   /*
-  Run `hyvpiper assemble` for input files: [R1, R1]
+  Run the `hyvpiper assemble` command for input files: [R1, R1]
   */
 
   // echo true
@@ -999,35 +999,9 @@ process ASSEMBLE_PAIRED_END {
 }
 
 
-// process VISUALISE {
-//   /*
-//   Run the get_seq_lengths.py script
-//   */
-
-//   // echo true
-//   label 'in_container'
-//   publishDir "${params.outdir}/05_visualise", mode: 'copy'
-
-//   input:
-//     path(assemble)
-//     path(target_file)
-//     path(namelist)
-
-//   output:
-//     path("seq_lengths.txt"), emit: seq_lengths_ch
-//     path("heatmap.png")
-
-//   script:
-//     """
-//     python /HybPiper/get_seq_lengths.py ${target_file} ${namelist} dna > seq_lengths.txt
-//     Rscript /HybPiper/gene_recovery_heatmap_ggplot.R
-//     """
-// }
-
-
 process SUMMARY_STATS {
 /*
-Run `hybpiper stats`.
+Run the `hybpiper stats` command.
 */
 
   // echo true
@@ -1056,6 +1030,30 @@ Run `hybpiper stats`.
 
 }
 
+
+process VISUALISE {
+  /*
+  Run the `hybpiper recovery_heatmap` command.
+  */
+
+  // echo true
+  label 'in_container'
+  publishDir "${params.outdir}/05_visualise", mode: 'copy'
+
+  input:
+    // path(assemble)
+    // path(target_file)
+    // path(namelist)
+    path(seq_lengths_file)
+
+  output:
+    path("recovery_heatmap.png")
+
+  script:
+    """
+    hybpiper recovery_heatmap ${seq_lengths_file}
+    """
+}
 
 
 // process PARALOGS {
@@ -1198,16 +1196,16 @@ workflow {
     assemble_no_unpaired_input_ch = illumina_paired_reads_ch
   }
 
-  // Run assemble.py:
+  // Run hybpiper assemble:
   ASSEMBLE_PAIRED_AND_SINGLE_END( target_file_ch, assemble_with_unpaired_input_ch )
   ASSEMBLE_PAIRED_END( target_file_ch, assemble_no_unpaired_input_ch )
   ASSEMBLE_SINGLE_END ( target_file_ch, assemble_with_single_end_only_input_ch )
 
-  // // Run get_seq_lengths.py and gene_recovery_heatmap_ggplot.R:
-  // VISUALISE( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), target_file_ch, namelist_ch) 
-
-  // Run hybpiper_stats.py:
+  // Run hybpiper stats:
   SUMMARY_STATS( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), target_file_ch, namelist_ch ) 
+
+  // Run hybpiper recovery_heatmap: 
+  VISUALISE( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(),  SUMMARY_STATS.out.seq_lengths_file) 
 
   // // Set up conditional channels to skip or include intronerate.py:
   // (assemble_channel_1, assemble_channel_2) = (params.run_intronerate ? 
