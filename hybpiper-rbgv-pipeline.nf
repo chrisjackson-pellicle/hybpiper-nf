@@ -1200,9 +1200,9 @@ workflow {
   }
 
   // Run assemble.py:
-  // ASSEMBLE_PAIRED_AND_SINGLE_END( target_file_ch, assemble_with_unpaired_input_ch )
+  ASSEMBLE_PAIRED_AND_SINGLE_END( target_file_ch, assemble_with_unpaired_input_ch )
   ASSEMBLE_PAIRED_END( target_file_ch, assemble_no_unpaired_input_ch )
-  // ASSEMBLE_SINGLE_END ( target_file_ch, assemble_with_single_end_only_input_ch )
+  ASSEMBLE_SINGLE_END ( target_file_ch, assemble_with_single_end_only_input_ch )
 
   // // Run get_seq_lengths.py and gene_recovery_heatmap_ggplot.R:
   // VISUALISE( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), target_file_ch, namelist_ch) 
