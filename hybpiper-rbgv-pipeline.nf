@@ -1205,7 +1205,7 @@ workflow {
   SUMMARY_STATS( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), target_file_ch, namelist_ch ) 
 
   // Run hybpiper recovery_heatmap: 
-  VISUALISE( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(),  SUMMARY_STATS.out.seq_lengths_file) 
+  VISUALISE( SUMMARY_STATS.out.seq_lengths_file ) 
 
   // // Set up conditional channels to skip or include intronerate.py:
   // (assemble_channel_1, assemble_channel_2) = (params.run_intronerate ? 
