@@ -1105,7 +1105,7 @@ process PARALOG_RETRIEVER {
   publishDir "${params.outdir}/05_visualise", mode: 'copy', pattern: "paralog_heatmap.png"
   publishDir "${params.outdir}/11_paralogs", mode: 'copy', pattern: "paralogs_all/*paralogs_all.fasta", saveAs: { filename -> file(filename).getName() }
   publishDir "${params.outdir}/12_paralogs_no_chimeras", mode: 'copy', pattern: "paralogs_no_chimeras/*paralogs_no_chimeras.fasta", saveAs: { filename -> file(filename).getName() }
-  publishDir "${params.outdir}/12_paralogs/logs", mode: 'copy', pattern: "*report*"
+  publishDir "${params.outdir}/11_paralogs/logs", mode: 'copy', pattern: "*report*"
 
   input:
     // path(paralog_complete_list)
