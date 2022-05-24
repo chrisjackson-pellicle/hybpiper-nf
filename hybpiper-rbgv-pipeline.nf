@@ -1051,6 +1051,8 @@ Run `hybpiper stats`.
   """
   }
 
+}
+
 
 
 // process PARALOGS {
