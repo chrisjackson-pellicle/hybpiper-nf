@@ -104,7 +104,7 @@ Options:
      -resume                                  If restarting the pipeline, use cached results from previously completed 
                                               processes
 
-     --cleanup                                Run 'cleanup.py' for each gene directory after 'reads_first.py'
+     --cleanup                                Run 'cleanup.py' for each gene directory after 'assemble.py'
 
      --nosupercontigs                         Do not create supercontigs. Use longest Exonerate hit only. Default is off.
      

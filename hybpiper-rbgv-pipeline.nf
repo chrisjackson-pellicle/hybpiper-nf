@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 //////////////////////////////////////
-//  Nextflow Pipeline for HybPiper  // 
+//  Nextflow Pipeline for HybPiper2  // 
 //////////////////////////////////////
 
 nextflow.enable.dsl=2
@@ -25,7 +25,14 @@ def helpMessage() {
       --illumina_reads_directory <directory>    
                                   Path to folder containing illumina read file(s)
 
-      --target_file <file>        File containing fasta sequences of target genes
+      --targetfile_dna <file>    File containing fasta sequences of target genes
+                                  (nucleotides)
+                                        
+
+      OR
+
+      --targetfile_aa <file>     File containing fasta sequences of target genes
+                                  (amino-acids)
 
       #############################################################################
 
@@ -40,43 +47,32 @@ def helpMessage() {
                                   in the provided <Illumina_reads_directory> 
                                   directory are processed
 
-      --cleanup                   Run the HybPiper script 'cleanup.py' for each gene 
-                                  directory after 'reads_first.py'
+      --combine_read_files        Group and concatenate read-files via a common prefix. 
+                                  Useful if samples have been run across multiple lanes. 
+                                  Default prefix is all text preceding the first 
+                                  underscore (_) in read filenames
 
-      --nosupercontigs            Do not create supercontigs. Use longest Exonerate 
-                                  hit only. Default is off  
+      --combine_read_files_num_fields <int>     
+                                  Number of fields (delimited by an underscore) to use 
+                                  for combining read files when using the 
+                                  `--combine_read_files` flag. Default is 1
 
-      --bbmap_subfilter <int>     Ban alignments with more than this many 
-                                  substitutions when performing read-pair mapping to 
-                                  supercontig reference (bbmap.sh). Default is 7
-
-      --memory <int>              Memory (RAM) amount in GB to use for bbmap.sh with 
-                                  'exonerate_hits.py'. Default is 1 GB
-
-      --discordant_reads_edit_distance <int>    
-                                  Minimum number of base differences between one read 
-                                  of a read pair vs the supercontig reference for a 
-                                  read pair to be flagged as discordant. Default is 5
+      --num_forks <int>           Specify the number of parallel processes (e.g. 
+                                  concurrent runs of 'hybpiper assemble') to run at any 
+                                  one time. Can be used to prevent Nextflow from using 
+                                  all the threads/cpus on your machine. Default is 
+                                  to use the maximum number possible  
       
-      --discordant_reads_cutoff <int>           
-                                  Minimum number of discordant reads pairs required 
-                                  to flag a supercontigs as a potential chimera of 
-                                  contigs from multiple paralogs. Default is 5
-
-      --merged                    Merge forward and reverse reads, and run SPAdes 
-                                  assembly with merged and unmerged (the latter 
-                                  in interleaved format) data. Default is off
+      --outdir <directory_name>                 
+                                  Specify the name of the pipeline results directory. 
+                                  Default is 'results'        
 
       --paired_and_single         Use when providing both paired-end R1 and R2 read 
                                   files as well as a file of single-end reads for each 
                                   sample       
 
       --single_end                Use when providing providing only a folder of 
-                                  single-end reads 
-
-      --outdir <directory_name>                 
-                                  Specify the name of the pipeline results directory. 
-                                  Default is 'results'                                 
+                                  single-end reads                         
 
       --read_pairs_pattern <pattern>            
                                   Provide a comma-separated read-pair pattern for 
@@ -87,33 +83,9 @@ def helpMessage() {
                                   Provide a pattern for matching single-end read 
                                   files. Default is 'single'
 
-      --use_blastx                Use a protein target file and map reads to targets 
-                                  with BLASTx. Default is a nucleotide target file 
-                                  and mapping of reads to targets using BWA
-
-      --num_forks <int>           Specify the number of parallel processes (e.g. 
-                                  concurrent runs of 'reads.first.py') to run at any 
-                                  one time. Can be used to prevent Nextflow from using 
-                                  all the threads/cpus on your machine. Default is 
-                                  to use the maximum number possible      
-
-      --cov_cutoff <int>          Coverage cutoff to pass to the SPAdes assembler. 
-                                  Default is 8
-
-      --blastx_evalue <value>     Evalue to pass to blastx when using blastx mapping, 
-                                  i.e., when the --use_blastx or 
-                                  --translate_target_file_for_blastx flag is specified. 
-                                  Default is 1e-4
-
-      --paralog_warning_min_len_percent <decimal> 
-                                  Minimum length percentage of a SPAdes contig vs 
-                                  reference protein query for a paralog warning to be 
-                                  generated and a putative paralog contig to be 
-                                  recovered. Default is 0.75 
-
-      --translate_target_file_for_blastx        
-                                  Translate a nucleotide target file. If set, the 
-                                  --use_blastx is set by default. Default is off
+      #######################################################################################
+      ################################ Trimmomatic options: #################################
+      #######################################################################################
 
       --use_trimmomatic           Trim forwards and reverse reads using Trimmomatic.
                                   Default is off
@@ -139,20 +111,116 @@ def helpMessage() {
                                   Specifies the average quality required within the 
                                   sliding window. Default is 20
 
-      --run_intronerate           Run intronerate.py to recover (hopefully) intron 
+
+      #######################################################################################
+      ############################# hybpiper assemble options: ##############################
+      #######################################################################################
+
+      --bwa                       Use BWA to search reads for hits to target. Requires
+                                  BWA and a target file that is nucleotides!
+
+      --diamond                   Use DIAMOND instead of BLASTx
+
+      --diamond_sensitivity       Use the provided sensitivity for DIAMOND searches. 
+                                  Option are: 'mid-sensitive', 'sensitive', 
+                                  'more-sensitive', 'very-sensitive', 'ultra-sensitive'
+
+      --distribute_hi_mem         Distributing and writing reads to individual gene 
+                                  directories  will be 40-50 percent faster, but can use 
+                                  more memory/RAM with large input files
+
+      --evalue                    Evalue to pass to blastx when using blastx mapping, 
+                                  i.e., when the --use_blastx or 
+                                  --translate_target_file_for_blastx flag is specified. 
+                                  Default is 1e-4
+
+      --max_target_seqs           Max target seqs to save in BLASTx search, default is 10
+
+      --cov_cutoff <int>          Coverage cutoff to pass to the SPAdes assembler. 
+                                  Default is 8
+
+      --single_cell_assembly      Run SPAdes assemblies in MDA (single-cell) mode. 
+                                  Default is False
+
+      --kvals                     Values of k for SPAdes assemblies. SPAdes needs to be 
+                                  compiled to handle larger k-values! Default is 
+                                  auto-detection by SPAdes
+
+      --thresh                    Percent identity threshold for retaining Exonerate
+                                  hits. Default is 55, but increase this if you are 
+                                  worried about contaminant sequences
+
+      --paralog_min_length_percentage <decimal> 
+                                  Minimum length percentage of a SPAdes contig vs 
+                                  reference protein query for a paralog warning to be 
+                                  generated and a putative paralog contig to be 
+                                  recovered. Default is 0.75 
+
+      --depth_multiplier          Assign a long paralog as the "main" sequence if it 
+                                  has a coverage depth <depth_multiplier> times all 
+                                  other long paralogs. Set to zero to not use depth. 
+                                  Default is 10
+
+      --timeout_assemble          Kill long-running gene assemblies if they take longer 
+                                  than X percent of average
+
+      --timeout_exonerate_contigs Kill long-running processes if they take longer than 
+                                  X seconds. Default is 120
+
+      --target                    Use the target file sequence with this taxon name in 
+                                  Exonerate searches for each gene. Other targets for 
+                                  that gene will be used only for read sorting. Can be a 
+                                  tab-delimited file (one <gene>\\t<taxon_name> per line) 
+                                  or a single taxon name
+
+      --exclude                   Do not use any sequence with the specified taxon name 
+                                  string in Exonerate searches. Sequenced from this 
+                                  taxon will still be used for read sorting
+
+      --no_stitched_contig        Do not create stitched contigs; use longest Exonerate 
+                                  hit only. Default is off
+
+
+
+      --chimera_test_memory <int> Memory (RAM) amount in MB to use for bbmap.sh when
+                                  peforming stitched-contig chimera tests. Default is 
+                                  1000 MB
+
+      --bbmap_subfilter <int>     Ban alignments with more than this many 
+                                  substitutions when performing read-pair mapping to 
+                                  supercontig reference (bbmap.sh). Default is 7
+
+      --chimeric_stitched_contig_edit_distance <int>    
+                                  Minimum number of base differences between one read 
+                                  of a read pair vs the stitched-contig reference for a 
+                                  read pair to be flagged as discordant. Default is 5
+      
+      --chimeric_stitched_contig_discordant_reads_cutoff <int>           
+                                  Minimum number of discordant reads pairs required 
+                                  to flag a stitched-contig as a potential chimera of 
+                                  contigs from multiple paralogs. Default is 5
+
+      --merged                    Merge forward and reverse reads, and run SPAdes 
+                                  assembly with merged and unmerged (the latter 
+                                  in interleaved format) data. Default is off
+      
+      --run_intronerate           Run the intronerate() fuction to recover intron 
                                   and supercontig sequences. Default is off, and so 
                                   fasta files in `subfolders 09_sequences_intron` and 
                                   `10_sequences_supercontig` will be empty
 
-      --combine_read_files        Group and concatenate read-files via a common prefix. 
-                                  Useful if samples have been run across multiple lanes. 
-                                  Default prefix is all text preceding the first 
-                                  underscore (_) in read filenames
+      --keep_intermediate_files   Keep all intermediate files and logs, which can be 
+                                  useful for debugging. Default action is to delete 
+                                  them, which greatly reduces the total file number
 
-      --combine_read_files_num_fields <int>     
-                                  Number of fields (delimited by an underscore) to use 
-                                  for combining read files when using the 
-                                  `--combine_read_files` flag. Default is 1
+      --no_padding_supercontigs   If Intronerate is run, and a supercontig is created 
+                                  by concatenating multiple SPAdes contigs, do not add 
+                                  10 "N" characters between contig joins. By default, 
+                                  Ns will be added
+
+      --verbose_logging           If supplied, enable verbose login. NOTE: this can 
+                                  increase the size of the log files by an order of 
+                                  magnitude
 
     """.stripIndent()
 }
@@ -188,10 +256,11 @@ params.illumina_reads_directory = false
 params.target_file = false
 
 // Check that input directories are provided
-if (params.help || !params.illumina_reads_directory || !params.target_file) {
+if (params.help || !params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa)) {
   helpMessage()
   exit 0
 }
+
 
 // Check that paralog_warning_min_len_percent value is a decimal between 0 and 1
 if (params.paralog_warning_min_len_percent < 0 || params.paralog_warning_min_len_percent >1) {
@@ -206,6 +275,16 @@ if (params.single_end && params.paired_and_single) {
   println('Please use --single_end OR --paired_and_single, not both!')
   exit 0
 }
+if (params.target_file_dna && params.target_file_aa) {
+  println('Please use --target_file_dna OR --target_file_aa, not both!')
+  exit 0
+}
+if (params.target_file_aa && params.use_bwa) {
+  println('You can not use BWA with a target file containing protein sequences. \
+  Please use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.')
+  exit 0
+}
+
 
 // Don't allow params.paired_and_single and params.use_trimmomatic
 if (params.paired_and_single && params.use_trimmomatic) {
@@ -215,15 +294,20 @@ if (params.paired_and_single && params.use_trimmomatic) {
   exit 0
 }
 
+
+
 // Check for unrecognised pararmeters
-allowed_params = ["cleanup", "nosupercontigs", "memory","discordant_reads_edit_distance", \
-"discordant_reads_cutoff", "merged", "paired_and_single", "single_end", "outdir", \
+allowed_params = ["no_stitched_contigs", "chimera_test_memory","chimeric_stitched_contig_edit_distance", \
+"chimeric_stitched_contig_discordant_reads_cutoff", "merged", "paired_and_single", "single_end", "outdir", \
 "illumina_reads_directory", "target_file", "help", "memory", "read_pairs_pattern", \
 "single_pattern", "use_blastx", "num_forks", "cov_cutoff", "blastx_evalue", \
 "paralog_warning_min_len_percent", "translate_target_file_for_blastx", "use_trimmomatic", \
 "trimmomatic_leading_quality", "trimmomatic_trailing_quality", "trimmomatic_min_length", \
 "trimmomatic_sliding_window_size", "trimmomatic_sliding_window_quality", "run_intronerate", \
-"bbmap_subfilter", "combine_read_files", "combine_read_files_num_fields", "namelist"]
+"bbmap_subfilter", "combine_read_files", "combine_read_files_num_fields", "namelist", \
+"keep_intermediate_files", "distribute_hi_mem", "use_diamond", "diamond_sensitivity", "single_cell_assembly",\
+"timeout_assemble", "timeout_exonerate_contigs", "target", "exclude", "no_padding_supercontigs",\
+"verbose_logging", "targetfile_aa", "targetfile_dna"]
 
 params.each { entry ->
   if (! allowed_params.contains(entry.key)) {
@@ -237,11 +321,18 @@ params.each { entry ->
 //  Target gene sequences file  //
 //////////////////////////////////
 
-Channel
-  .fromPath("${params.target_file}", checkIfExists: true)
-  .first()
-  .set { target_file_ch }
 
+if (params.targetfile_dna) {
+  Channel
+    .fromPath("${params.targetfile_dna}", checkIfExists: true)
+    .first()
+    .set { target_file_ch }
+} else if (params.targetfile_aa) {
+  Channel
+    .fromPath("${params.targetfile_aa}", checkIfExists: true)
+    .first()
+    .set { target_file_ch }
+}
 
 end_field = params.combine_read_files_num_fields - 1  // Due to zero-based indexing
 
@@ -425,68 +516,68 @@ if (!params.paired_and_single && !params.single_end  && !params.combine_read_fil
 }
 
 
-/*
-Channel of gene names for 'paralog_retriever.py' script
-*/
-Channel
-  .fromPath("${params.target_file}", checkIfExists: true)
-  .splitFasta( record: [id: true, seqString: true ])
-  .map { it.id.replaceFirst(~/.*-/, '') }
-  .unique()
-  .set { gene_names_ch }
-  // gene_names_ch.view { "value: $it" }
+// /*
+// Channel of gene names for 'paralog_retriever.py' script
+// */
+// Channel
+//   .fromPath("${params.target_file}", checkIfExists: true)
+//   .splitFasta( record: [id: true, seqString: true ])
+//   .map { it.id.replaceFirst(~/.*-/, '') }
+//   .unique()
+//   .set { gene_names_ch }
+//   // gene_names_ch.view { "value: $it" }
 
 
 /////////////////////////////
 //  DEFINE DSL2 PROCESSES  //
 /////////////////////////////
 
-process TRANSLATE_TARGET_FILE {
-  /*
-  If the flag `--translate_target_file_for_blastx` is set, translate nucleotide target file.
-  */
+// process TRANSLATE_TARGET_FILE {
+//   /*
+//   If the flag `--translate_target_file_for_blastx` is set, translate nucleotide target file.
+//   */
 
-  // echo true
-  label 'in_container'
-  publishDir "${params.outdir}/00_translated_target_file", mode: 'copy'
+//   // echo true
+//   label 'in_container'
+//   publishDir "${params.outdir}/00_translated_target_file", mode: 'copy'
 
-  when:
-    params.translate_target_file_for_blastx
+//   when:
+//     params.translate_target_file_for_blastx
 
-  input:
-    path(target_file_nucleotides)
+//   input:
+//     path(target_file_nucleotides)
 
-  output:
-    path "target_file_translated.fasta", emit: translated_target_file
-    path("translation_warnings.txt")
+//   output:
+//     path "target_file_translated.fasta", emit: translated_target_file
+//     path("translation_warnings.txt")
 
-  script:
-    """
-    #!/usr/bin/env python
+//   script:
+//     """
+//     #!/usr/bin/env python
 
-    from Bio import SeqIO
+//     from Bio import SeqIO
 
-    translated_seqs_to_write = []
-    with open("${target_file_nucleotides}", 'r') as target_file_nucleotides:
-      seqs = SeqIO.parse(target_file_nucleotides, 'fasta')
-      with open('translation_warnings.txt', 'w') as translation_warnings:
-        for seq in seqs:
-          if len(seq.seq) % 3 != 0:
-            translation_warnings.write(f"WARNING: sequence for gene {seq.name} is not a multiple of 3. Translating anyway...\\n")
-          protein_translation = seq.translate()
-          protein_translation.name = seq.name
-          protein_translation.id = seq.id
-          protein_translation.description = 'translated sequence from nucleotide target file'
-          num_stop_codons = protein_translation.seq.count('*')
-          if num_stop_codons != 0:
-            translation_warnings.write(f'WARNING: stop codons present in translation of sequence {seq.name}, please check\\n')
-          translated_seqs_to_write.append(protein_translation)
+//     translated_seqs_to_write = []
+//     with open("${target_file_nucleotides}", 'r') as target_file_nucleotides:
+//       seqs = SeqIO.parse(target_file_nucleotides, 'fasta')
+//       with open('translation_warnings.txt', 'w') as translation_warnings:
+//         for seq in seqs:
+//           if len(seq.seq) % 3 != 0:
+//             translation_warnings.write(f"WARNING: sequence for gene {seq.name} is not a multiple of 3. Translating anyway...\\n")
+//           protein_translation = seq.translate()
+//           protein_translation.name = seq.name
+//           protein_translation.id = seq.id
+//           protein_translation.description = 'translated sequence from nucleotide target file'
+//           num_stop_codons = protein_translation.seq.count('*')
+//           if num_stop_codons != 0:
+//             translation_warnings.write(f'WARNING: stop codons present in translation of sequence {seq.name}, please check\\n')
+//           translated_seqs_to_write.append(protein_translation)
 
-    with open('target_file_translated.fasta', 'w') as translated_handle:
-      SeqIO.write(translated_seqs_to_write, translated_handle, 'fasta')
+//     with open('target_file_translated.fasta', 'w') as translated_handle:
+//       SeqIO.write(translated_seqs_to_write, translated_handle, 'fasta')
 
-    """
-}
+//     """
+// }
 
 
 
@@ -696,9 +787,9 @@ process TRIMMOMATIC_SINGLE {
 
 
 
-process READS_FIRST_SINGLE_END {
+process ASSEMBLE_SINGLE_END {
   /*
-  Run reads_first.py for input files: [single_end]
+  Run assemble.py for input files: [single_end]
   */
 
   // echo true
@@ -718,7 +809,7 @@ process READS_FIRST_SINGLE_END {
     tuple val(prefix), path(reads_single)
 
   output:
-    path("${prefix}"), emit: reads_first_with_single_end_ch optional true
+    path("${prefix}"), emit: assemble_with_single_end_ch optional true
     path("${prefix}/${prefix}_genes_with_supercontigs.csv") optional true
     path("${prefix}/${prefix}_supercontigs_with_discordant_reads.csv") optional true
 
@@ -757,19 +848,19 @@ process READS_FIRST_SINGLE_END {
     } else {
       cleanup = ''
     }
-    reads_first_command = "python /HybPiper/reads_first.py -b ${target_file} -r ${reads_single} --prefix ${prefix} --cpu ${task.cpus} " + command_list.join(' ')
+    assemble_command = "python /HybPiper/assemble.py -b ${target_file} -r ${reads_single} --prefix ${prefix} --cpu ${task.cpus} " + command_list.join(' ')
 
     """
-    echo ${reads_first_command}
-    ${reads_first_command}
+    echo ${assemble_command}
+    ${assemble_command}
     ${cleanup}
     """
 }
 
 
-process READS_FIRST_PAIRED_AND_SINGLE_END {
+process ASSEMBLE_PAIRED_AND_SINGLE_END {
   /*
-  Run reads_first.py for input files: [R1, R1, R1-R2_unpaired]
+  Run assemble.py for input files: [R1, R1, R1-R2_unpaired]
   */
 
   //echo true
@@ -789,7 +880,7 @@ process READS_FIRST_PAIRED_AND_SINGLE_END {
     tuple val(pair_id), path(reads_R1), path(reads_R2), path(reads_unpaired)
 
   output:
-    path("${pair_id}"), emit: reads_first_with_unPaired_ch optional true
+    path("${pair_id}"), emit: assemble_with_unPaired_ch optional true
     path("${pair_id}/${pair_id}_genes_with_supercontigs.csv") optional true
     path("${pair_id}/${pair_id}_supercontigs_with_discordant_reads.csv") optional true
 
@@ -831,26 +922,28 @@ process READS_FIRST_PAIRED_AND_SINGLE_END {
     } else {
       cleanup = ''
     }
-    reads_first_command = "python /HybPiper/reads_first.py -b ${target_file} -r ${reads_R1} ${reads_R2} --unpaired ${reads_unpaired} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
+    assemble_command = "python /HybPiper/assemble.py -b ${target_file} -r ${reads_R1} ${reads_R2} --unpaired ${reads_unpaired} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
 
     script:
     """
-    echo ${reads_first_command}
-    ${reads_first_command}
+    echo ${assemble_command}
+    ${assemble_command}
     ${cleanup}
     """
   } 
 
 
-process READS_FIRST_PAIRED_END {
+process ASSEMBLE_PAIRED_END {
   /*
-  Run reads_first.py for input files: [R1, R1]
+  Run assemble.py for input files: [R1, R1]
   */
 
   // echo true
   label 'in_container'
-  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_supercontigs.csv"
-  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_supercontigs_with_discordant_reads.csv"
+  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_stitched_contig.csv"
+  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_derived_from_putative_chimeric_stitched_contig.csv"
+  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt"
+  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv"
 
   if (params.num_forks) {
     maxForks params.num_forks
@@ -864,56 +957,101 @@ process READS_FIRST_PAIRED_END {
     tuple val(pair_id), path(reads_R1), path(reads_R2)
 
   output:
-    path("${pair_id}"), emit: reads_first_ch optional true
-    path("${pair_id}/${pair_id}_genes_with_supercontigs.csv") optional true
-    path("${pair_id}/${pair_id}_supercontigs_with_discordant_reads.csv") optional true
+    path("${pair_id}"), emit: assemble_ch optional true
+    path("${pair_id}/${pair_id}_genes_with_stitched_contig.csv") optional true
+    path("${pair_id}/${pair_id}_genes_derived_from_putative_chimeric_stitched_contig.csv") optional true
+    path("${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt") optional true
+    path("${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv") optional true
 
   script:
     def command_list = []
 
-    if (params.nosupercontigs) {
-      command_list << "--nosupercontigs"
+    if (params.targetfile_dna) {
+      command_list << "--targetfile_dna ${params.targetfile_dna}"
       }
-    if (params.memory) {
-      command_list << "--memory ${params.memory}"
+    if (params.targetfile_aa) {
+      command_list << "--targetfile_dna ${params.targetfile_dna}"
+      }
+    if (params.use_bwa) {
+      command_list << "--bwa"
+      }
+    if (params.use_diamond) {
+      command_list << "--diamond"
+      }
+    if (params.diamond_sensitivity) {
+      command_list << "--diamond_sensitivity ${params.diamond_sensitivity}"
+      }
+    if (params.distribute_hi_mem) {
+      command_list << "--distribute_hi_mem"
+      }
+    if (params.evalue) {
+      command_list << "--evalue ${params.evalue}"
+      }
+    if (params.max_target_seqs) {
+      command_list << "--max_target_seqs ${params.max_target_seqs}"
+      }
+    if (params.cov_cutoff) {
+      command_list << "--cov_cutoff ${params.cov_cutoff}"
+      }
+    if (params.single_cell_assembly) {
+      command_list << "--single_cell_assembly"
+      }
+    if (params.kvals) {
+      command_list << "--kvals ${params.kvals}"
+      }
+    if (params.paralog_min_length_percentage) {
+      command_list << "--paralog_min_length_percentage ${params.paralog_min_length_percentage}"
+      }
+    if (params.timeout_assemble) {
+      command_list << "--timeout_assemble ${params.timeout_assemble}"
+      }
+    if (params.timeout_exonerate_contigs) {
+      command_list << "--timeout_exonerate_contigs ${params.timeout_exonerate_contigs}"
+      }
+    if (params.target) {
+      command_list << "--target ${params.target}"
+      }
+    if (params.exclude) {
+      command_list << "--exclude ${params.exclude}"
+      }
+    if (params.no_stitched_contig) {
+      command_list << "--no_stitched_contig"
+      }
+    if (params.chimera_test_memory) {
+      command_list << "--bbmap_memory ${params.chimera_test_memory}"
       }
     if (params.bbmap_subfilter) {
       command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
       }
-    if (params.discordant_reads_edit_distance) {
-      command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
+    if (params.chimeric_stitched_contig_edit_distance) {
+      command_list << "--chimeric_stitched_contig_edit_distance ${params.chimeric_stitched_contig_edit_distance}"
       }
-    if (params.discordant_reads_cutoff) {
-      command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
+    if (params.chimeric_stitched_contig_discordant_reads_cutoff) {
+      command_list << "--chimeric_stitched_contig_discordant_reads_cutoff ${params.chimeric_stitched_contig_discordant_reads_cutoff}"
       }
     if (params.merged) {
       command_list << "--merged"
       }
-    if (!params.use_blastx && !params.translate_target_file_for_blastx) {
-      command_list << "--bwa"
-    }
-    if (params.blastx_evalue) {
-      command_list << "--evalue ${params.blastx_evalue}"
-    }
-    if (params.paralog_warning_min_len_percent) {
-      command_list << "--paralog_warning_min_length_percentage ${params.paralog_warning_min_len_percent}"
-    }
-    if (params.cov_cutoff) {
-      command_list << "--cov_cutoff ${params.cov_cutoff}"
-    }
-    if (params.cleanup) {
-      cleanup = "python /HybPiper/cleanup.py ${pair_id}"
-    } else {
-      cleanup = ''
-    }
-    reads_first_command = "python /HybPiper/reads_first.py -b ${target_file} -r ${reads_R1} ${reads_R2} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
+    if (params.run_intronerate) {
+      command_list << "--run_intronerate"
+      }
+    if (params.keep_intermediate_files) {
+      command_list << "--keep_intermediate_files"
+      }
+    if (params.no_padding_supercontigs) {
+      command_list << "--no_padding_supercontigs"
+      }
+    if (params.verbose_logging) {
+      command_list << "--verbose_logging"
+      }
+
+    assemble_command = "hybpiper assemble -r ${reads_R1} ${reads_R2} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
 
 
     script:
     """
-    echo "about to try command: ${reads_first_command}"
-    ${reads_first_command}
-    ${cleanup}
+    echo "Executing command: ${assemble_command}"
+    ${assemble_command}
     """
 }
 
@@ -928,7 +1066,7 @@ process VISUALISE {
   publishDir "${params.outdir}/05_visualise", mode: 'copy'
 
   input:
-    path(reads_first)
+    path(assemble)
     path(target_file)
     path(namelist)
 
@@ -954,7 +1092,7 @@ Run hybpiper_stats.py script.
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy'
 
   input:
-    path(reads_first)
+    path(assemble)
     path(seq_lengths) 
     path(namelist)
 
@@ -974,26 +1112,26 @@ Run hybpiper_stats.py script.
 }
 
 
-process INTRONERATE {
-  /*
-  Run intronerate.py script.
-  */
+// process INTRONERATE {
+//   /*
+//   Run intronerate.py script.
+//   */
 
-  // echo true
-  label 'in_container'
+//   // echo true
+//   label 'in_container'
 
-  input:
-    path(reads_first)
+//   input:
+//     path(assemble)
 
-  output:
-    path(reads_first), emit: intronerate_ch optional true
+//   output:
+//     path(assemble), emit: intronerate_ch optional true
 
-  script:
-    """
-    echo ${reads_first}
-    python /HybPiper/intronerate.py --prefix ${reads_first}
-    """
-}
+//   script:
+//     """
+//     echo ${assemble}
+//     python /HybPiper/intronerate.py --prefix ${assemble}
+//     """
+// }
 
 
 process PARALOGS {
@@ -1087,43 +1225,6 @@ process PARALOG_RETRIEVER {
 }
 
 
-///////////////////////////////////
-//  OPTIONAL workflow processes  //
-///////////////////////////////////
-
-
-process LUCY_PROCESS {
-  /*
-  BEAGLE
-  */
-
-  echo true
-  label 'in_container'
-  publishDir "${params.outdir}/lucy_beagle_folder", mode: 'copy'
-
-
-  input:
-    tuple val(prefix), path(reads_R1), path(reads_R2)
-
-  output:
-    path "${reads_R1}", emit: lucy_ch
-
-
-  script:
-    """
-    echo ${reads_R1}
-
-    """
-} 
-
-
-workflow lucy_workflow {
-
-  LUCY_PROCESS( illumina_paired_reads_ch )
-
-}
-
-
 
 ////////////////////////
 //  Define workflows  //
@@ -1131,15 +1232,15 @@ workflow lucy_workflow {
 
 workflow {
 
-  // Run OPTIONAL translate target file step:
-  TRANSLATE_TARGET_FILE( target_file_ch )
+  // // Run OPTIONAL translate target file step:
+  // TRANSLATE_TARGET_FILE( target_file_ch )
 
-  // Set up input channel for target file:
-  if (!params.translate_target_file_for_blastx) {
-    target_file_ch = target_file_ch
-  } else {
-    target_file_ch = TRANSLATE_TARGET_FILE.out.translated_target_file
-  }
+  // // Set up input channel for target file:
+  // if (!params.translate_target_file_for_blastx) {
+  //   target_file_ch = target_file_ch
+  // } else {
+  //   target_file_ch = TRANSLATE_TARGET_FILE.out.translated_target_file
+  // }
 
   // Run OPTIONAL combine read file step: 
   COMBINE_LANES_PAIRED_END( illumina_paired_reads_ch )
@@ -1158,47 +1259,47 @@ workflow {
   TRIMMOMATIC_PAIRED( trimmomatic_PE_input_ch )
   TRIMMOMATIC_SINGLE( trimmomatic_SE_input_ch )
 
-  // Set up input channels for reads_first.py:
+  // Set up input channels for assemble.py:
   if (params.use_trimmomatic) {
-    reads_first_with_single_end_only_input_ch = TRIMMOMATIC_SINGLE.out.trimmed_single_ch
-    reads_first_with_unpaired_input_ch = TRIMMOMATIC_PAIRED.out.trimmed_paired_and_orphaned_ch
-    reads_first_no_unpaired_input_ch = Channel.empty()
+    assemble_with_single_end_only_input_ch = TRIMMOMATIC_SINGLE.out.trimmed_single_ch
+    assemble_with_unpaired_input_ch = TRIMMOMATIC_PAIRED.out.trimmed_paired_and_orphaned_ch
+    assemble_no_unpaired_input_ch = Channel.empty()
   } else if (params.combine_read_files) {
-    reads_first_with_single_end_only_input_ch = COMBINE_LANES_SINGLE_END.out.combined_lane_single_reads_ch
-    reads_first_with_unpaired_input_ch = Channel.empty()
-    reads_first_no_unpaired_input_ch = COMBINE_LANES_PAIRED_END.out.combined_lane_paired_reads
+    assemble_with_single_end_only_input_ch = COMBINE_LANES_SINGLE_END.out.combined_lane_single_reads_ch
+    assemble_with_unpaired_input_ch = Channel.empty()
+    assemble_no_unpaired_input_ch = COMBINE_LANES_PAIRED_END.out.combined_lane_paired_reads
   } else {
-    reads_first_with_single_end_only_input_ch = illumina_reads_single_end_ch
-    reads_first_with_unpaired_input_ch = illumina_paired_reads_with_unpaired_ch
-    reads_first_no_unpaired_input_ch = illumina_paired_reads_ch
+    assemble_with_single_end_only_input_ch = illumina_reads_single_end_ch
+    assemble_with_unpaired_input_ch = illumina_paired_reads_with_unpaired_ch
+    assemble_no_unpaired_input_ch = illumina_paired_reads_ch
   }
 
-  // Run reads_first.py:
-  READS_FIRST_PAIRED_AND_SINGLE_END( target_file_ch, reads_first_with_unpaired_input_ch )
-  READS_FIRST_PAIRED_END( target_file_ch, reads_first_no_unpaired_input_ch )
-  READS_FIRST_SINGLE_END ( target_file_ch, reads_first_with_single_end_only_input_ch )
+  // Run assemble.py:
+  // ASSEMBLE_PAIRED_AND_SINGLE_END( target_file_ch, assemble_with_unpaired_input_ch )
+  ASSEMBLE_PAIRED_END( target_file_ch, assemble_no_unpaired_input_ch )
+  // ASSEMBLE_SINGLE_END ( target_file_ch, assemble_with_single_end_only_input_ch )
 
-  // Run get_seq_lengths.py and gene_recovery_heatmap_ggplot.R:
-  VISUALISE( READS_FIRST_PAIRED_AND_SINGLE_END.out.reads_first_with_unPaired_ch.collect().mix(READS_FIRST_PAIRED_END.out.reads_first_ch).collect().mix(READS_FIRST_SINGLE_END.out.reads_first_with_single_end_ch).collect(), target_file_ch, namelist_ch) 
+  // // Run get_seq_lengths.py and gene_recovery_heatmap_ggplot.R:
+  // VISUALISE( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), target_file_ch, namelist_ch) 
 
-  // Run hybpiper_stats.py:
-  SUMMARY_STATS( READS_FIRST_PAIRED_AND_SINGLE_END.out.reads_first_with_unPaired_ch.collect().mix(READS_FIRST_PAIRED_END.out.reads_first_ch).collect().mix(READS_FIRST_SINGLE_END.out.reads_first_with_single_end_ch).collect(), VISUALISE.out.seq_lengths_ch, namelist_ch ) 
+  // // Run hybpiper_stats.py:
+  // SUMMARY_STATS( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), VISUALISE.out.seq_lengths_ch, namelist_ch ) 
 
-  // Set up conditional channels to skip or include intronerate.py:
-  (reads_first_channel_1, reads_first_channel_2) = (params.run_intronerate ? 
-  [Channel.empty(), READS_FIRST_PAIRED_AND_SINGLE_END.out.reads_first_with_unPaired_ch.mix(READS_FIRST_PAIRED_END.out.reads_first_ch).mix(READS_FIRST_SINGLE_END.out.reads_first_with_single_end_ch)] : [READS_FIRST_PAIRED_AND_SINGLE_END.out.reads_first_with_unPaired_ch.mix(READS_FIRST_PAIRED_END.out.reads_first_ch).mix(READS_FIRST_SINGLE_END.out.reads_first_with_single_end_ch), Channel.empty()] )
+  // // Set up conditional channels to skip or include intronerate.py:
+  // (assemble_channel_1, assemble_channel_2) = (params.run_intronerate ? 
+  // [Channel.empty(), ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.mix(ASSEMBLE_PAIRED_END.out.assemble_ch).mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch)] : [ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.mix(ASSEMBLE_PAIRED_END.out.assemble_ch).mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch), Channel.empty()] )
 
-  // Run OPTIONAL Intronerate step:
-  INTRONERATE( reads_first_channel_2 )
+  // // Run OPTIONAL Intronerate step:
+  // INTRONERATE( assemble_channel_2 )
 
-  // Run paralog_investigator.py script:
-  PARALOGS( INTRONERATE.out.intronerate_ch.mix(reads_first_channel_1) )
+  // // Run paralog_investigator.py script:
+  // PARALOGS( INTRONERATE.out.intronerate_ch.mix(assemble_channel_1) )
 
-  // Run retrieve_sequences.py script for all sequence types:
-  RETRIEVE_SEQUENCES( PARALOGS.out.paralogs_ch.collect(), target_file_ch )
+  // // Run retrieve_sequences.py script for all sequence types:
+  // RETRIEVE_SEQUENCES( PARALOGS.out.paralogs_ch.collect(), target_file_ch )
 
-  // Run paralog_retriever.py script: 
-  PARALOG_RETRIEVER( PARALOGS.out.paralogs_ch.collect(), namelist_ch, gene_names_ch.collect() )
+  // // Run paralog_retriever.py script: 
+  // PARALOG_RETRIEVER( PARALOGS.out.paralogs_ch.collect(), namelist_ch, gene_names_ch.collect() )
 } 
 
 ///////////////////////////////////////////////////
