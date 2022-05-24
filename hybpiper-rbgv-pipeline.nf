@@ -280,7 +280,7 @@ if (params.targetfile_dna && params.targetfile_aa) {
   println('Please use --targetfile_dna OR --targetfile_aa, not both!')
   exit 0
 }
-if (params.target_file_aa && params.use_bwa) {
+if (params.targetfile_aa && params.use_bwa) {
   println('You can not use BWA with a target file containing protein sequences. \
   Please use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.')
   exit 0
@@ -1139,16 +1139,6 @@ process PARALOG_RETRIEVER {
 ////////////////////////
 
 workflow {
-
-  // // Run OPTIONAL translate target file step:
-  // TRANSLATE_TARGET_FILE( target_file_ch )
-
-  // // Set up input channel for target file:
-  // if (!params.translate_target_file_for_blastx) {
-  //   target_file_ch = target_file_ch
-  // } else {
-  //   target_file_ch = TRANSLATE_TARGET_FILE.out.translated_target_file
-  // }
 
   // Run OPTIONAL combine read file step: 
   COMBINE_LANES_PAIRED_END( illumina_paired_reads_ch )
