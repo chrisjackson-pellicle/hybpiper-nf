@@ -298,7 +298,7 @@ if (params.paired_and_single && params.use_trimmomatic) {
 
 
 // Check for unrecognised pararmeters
-allowed_params = ["no_stitched_contigs", "chimera_test_memory","chimeric_stitched_contig_edit_distance", \
+allowed_params = ["no_stitched_contig", "chimera_test_memory","chimeric_stitched_contig_edit_distance", \
 "chimeric_stitched_contig_discordant_reads_cutoff", "merged", "paired_and_single", "single_end", "outdir", \
 "illumina_reads_directory", "target_file", "help", "memory", "read_pairs_pattern", \
 "single_pattern", "use_blastx", "num_forks", "cov_cutoff", "evalue", \
