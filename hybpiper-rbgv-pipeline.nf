@@ -306,7 +306,7 @@ allowed_params = ["no_stitched_contigs", "chimera_test_memory","chimeric_stitche
 "trimmomatic_leading_quality", "trimmomatic_trailing_quality", "trimmomatic_min_length", \
 "trimmomatic_sliding_window_size", "trimmomatic_sliding_window_quality", "run_intronerate", \
 "bbmap_subfilter", "combine_read_files", "combine_read_files_num_fields", "namelist", \
-"keep_intermediate_files", "distribute_hi_mem", "use_diamond", "diamond_sensitivity", "single_cell_assembly",\
+"keep_intermediate_files", "distribute_hi_mem", "use_diamond", "diamond_sensitivity", "single_cell_assembly", "max_target_seqs", "kvals", "target", "exclude", 
 "timeout_assemble", "timeout_exonerate_contigs", "target", "exclude", "no_padding_supercontigs",\
 "verbose_logging", "targetfile_aa", "targetfile_dna", "bwa"]
 
