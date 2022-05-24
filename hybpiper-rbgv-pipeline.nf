@@ -516,70 +516,9 @@ if (!params.paired_and_single && !params.single_end  && !params.combine_read_fil
 }
 
 
-// /*
-// Channel of gene names for 'paralog_retriever.py' script
-// */
-// Channel
-//   .fromPath("${params.target_file}", checkIfExists: true)
-//   .splitFasta( record: [id: true, seqString: true ])
-//   .map { it.id.replaceFirst(~/.*-/, '') }
-//   .unique()
-//   .set { gene_names_ch }
-//   // gene_names_ch.view { "value: $it" }
-
-
 /////////////////////////////
 //  DEFINE DSL2 PROCESSES  //
 /////////////////////////////
-
-// process TRANSLATE_TARGET_FILE {
-//   /*
-//   If the flag `--translate_target_file_for_blastx` is set, translate nucleotide target file.
-//   */
-
-//   // echo true
-//   label 'in_container'
-//   publishDir "${params.outdir}/00_translated_target_file", mode: 'copy'
-
-//   when:
-//     params.translate_target_file_for_blastx
-
-//   input:
-//     path(target_file_nucleotides)
-
-//   output:
-//     path "target_file_translated.fasta", emit: translated_target_file
-//     path("translation_warnings.txt")
-
-//   script:
-//     """
-//     #!/usr/bin/env python
-
-//     from Bio import SeqIO
-
-//     translated_seqs_to_write = []
-//     with open("${target_file_nucleotides}", 'r') as target_file_nucleotides:
-//       seqs = SeqIO.parse(target_file_nucleotides, 'fasta')
-//       with open('translation_warnings.txt', 'w') as translation_warnings:
-//         for seq in seqs:
-//           if len(seq.seq) % 3 != 0:
-//             translation_warnings.write(f"WARNING: sequence for gene {seq.name} is not a multiple of 3. Translating anyway...\\n")
-//           protein_translation = seq.translate()
-//           protein_translation.name = seq.name
-//           protein_translation.id = seq.id
-//           protein_translation.description = 'translated sequence from nucleotide target file'
-//           num_stop_codons = protein_translation.seq.count('*')
-//           if num_stop_codons != 0:
-//             translation_warnings.write(f'WARNING: stop codons present in translation of sequence {seq.name}, please check\\n')
-//           translated_seqs_to_write.append(protein_translation)
-
-//     with open('target_file_translated.fasta', 'w') as translated_handle:
-//       SeqIO.write(translated_seqs_to_write, translated_handle, 'fasta')
-
-//     """
-// }
-
-
 
 process COMBINE_LANES_PAIRED_END {
   /*
@@ -935,7 +874,7 @@ process ASSEMBLE_PAIRED_AND_SINGLE_END {
 
 process ASSEMBLE_PAIRED_END {
   /*
-  Run assemble.py for input files: [R1, R1]
+  Run `hyvpiper assemble` for input files: [R1, R1]
   */
 
   // echo true
@@ -972,7 +911,7 @@ process ASSEMBLE_PAIRED_END {
     if (params.targetfile_aa) {
       command_list << "--targetfile_dna ${params.targetfile_dna}"
       }
-    if (params.use_bwa) {
+    if (params.bwa) {
       command_list << "--bwa"
       }
     if (params.use_diamond) {
@@ -1056,35 +995,35 @@ process ASSEMBLE_PAIRED_END {
 }
 
 
-process VISUALISE {
-  /*
-  Run the get_seq_lengths.py script
-  */
+// process VISUALISE {
+//   /*
+//   Run the get_seq_lengths.py script
+//   */
 
-  // echo true
-  label 'in_container'
-  publishDir "${params.outdir}/05_visualise", mode: 'copy'
+//   // echo true
+//   label 'in_container'
+//   publishDir "${params.outdir}/05_visualise", mode: 'copy'
 
-  input:
-    path(assemble)
-    path(target_file)
-    path(namelist)
+//   input:
+//     path(assemble)
+//     path(target_file)
+//     path(namelist)
 
-  output:
-    path("seq_lengths.txt"), emit: seq_lengths_ch
-    path("heatmap.png")
+//   output:
+//     path("seq_lengths.txt"), emit: seq_lengths_ch
+//     path("heatmap.png")
 
-  script:
-    """
-    python /HybPiper/get_seq_lengths.py ${target_file} ${namelist} dna > seq_lengths.txt
-    Rscript /HybPiper/gene_recovery_heatmap_ggplot.R
-    """
-}
+//   script:
+//     """
+//     python /HybPiper/get_seq_lengths.py ${target_file} ${namelist} dna > seq_lengths.txt
+//     Rscript /HybPiper/gene_recovery_heatmap_ggplot.R
+//     """
+// }
 
 
 process SUMMARY_STATS {
 /*
-Run hybpiper_stats.py script.
+Run `hybpiper stats`.
 */
 
   // echo true
@@ -1092,137 +1031,117 @@ Run hybpiper_stats.py script.
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy'
 
   input:
+    path(target_file)
     path(assemble)
-    path(seq_lengths) 
     path(namelist)
 
   output:
-    path("stats.txt"), emit: stats_file
+  seq_lengths
+    path("hybpiper_stats.tsv"), emit: stats_file
+    path("seq_lengths.tsv"), emit: seq_lengths_file
 
   script:
-    if (params.translate_target_file_for_blastx || params.use_blastx) {
-    """
-    python /HybPiper/hybpiper_stats.py ${seq_lengths} ${namelist} --blastx_adjustment > stats.txt
-    """
-    } else {
-    """
-    python /HybPiper/hybpiper_stats.py ${seq_lengths} ${namelist} > stats.txt
-    """
-    } 
-}
+  if (params.targetfile_dna) {
+  """
+  hybpiper stats -t_dna ${target_file} gene ${namelist}
+  """
+  } else if (params.targetfile_dna) {
+  """
+  hybpiper stats -t_aa ${target_file} gene ${namelist}
+  """
+  }
 
 
-// process INTRONERATE {
+
+// process PARALOGS {
 //   /*
-//   Run intronerate.py script.
+//   Run paralog_investigator.py script.
 //   */
 
-//   // echo true
+//   //echo true
 //   label 'in_container'
+//   publishDir "${params.outdir}/04_processed_gene_directories", mode: 'copy'
+
+//   if (params.num_forks) {
+//       maxForks params.num_forks
+//   }
 
 //   input:
-//     path(assemble)
+//     path(intronerate_complete) 
 
 //   output:
-//     path(assemble), emit: intronerate_ch optional true
+//     path(intronerate_complete), emit: paralogs_ch optional true 
 
 //   script:
 //     """
-//     echo ${assemble}
-//     python /HybPiper/intronerate.py --prefix ${assemble}
+//     python /HybPiper/paralog_investigator.py ${intronerate_complete}
 //     """
 // }
 
 
-process PARALOGS {
-  /*
-  Run paralog_investigator.py script.
-  */
+// process RETRIEVE_SEQUENCES {
+//   /*
+//   Run the retrieve_sequences.py script for all sequence types.
+//   */
 
-  //echo true
-  label 'in_container'
-  publishDir "${params.outdir}/04_processed_gene_directories", mode: 'copy'
+//   // echo true
+//   label 'in_container'
+//   publishDir "${params.outdir}/07_sequences_dna", mode: 'copy', pattern: "*.FNA"
+//   publishDir "${params.outdir}/08_sequences_aa", mode: 'copy', pattern: "*.FAA"
+//   publishDir "${params.outdir}/09_sequences_intron", mode: 'copy', pattern: "*introns.fasta"
+//   publishDir "${params.outdir}/10_sequences_supercontig", mode: 'copy', pattern: "*supercontig.fasta"
 
-  if (params.num_forks) {
-      maxForks params.num_forks
-  }
-
-  input:
-    path(intronerate_complete) 
-
-  output:
-    path(intronerate_complete), emit: paralogs_ch optional true 
-
-  script:
-    """
-    python /HybPiper/paralog_investigator.py ${intronerate_complete}
-    """
-}
+//   input:
+//     path(paralog_complete)
+//     path(target_file)
 
 
-process RETRIEVE_SEQUENCES {
-  /*
-  Run the retrieve_sequences.py script for all sequence types.
-  */
+//   output:
+//     path("*.FNA")
+//     path("*.FAA")
+//     path("*.fasta")
 
-  // echo true
-  label 'in_container'
-  publishDir "${params.outdir}/07_sequences_dna", mode: 'copy', pattern: "*.FNA"
-  publishDir "${params.outdir}/08_sequences_aa", mode: 'copy', pattern: "*.FAA"
-  publishDir "${params.outdir}/09_sequences_intron", mode: 'copy', pattern: "*introns.fasta"
-  publishDir "${params.outdir}/10_sequences_supercontig", mode: 'copy', pattern: "*supercontig.fasta"
-
-  input:
-    path(paralog_complete)
-    path(target_file)
+//   script:
+//     """
+//     python /HybPiper/retrieve_sequences.py ${target_file} . dna
+//     python /HybPiper/retrieve_sequences.py ${target_file} . aa
+//     python /HybPiper/retrieve_sequences.py ${target_file} . intron
+//     python /HybPiper/retrieve_sequences.py ${target_file} . supercontig
+//     """
+// }
 
 
-  output:
-    path("*.FNA")
-    path("*.FAA")
-    path("*.fasta")
+// process PARALOG_RETRIEVER {
+//   /*
+//   Run paralog_retriever.py script.
+//   */
 
-  script:
-    """
-    python /HybPiper/retrieve_sequences.py ${target_file} . dna
-    python /HybPiper/retrieve_sequences.py ${target_file} . aa
-    python /HybPiper/retrieve_sequences.py ${target_file} . intron
-    python /HybPiper/retrieve_sequences.py ${target_file} . supercontig
-    """
-}
+//   //echo true
+//   label 'in_container'
+//   publishDir "${params.outdir}/11_paralogs", mode: 'copy', pattern: "*.paralogs.fasta"
+//   publishDir "${params.outdir}/12_paralogs_noChimeras", mode: 'copy', pattern: "*.paralogs_noChimeras.fasta"
+//   publishDir "${params.outdir}/12_paralogs_noChimeras/logs", mode: 'copy', pattern: "*mylog*"
 
-
-process PARALOG_RETRIEVER {
-  /*
-  Run paralog_retriever.py script.
-  */
-
-  //echo true
-  label 'in_container'
-  publishDir "${params.outdir}/11_paralogs", mode: 'copy', pattern: "*.paralogs.fasta"
-  publishDir "${params.outdir}/12_paralogs_noChimeras", mode: 'copy', pattern: "*.paralogs_noChimeras.fasta"
-  publishDir "${params.outdir}/12_paralogs_noChimeras/logs", mode: 'copy', pattern: "*mylog*"
-
-  input:
-    path(paralog_complete_list)
-    path(namelist)
-    val(gene_list)
+//   input:
+//     path(paralog_complete_list)
+//     path(namelist)
+//     val(gene_list)
 
 
-  output:
-    path("*.fasta")
-    path("*.mylog*")  
+//   output:
+//     path("*.fasta")
+//     path("*.mylog*")  
 
-  script:
-    assert (gene_list in List)
-    list_of_names = gene_list.join(' ') // Note that this is necessary so that the list isn't of the form [4471, 4527, etc]
-    """
-    for gene_name in ${list_of_names}
-    do
-      python /HybPiper/paralog_retriever.py ${namelist} \${gene_name} > \${gene_name}.paralogs_noChimeras.fasta 2> \${gene_name}.paralogs.fasta
-    done
-    """
-}
+//   script:
+//     assert (gene_list in List)
+//     list_of_names = gene_list.join(' ') // Note that this is necessary so that the list isn't of the form [4471, 4527, etc]
+//     """
+//     for gene_name in ${list_of_names}
+//     do
+//       python /HybPiper/paralog_retriever.py ${namelist} \${gene_name} > \${gene_name}.paralogs_noChimeras.fasta 2> \${gene_name}.paralogs.fasta
+//     done
+//     """
+// }
 
 
 
@@ -1282,8 +1201,8 @@ workflow {
   // // Run get_seq_lengths.py and gene_recovery_heatmap_ggplot.R:
   // VISUALISE( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), target_file_ch, namelist_ch) 
 
-  // // Run hybpiper_stats.py:
-  // SUMMARY_STATS( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), VISUALISE.out.seq_lengths_ch, namelist_ch ) 
+  // Run hybpiper_stats.py:
+  SUMMARY_STATS( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), target_file_ch, namelist_ch ) 
 
   // // Set up conditional channels to skip or include intronerate.py:
   // (assemble_channel_1, assemble_channel_2) = (params.run_intronerate ? 
