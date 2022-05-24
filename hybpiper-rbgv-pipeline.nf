@@ -1197,8 +1197,8 @@ workflow {
   // // Run paralog_investigator.py script:
   // PARALOGS( INTRONERATE.out.intronerate_ch.mix(assemble_channel_1) )
 
-  // // Run retrieve_sequences.py script for all sequence types:
-  // RETRIEVE_SEQUENCES( PARALOGS.out.paralogs_ch.collect(), target_file_ch )
+  // Run retrieve_sequences.py script for all sequence types:
+  RETRIEVE_SEQUENCES( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), target_file_ch, namelist_ch )
 
   // // Run paralog_retriever.py script: 
   // PARALOG_RETRIEVER( PARALOGS.out.paralogs_ch.collect(), namelist_ch, gene_names_ch.collect() )
