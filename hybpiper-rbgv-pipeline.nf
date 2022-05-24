@@ -1035,8 +1035,8 @@ Run `hybpiper stats`.
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy'
 
   input:
-    path(target_file)
     path(assemble)
+    path(target_file)
     path(namelist)
 
   output:
