@@ -799,13 +799,15 @@ process ASSEMBLE_SINGLE_END {
 
 process ASSEMBLE_PAIRED_AND_SINGLE_END {
   /*
-  Run assemble.py for input files: [R1, R1, R1-R2_unpaired]
+  Run `hybpiper assemble` for input files: [R1, R1, R1-R2_unpaired]
   */
 
   //echo true
   label 'in_container'
-  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_supercontigs.csv"
-  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_supercontigs_with_discordant_reads.csv"
+  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_stitched_contig.csv"
+  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_derived_from_putative_chimeric_stitched_contig.csv"
+  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt"
+  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv"
 
   if (params.num_forks) {
     maxForks params.num_forks
@@ -820,8 +822,10 @@ process ASSEMBLE_PAIRED_AND_SINGLE_END {
 
   output:
     path("${pair_id}"), emit: assemble_with_unPaired_ch optional true
-    path("${pair_id}/${pair_id}_genes_with_supercontigs.csv") optional true
-    path("${pair_id}/${pair_id}_supercontigs_with_discordant_reads.csv") optional true
+    path("${pair_id}/${pair_id}_genes_with_stitched_contig.csv") optional true
+    path("${pair_id}/${pair_id}_genes_derived_from_putative_chimeric_stitched_contig.csv") optional true
+    path("${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt") optional true
+    path("${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv") optional true
 
   script:
     def command_list = []
