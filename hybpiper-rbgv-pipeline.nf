@@ -276,8 +276,8 @@ if (params.single_end && params.paired_and_single) {
   println('Please use --single_end OR --paired_and_single, not both!')
   exit 0
 }
-if (params.target_file_dna && params.target_file_aa) {
-  println('Please use --target_file_dna OR --target_file_aa, not both!')
+if (params.targetfile_dna && params.targetfile_aa) {
+  println('Please use --targetfile_dna OR --targetfile_aa, not both!')
   exit 0
 }
 if (params.target_file_aa && params.use_bwa) {
