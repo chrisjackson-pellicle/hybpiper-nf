@@ -264,10 +264,10 @@ if (params.help || !params.illumina_reads_directory || (!params.targetfile_dna &
 
 
 // Check that paralog_warning_min_len_percent value is a decimal between 0 and 1
-if (params.paralog_warning_min_len_percent < 0 || params.paralog_warning_min_len_percent >1) {
+if (params.paralog_min_length_percentage < 0 || params.paralog_min_length_percentage >1) {
 println("""
-  The value for --paralog_warning_min_len_percent should be between 0 and 1. 
-  Your value is ${params.paralog_warning_min_len_percent}""".stripIndent())
+  The value for --paralog_min_length_percentage should be between 0 and 1. 
+  Your value is ${params.paralog_min_length_percentage}""".stripIndent())
 exit 0
 }
 
