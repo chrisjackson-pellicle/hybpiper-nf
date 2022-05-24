@@ -302,7 +302,7 @@ allowed_params = ["no_stitched_contig", "chimera_test_memory","chimeric_stitched
 "chimeric_stitched_contig_discordant_reads_cutoff", "merged", "paired_and_single", "single_end", "outdir", \
 "illumina_reads_directory", "target_file", "help", "memory", "read_pairs_pattern", \
 "single_pattern", "use_blastx", "num_forks", "cov_cutoff", "evalue", \
-"paralog_min_len_percentage", "translate_target_file_for_blastx", "use_trimmomatic", \
+"paralog_min_length_percentage", "translate_target_file_for_blastx", "use_trimmomatic", \
 "trimmomatic_leading_quality", "trimmomatic_trailing_quality", "trimmomatic_min_length", \
 "trimmomatic_sliding_window_size", "trimmomatic_sliding_window_quality", "run_intronerate", \
 "bbmap_subfilter", "combine_read_files", "combine_read_files_num_fields", "namelist", \
