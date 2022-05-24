@@ -1041,9 +1041,6 @@ process VISUALISE {
   publishDir "${params.outdir}/05_visualise", mode: 'copy'
 
   input:
-    // path(assemble)
-    // path(target_file)
-    // path(namelist)
     path(seq_lengths_file)
 
   output:
@@ -1056,62 +1053,45 @@ process VISUALISE {
 }
 
 
-// process PARALOGS {
-//   /*
-//   Run paralog_investigator.py script.
-//   */
+process RETRIEVE_SEQUENCES {
+  /*
+  Run the hybpiper retrieve_sequences command for all sequence types.
+  */
 
-//   //echo true
-//   label 'in_container'
-//   publishDir "${params.outdir}/04_processed_gene_directories", mode: 'copy'
+  // echo true
+  label 'in_container'
+  publishDir "${params.outdir}/07_sequences_dna", mode: 'copy', pattern: "*.FNA"
+  publishDir "${params.outdir}/08_sequences_aa", mode: 'copy', pattern: "*.FAA"
+  publishDir "${params.outdir}/09_sequences_intron", mode: 'copy', pattern: "*introns.fasta"
+  publishDir "${params.outdir}/10_sequences_supercontig", mode: 'copy', pattern: "*supercontig.fasta"
 
-//   if (params.num_forks) {
-//       maxForks params.num_forks
-//   }
+  input:
+    path(assemble)
+    path(target_file)
+    path(namelist)
 
-//   input:
-//     path(intronerate_complete) 
+  output:
+    path("*.FNA")
+    path("*.FAA")
+    path("*.fasta")
 
-//   output:
-//     path(intronerate_complete), emit: paralogs_ch optional true 
-
-//   script:
-//     """
-//     python /HybPiper/paralog_investigator.py ${intronerate_complete}
-//     """
-// }
-
-
-// process RETRIEVE_SEQUENCES {
-//   /*
-//   Run the retrieve_sequences.py script for all sequence types.
-//   */
-
-//   // echo true
-//   label 'in_container'
-//   publishDir "${params.outdir}/07_sequences_dna", mode: 'copy', pattern: "*.FNA"
-//   publishDir "${params.outdir}/08_sequences_aa", mode: 'copy', pattern: "*.FAA"
-//   publishDir "${params.outdir}/09_sequences_intron", mode: 'copy', pattern: "*introns.fasta"
-//   publishDir "${params.outdir}/10_sequences_supercontig", mode: 'copy', pattern: "*supercontig.fasta"
-
-//   input:
-//     path(paralog_complete)
-//     path(target_file)
-
-
-//   output:
-//     path("*.FNA")
-//     path("*.FAA")
-//     path("*.fasta")
-
-//   script:
-//     """
-//     python /HybPiper/retrieve_sequences.py ${target_file} . dna
-//     python /HybPiper/retrieve_sequences.py ${target_file} . aa
-//     python /HybPiper/retrieve_sequences.py ${target_file} . intron
-//     python /HybPiper/retrieve_sequences.py ${target_file} . supercontig
-//     """
-// }
+  script:
+  if (params.targetfile_dna) {
+    """
+    hybpiper retrieve_sequences -t_dna ${target_file} --sample_names ${namelist} dna
+    hybpiper retrieve_sequences -t_dna ${target_file} --sample_names ${namelist} aa
+    hybpiper retrieve_sequences -t_dna ${target_file} --sample_names ${namelist} intron
+    hybpiper retrieve_sequences -t_dna ${target_file} --sample_names ${namelist} supercontig
+    """
+  } else if (params.targetfile_aa) {
+    """
+    hybpiper retrieve_sequences -t_aa ${target_file} --sample_names ${namelist} . dna
+    hybpiper retrieve_sequences -t_aa ${target_file} --sample_names ${namelist} . aa
+    hybpiper retrieve_sequences -t_aa ${target_file} --sample_names ${namelist} . intron
+    hybpiper retrieve_sequences -t_aa ${target_file} --sample_names ${namelist} . supercontig
+    """
+  }
+}
 
 
 // process PARALOG_RETRIEVER {
