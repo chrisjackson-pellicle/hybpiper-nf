@@ -269,44 +269,22 @@ if (params.targetfile_dna) {
     .set { target_file_ch }
 }
 
-
-process CHECK_TARGETFILE {
-  /*
-  Run `hybpiper check_targetfile` command.
-  */
-
-  // echo true
-  // debug true
-  label 'in_container'
-  publishDir "${params.outdir}/00_check_targetfile", mode: 'copy', pattern: "check_targetfile_report.txt"
-
-  input:
-    path(target_file)
-
-  output:
-    stdout emit: check_results
-    path("check_targetfile_report.txt")
-
-  script:
-    if (params.targetfile_dna) {
-      """ 
-      hybpiper check_targetfile -t_dna ${target_file} 2>&1 | tee check_targetfile_report.txt
-      """
-    } else if (params.targetfile_aa) {
-      """
-      hybpiper check_targetfileiever -t_aa ${target_file} 2>&1 | tee check_targetfile_report.txt
-      """
-    }
-}
-
-
+// Check  minimal input provided if -entry check_targetfile:
 if (workflow.commandLine.contains('-entry check_targetfile')  && 
 (!params.targetfile_dna && !params.targetfile_aa)) {
   println('\nERROR: Parameter "-entry check_targetfile" detected, but no target file provided!\nPlease provide your target file using the "--targetfile_dna" or "--targetfile_aa" parameter.')
   exit 0
 } 
 
+// Check minimal input provided if NOT -entry check_targetfile:
+if (!workflow.commandLine.contains('-entry check_targetfile')) {
+  if (params.help || !params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa)) {
+  helpMessage()
+  exit 0
+  }
+}
 
+// Workflow to run the CHECK_TARGETFILE process
 workflow check_targetfile_main {
     take: target_file
     main:
@@ -315,19 +293,14 @@ workflow check_targetfile_main {
         // exit 0 
 }
 
-
+// Workflow to run the check_targetfile_main workflow with target_file_ch as input:
 workflow check_targetfile {
     check_targetfile_main( target_file_ch )
     // exit 0
 }
 
 
-if (!workflow.commandLine.contains('-entry check_targetfile')) {
-  if (params.help || !params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa)) {
-  helpMessage()
-  exit 0
-}
-}
+
 // } && (params.help || !params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa))) {
 //   // helpMessage()
 //   println('nope')
@@ -600,6 +573,35 @@ def getLibraryId( prefix ){
 /////////////////////////////
 //  DEFINE DSL2 PROCESSES  //
 /////////////////////////////
+
+
+process CHECK_TARGETFILE {
+  /*
+  Run `hybpiper check_targetfile` command.
+  */
+
+  label 'in_container'
+  publishDir "${params.outdir}/00_check_targetfile", mode: 'copy', pattern: "check_targetfile_report.txt"
+
+  input:
+    path(target_file)
+
+  output:
+    stdout emit: check_results
+    path("check_targetfile_report.txt")
+
+  script:
+    if (params.targetfile_dna) {
+      """ 
+      hybpiper check_targetfile -t_dna ${target_file} 2>&1 | tee check_targetfile_report.txt
+      """
+    } else if (params.targetfile_aa) {
+      """
+      hybpiper check_targetfileiever -t_aa ${target_file} 2>&1 | tee check_targetfile_report.txt
+      """
+    }
+}
+
 
 process COMBINE_LANES_PAIRED_END {
   /*
