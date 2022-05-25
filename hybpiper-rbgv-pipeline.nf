@@ -275,7 +275,7 @@ process CHECK_TARGETFILE {
   Run `hybpiper check_targetfile` command.
   */
 
-  echo true
+  // echo true
   // debug true
   label 'in_container'
   publishDir "${params.outdir}/00_check_targetfile", mode: 'copy', pattern: "check_targetfile_report.txt"
@@ -309,8 +309,8 @@ if (workflow.commandLine.contains('-entry check_targetfile')  &&
 workflow check_targetfile_main {
     take: target_file
     main:
-        CHECK_TARGETFILE(target_file).out.check_results.view()
-
+        CHECK_TARGETFILE(target_file)
+        CHECK_TARGETFILE.out.check_results.view()
         // exit 0 
 }
 
