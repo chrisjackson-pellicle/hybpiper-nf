@@ -285,6 +285,7 @@ process CHECK_TARGETFILE {
 
   output:
     stdout emit: check_results
+    path("check_targetfile_report.txt")
 
   script:
     if (params.targetfile_dna) {
