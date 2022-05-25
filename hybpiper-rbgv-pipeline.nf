@@ -296,6 +296,7 @@ if (!workflow.commandLine.contains('-entry check_targetfile')) {
     println('You can not use BWA with a target file containing protein sequences. \
     Please use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.')
     exit 0
+  }
 }
 
 // Workflow to run the CHECK_TARGETFILE process
