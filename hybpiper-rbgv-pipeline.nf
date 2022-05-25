@@ -278,26 +278,22 @@ process CHECK_TARGETFILE {
   echo true
   // debug true
   label 'in_container'
+  publishDir "${params.outdir}/00_check_targetfile", mode: 'copy', pattern: "check_targetfile_report.txt"
 
   input:
     path(target_file)
 
   output:
     stdout emit: check_results
-  //   path("paralogs_all/*paralogs_all.fasta")
-  //   path("paralogs_no_chimeras/*paralogs_no_chimeras.fasta")
-  //   path("paralog_report.tsv")
-  //   path("paralogs_above_threshold_report.txt") 
 
   script:
     if (params.targetfile_dna) {
-      """
-      echo 'hello'
-      hybpiper check_targetfile -t_dna ${target_file}
+      """ 
+      hybpiper check_targetfile -t_dna ${target_file} 2>&1 | tee check_targetfile_report.txt
       """
     } else if (params.targetfile_aa) {
       """
-      hybpiper check_targetfileiever -t_aa ${target_file}
+      hybpiper check_targetfileiever -t_aa ${target_file} 2>&1 | tee check_targetfile_report.txt
       """
     }
 }
@@ -313,7 +309,8 @@ if (workflow.commandLine.contains('-entry check_targetfile')  &&
 workflow check_targetfile_main {
     take: target_file
     main:
-        CHECK_TARGETFILE(target_file) 
+        CHECK_TARGETFILE(target_file).out.check_results.view()
+
         // exit 0 
 }
 
@@ -325,7 +322,10 @@ workflow check_targetfile {
 
 
 if (!workflow.commandLine.contains('-entry check_targetfile')) {
-  println('lucy')
+  if (params.help || !params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa)) {
+  helpMessage()
+  exit 0
+}
 }
 // } && (params.help || !params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa))) {
 //   // helpMessage()
