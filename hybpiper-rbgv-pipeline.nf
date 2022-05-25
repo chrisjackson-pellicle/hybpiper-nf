@@ -276,12 +276,26 @@ if (workflow.commandLine.contains('-entry check_targetfile')  &&
   exit 0
 } 
 
-// Check minimal input provided if NOT -entry check_targetfile:
+// Check minimal input provided if NOT -entry check_targetfile, then check for incompatible parameters:
 if (!workflow.commandLine.contains('-entry check_targetfile')) {
   if (params.help || !params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa)) {
   helpMessage()
   exit 0
-  }
+  } else if (params.paralog_min_length_percentage < 0 || params.paralog_min_length_percentage >1) {
+  println("""
+    The value for --paralog_min_length_percentage should be between 0 and 1. 
+    Your value is ${params.paralog_min_length_percentage}""".stripIndent())
+  exit 0
+  } else if (params.single_end && params.paired_and_single) {
+    println('Please use --single_end OR --paired_and_single, not both!')
+    exit 0
+  } else if if (params.targetfile_dna && params.targetfile_aa) {
+    println('Please use --targetfile_dna OR --targetfile_aa, not both!')
+    exit 0
+  } else if (params.targetfile_aa && params.use_bwa) {
+    println('You can not use BWA with a target file containing protein sequences. \
+    Please use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.')
+    exit 0
 }
 
 // Workflow to run the CHECK_TARGETFILE process
@@ -298,21 +312,6 @@ workflow check_targetfile {
     check_targetfile_main( target_file_ch )
     // exit 0
 }
-
-
-
-// } && (params.help || !params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa))) {
-//   // helpMessage()
-//   println('nope')
-//   exit 0
-// }
-
-
-// // Check that input directories are provided
-// if (params.help || !params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa)) {
-//   helpMessage()
-//   exit 0
-// }
 
 
 
@@ -1222,28 +1221,28 @@ process PARALOG_RETRIEVER {
 
 workflow {
 
-    // Check that paralog_warning_min_len_percent value is a decimal between 0 and 1
-  if (params.paralog_min_length_percentage < 0 || params.paralog_min_length_percentage >1) {
-  println("""
-    The value for --paralog_min_length_percentage should be between 0 and 1. 
-    Your value is ${params.paralog_min_length_percentage}""".stripIndent())
-  exit 0
-  }
+  //   // Check that paralog_warning_min_len_percent value is a decimal between 0 and 1
+  // if (params.paralog_min_length_percentage < 0 || params.paralog_min_length_percentage >1) {
+  // println("""
+  //   The value for --paralog_min_length_percentage should be between 0 and 1. 
+  //   Your value is ${params.paralog_min_length_percentage}""".stripIndent())
+  // exit 0
+  // }
 
-  // Check that non-overlapping options are provided
-  if (params.single_end && params.paired_and_single) {
-    println('Please use --single_end OR --paired_and_single, not both!')
-    exit 0
-  }
-  if (params.targetfile_dna && params.targetfile_aa) {
-    println('Please use --targetfile_dna OR --targetfile_aa, not both!')
-    exit 0
-  }
-  if (params.targetfile_aa && params.use_bwa) {
-    println('You can not use BWA with a target file containing protein sequences. \
-    Please use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.')
-    exit 0
-  }
+  // // Check that non-overlapping options are provided
+  // if (params.single_end && params.paired_and_single) {
+  //   println('Please use --single_end OR --paired_and_single, not both!')
+  //   exit 0
+  // }
+  // if (params.targetfile_dna && params.targetfile_aa) {
+  //   println('Please use --targetfile_dna OR --targetfile_aa, not both!')
+  //   exit 0
+  // }
+  // if (params.targetfile_aa && params.use_bwa) {
+  //   println('You can not use BWA with a target file containing protein sequences. \
+  //   Please use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.')
+  //   exit 0
+  // }
 
 
   // Don't allow params.paired_and_single and params.use_trimmomatic
