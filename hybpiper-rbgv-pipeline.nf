@@ -275,8 +275,8 @@ process CHECK_TARGETFILE {
   Run `hybpiper check_targetfile` command.
   */
 
-  // echo true
-  debug true
+  echo true
+  // debug true
   label 'in_container'
 
   input:
