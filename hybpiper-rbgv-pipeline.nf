@@ -282,7 +282,8 @@ process CHECK_TARGETFILE {
   input:
     path(target_file)
 
-  // output:
+  output:
+    stdout emit: check_results
   //   path("paralogs_all/*paralogs_all.fasta")
   //   path("paralogs_no_chimeras/*paralogs_no_chimeras.fasta")
   //   path("paralog_report.tsv")
