@@ -303,10 +303,18 @@ process CHECK_TARGETFILE {
 }
 
 
+if (workflow.commandLine.contains('-entry check_targetfile')  && 
+(!params.targetfile_dna && !params.targetfile_aa)) {
+  println('\nERROR: Parameter "-entry check_targetfile" detected, but no target file provided!\nPlease provide your target file using the "--targetfile_dna" or "--targetfile_aa" parameter.')
+  exit 0
+} 
+
+
 workflow check_targetfile_main {
     take: target_file
     main:
-        CHECK_TARGETFILE(target_file)  
+        CHECK_TARGETFILE(target_file) 
+        // exit 0 
 }
 
 
@@ -316,44 +324,55 @@ workflow check_targetfile {
 }
 
 
-// Check that input directories are provided
+if (!workflow.commandLine.contains('-entry check_targetfile')) {
+  println('lucy')
+}
+// } && (params.help || !params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa))) {
+//   // helpMessage()
+//   println('nope')
+//   exit 0
+// }
+
+
+// // Check that input directories are provided
 // if (params.help || !params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa)) {
 //   helpMessage()
 //   exit 0
 // }
 
 
-// Check that paralog_warning_min_len_percent value is a decimal between 0 and 1
-if (params.paralog_min_length_percentage < 0 || params.paralog_min_length_percentage >1) {
-println("""
-  The value for --paralog_min_length_percentage should be between 0 and 1. 
-  Your value is ${params.paralog_min_length_percentage}""".stripIndent())
-exit 0
-}
 
-// Check that non-overlapping options are provided
-if (params.single_end && params.paired_and_single) {
-  println('Please use --single_end OR --paired_and_single, not both!')
-  exit 0
-}
-if (params.targetfile_dna && params.targetfile_aa) {
-  println('Please use --targetfile_dna OR --targetfile_aa, not both!')
-  exit 0
-}
-if (params.targetfile_aa && params.use_bwa) {
-  println('You can not use BWA with a target file containing protein sequences. \
-  Please use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.')
-  exit 0
-}
+// // Check that paralog_warning_min_len_percent value is a decimal between 0 and 1
+// if (params.paralog_min_length_percentage < 0 || params.paralog_min_length_percentage >1) {
+// println("""
+//   The value for --paralog_min_length_percentage should be between 0 and 1. 
+//   Your value is ${params.paralog_min_length_percentage}""".stripIndent())
+// exit 0
+// }
+
+// // Check that non-overlapping options are provided
+// if (params.single_end && params.paired_and_single) {
+//   println('Please use --single_end OR --paired_and_single, not both!')
+//   exit 0
+// }
+// if (params.targetfile_dna && params.targetfile_aa) {
+//   println('Please use --targetfile_dna OR --targetfile_aa, not both!')
+//   exit 0
+// }
+// if (params.targetfile_aa && params.use_bwa) {
+//   println('You can not use BWA with a target file containing protein sequences. \
+//   Please use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.')
+//   exit 0
+// }
 
 
-// Don't allow params.paired_and_single and params.use_trimmomatic
-if (params.paired_and_single && params.use_trimmomatic) {
-  println("""
-    Trimmomatic can't be used with paired plus single reads yet - 
-    let me know if this would be useful!""".stripIndent())
-  exit 0
-}
+// // Don't allow params.paired_and_single and params.use_trimmomatic
+// if (params.paired_and_single && params.use_trimmomatic) {
+//   println("""
+//     Trimmomatic can't be used with paired plus single reads yet - 
+//     let me know if this would be useful!""".stripIndent())
+//   exit 0
+// }
 
 
 
@@ -409,172 +428,172 @@ def getLibraryId( prefix ){
 }
 
 
-/////////////////////////////////////////////////////////
-//  Create 'namelist.txt' file and associated channel  //
-/////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////
+// //  Create 'namelist.txt' file and associated channel  //
+// /////////////////////////////////////////////////////////
 
-def user_provided_namelist_for_filtering = []
+// def user_provided_namelist_for_filtering = []
 
-if (params.namelist) {
-  user_provided_namelist_file = file("${params.namelist}", checkIfExists: true)
-    .readLines()
-    .each { user_provided_namelist_for_filtering << it }
-  Channel
-  .fromPath("${params.namelist}", checkIfExists: true)
-  .first()
-  .set { namelist_ch }
+// if (params.namelist) {
+//   user_provided_namelist_file = file("${params.namelist}", checkIfExists: true)
+//     .readLines()
+//     .each { user_provided_namelist_for_filtering << it }
+//   Channel
+//   .fromPath("${params.namelist}", checkIfExists: true)
+//   .first()
+//   .set { namelist_ch }
 
-} else if (!params.single_end && !params.combine_read_files) {
-  Channel
-  .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-    flat : true, checkIfExists: true)
-  .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
-  .first()
-  .set { namelist_ch }
+// } else if (!params.single_end && !params.combine_read_files) {
+//   Channel
+//   .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+//     flat : true, checkIfExists: true)
+//   .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
+//   .first()
+//   .set { namelist_ch }
 
-} else if (!params.single_end && params.combine_read_files) {
-  Channel
-  .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-    flat : true, checkIfExists: true)
-  .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
-  .groupTuple(sort:true)
-  .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
-  .first()
-  .set { namelist_ch }
+// } else if (!params.single_end && params.combine_read_files) {
+//   Channel
+//   .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+//     flat : true, checkIfExists: true)
+//   .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+//   .groupTuple(sort:true)
+//   .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
+//   .first()
+//   .set { namelist_ch }
 
-} else if (params.single_end && !params.combine_read_files) {
-  Channel
-  .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-    checkIfExists: true)
-  .map { file -> file.baseName.split("_${params.single_pattern}")[0] } // THIS NEEDS TO BE UNIQUE
-  .unique()
-  .collectFile(name: "${params.outdir}/01_namelist/namelist.txt", newLine: true)
-  .first()
-  .set { namelist_ch }
+// } else if (params.single_end && !params.combine_read_files) {
+//   Channel
+//   .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+//     checkIfExists: true)
+//   .map { file -> file.baseName.split("_${params.single_pattern}")[0] } // THIS NEEDS TO BE UNIQUE
+//   .unique()
+//   .collectFile(name: "${params.outdir}/01_namelist/namelist.txt", newLine: true)
+//   .first()
+//   .set { namelist_ch }
 
-} else if (params.single_end && params.combine_read_files) {
-  Channel
-  .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-    checkIfExists: true)
-  .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
-  .groupTuple(sort:true)
-  .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
-  .first()
-  .set { namelist_ch }
-}
-
-
-
-if (user_provided_namelist_for_filtering) {
-  user_provided_namelist_for_filtering = user_provided_namelist_for_filtering.findAll { item -> !item.isEmpty() }
-
-  log.info("""
-    INFO: A namelist has been supplied by the user. Only the following samples will be processed: ${user_provided_namelist_for_filtering}\n""".stripIndent())
-}
+// } else if (params.single_end && params.combine_read_files) {
+//   Channel
+//   .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+//     checkIfExists: true)
+//   .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
+//   .groupTuple(sort:true)
+//   .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
+//   .first()
+//   .set { namelist_ch }
+// }
 
 
-//////////////////////////////
-//  Illumina reads channel  //
-//////////////////////////////
 
-/*
-Single-end reads.
-Don't group reads from multi-lane (default).
-*/
-if (params.single_end && !params.combine_read_files && user_provided_namelist_for_filtering) {
-  Channel
-  .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-    checkIfExists: true)
-  .map { file -> tuple(file.baseName.split("_${params.single_pattern}")[0], file) } // THIS NEEDS TO BE UNIQUE
-  .filter { it[0] in user_provided_namelist_for_filtering }
-  // .view()
-  .set { illumina_reads_single_end_ch }
+// if (user_provided_namelist_for_filtering) {
+//   user_provided_namelist_for_filtering = user_provided_namelist_for_filtering.findAll { item -> !item.isEmpty() }
 
-} else if (params.single_end && !params.combine_read_files && 
-  !user_provided_namelist_for_filtering) {
-  Channel
-  .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-    checkIfExists: true)
-  .map { file -> tuple(file.baseName.split("_${params.single_pattern}")[0], file) } // THIS NEEDS TO BE UNIQUE
-  .set { illumina_reads_single_end_ch }
-
-} else if (params.single_end && params.combine_read_files && user_provided_namelist_for_filtering) {
-  Channel
-  .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-  checkIfExists: true)
-  .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
-  .groupTuple(sort:true)
-  // .view()
-  .filter { it[0] in user_provided_namelist_for_filtering }
-  // .view()
-  .set { illumina_reads_single_end_ch }
-
-} else if (params.single_end && params.combine_read_files && !user_provided_namelist_for_filtering) {
-  Channel
-  .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-  checkIfExists: true)
-  .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
-  .groupTuple(sort:true)
-  .set { illumina_reads_single_end_ch }
-
-} else {
-  illumina_reads_single_end_ch = Channel.empty()
-}
+//   log.info("""
+//     INFO: A namelist has been supplied by the user. Only the following samples will be processed: ${user_provided_namelist_for_filtering}\n""".stripIndent())
+// }
 
 
-/*
-Paired-end reads and a file of unpaired reads.
-*/
-if (params.paired_and_single) {
-  Channel
-  .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern,$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", flat : true,
-  checkIfExists: true, size: 3)
-  .set { illumina_paired_reads_with_unpaired_ch }
-} else {
-  illumina_paired_reads_with_unpaired_ch = Channel.empty()
-}
+// //////////////////////////////
+// //  Illumina reads channel  //
+// //////////////////////////////
+
+// /*
+// Single-end reads.
+// Don't group reads from multi-lane (default).
+// */
+// if (params.single_end && !params.combine_read_files && user_provided_namelist_for_filtering) {
+//   Channel
+//   .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+//     checkIfExists: true)
+//   .map { file -> tuple(file.baseName.split("_${params.single_pattern}")[0], file) } // THIS NEEDS TO BE UNIQUE
+//   .filter { it[0] in user_provided_namelist_for_filtering }
+//   // .view()
+//   .set { illumina_reads_single_end_ch }
+
+// } else if (params.single_end && !params.combine_read_files && 
+//   !user_provided_namelist_for_filtering) {
+//   Channel
+//   .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+//     checkIfExists: true)
+//   .map { file -> tuple(file.baseName.split("_${params.single_pattern}")[0], file) } // THIS NEEDS TO BE UNIQUE
+//   .set { illumina_reads_single_end_ch }
+
+// } else if (params.single_end && params.combine_read_files && user_provided_namelist_for_filtering) {
+//   Channel
+//   .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+//   checkIfExists: true)
+//   .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
+//   .groupTuple(sort:true)
+//   // .view()
+//   .filter { it[0] in user_provided_namelist_for_filtering }
+//   // .view()
+//   .set { illumina_reads_single_end_ch }
+
+// } else if (params.single_end && params.combine_read_files && !user_provided_namelist_for_filtering) {
+//   Channel
+//   .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+//   checkIfExists: true)
+//   .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
+//   .groupTuple(sort:true)
+//   .set { illumina_reads_single_end_ch }
+
+// } else {
+//   illumina_reads_single_end_ch = Channel.empty()
+// }
 
 
-/* 
-Paired-end reads.
-Don't group reads from multi-lane (default).
-*/
-if (!params.paired_and_single && !params.single_end  && !params.combine_read_files && user_provided_namelist_for_filtering) {
-  Channel
-    .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-    flat : true, checkIfExists: true)
-    .filter { it[0] in user_provided_namelist_for_filtering }
-    // .view()
-    .set { illumina_paired_reads_ch }
+// /*
+// Paired-end reads and a file of unpaired reads.
+// */
+// if (params.paired_and_single) {
+//   Channel
+//   .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern,$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", flat : true,
+//   checkIfExists: true, size: 3)
+//   .set { illumina_paired_reads_with_unpaired_ch }
+// } else {
+//   illumina_paired_reads_with_unpaired_ch = Channel.empty()
+// }
 
-} else if (!params.paired_and_single && !params.single_end  && !params.combine_read_files && !user_provided_namelist_for_filtering) {
-    Channel
-    .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-    flat : true, checkIfExists: true)
-    // .view()
-    .set { illumina_paired_reads_ch }
 
-} else if (!params.paired_and_single && !params.single_end  && params.combine_read_files && user_provided_namelist_for_filtering) {
-    Channel
-    .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-    flat : true, checkIfExists: true)
-    .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
-    .groupTuple(sort:true)
-    .filter { it[0] in user_provided_namelist_for_filtering }
-    // .view()
-    .set { illumina_paired_reads_ch }
+// /* 
+// Paired-end reads.
+// Don't group reads from multi-lane (default).
+// */
+// if (!params.paired_and_single && !params.single_end  && !params.combine_read_files && user_provided_namelist_for_filtering) {
+//   Channel
+//     .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+//     flat : true, checkIfExists: true)
+//     .filter { it[0] in user_provided_namelist_for_filtering }
+//     // .view()
+//     .set { illumina_paired_reads_ch }
 
-} else if (!params.paired_and_single && !params.single_end && params.combine_read_files && !user_provided_namelist_for_filtering) {
-    Channel
-    .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-    flat : true, checkIfExists: true)
-    .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
-    .groupTuple(sort:true)
-    .set { illumina_paired_reads_ch }
+// } else if (!params.paired_and_single && !params.single_end  && !params.combine_read_files && !user_provided_namelist_for_filtering) {
+//     Channel
+//     .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+//     flat : true, checkIfExists: true)
+//     // .view()
+//     .set { illumina_paired_reads_ch }
 
-} else {
-  illumina_paired_reads_ch = Channel.empty()
-}
+// } else if (!params.paired_and_single && !params.single_end  && params.combine_read_files && user_provided_namelist_for_filtering) {
+//     Channel
+//     .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+//     flat : true, checkIfExists: true)
+//     .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+//     .groupTuple(sort:true)
+//     .filter { it[0] in user_provided_namelist_for_filtering }
+//     // .view()
+//     .set { illumina_paired_reads_ch }
+
+// } else if (!params.paired_and_single && !params.single_end && params.combine_read_files && !user_provided_namelist_for_filtering) {
+//     Channel
+//     .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+//     flat : true, checkIfExists: true)
+//     .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+//     .groupTuple(sort:true)
+//     .set { illumina_paired_reads_ch }
+
+// } else {
+//   illumina_paired_reads_ch = Channel.empty()
+// }
 
 
 /////////////////////////////
@@ -1199,6 +1218,202 @@ process PARALOG_RETRIEVER {
 ////////////////////////
 
 workflow {
+
+    // Check that paralog_warning_min_len_percent value is a decimal between 0 and 1
+  if (params.paralog_min_length_percentage < 0 || params.paralog_min_length_percentage >1) {
+  println("""
+    The value for --paralog_min_length_percentage should be between 0 and 1. 
+    Your value is ${params.paralog_min_length_percentage}""".stripIndent())
+  exit 0
+  }
+
+  // Check that non-overlapping options are provided
+  if (params.single_end && params.paired_and_single) {
+    println('Please use --single_end OR --paired_and_single, not both!')
+    exit 0
+  }
+  if (params.targetfile_dna && params.targetfile_aa) {
+    println('Please use --targetfile_dna OR --targetfile_aa, not both!')
+    exit 0
+  }
+  if (params.targetfile_aa && params.use_bwa) {
+    println('You can not use BWA with a target file containing protein sequences. \
+    Please use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.')
+    exit 0
+  }
+
+
+  // Don't allow params.paired_and_single and params.use_trimmomatic
+  if (params.paired_and_single && params.use_trimmomatic) {
+    println("""
+      Trimmomatic can't be used with paired plus single reads yet - 
+      let me know if this would be useful!""".stripIndent())
+    exit 0
+  }
+
+  /////////////////////////////////////////////////////////
+  //  Create 'namelist.txt' file and associated channel  //
+  /////////////////////////////////////////////////////////
+
+  def user_provided_namelist_for_filtering = []
+
+  if (params.namelist) {
+    user_provided_namelist_file = file("${params.namelist}", checkIfExists: true)
+      .readLines()
+      .each { user_provided_namelist_for_filtering << it }
+    Channel
+    .fromPath("${params.namelist}", checkIfExists: true)
+    .first()
+    .set { namelist_ch }
+
+  } else if (!params.single_end && !params.combine_read_files) {
+    Channel
+    .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+      flat : true, checkIfExists: true)
+    .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
+    .first()
+    .set { namelist_ch }
+
+  } else if (!params.single_end && params.combine_read_files) {
+    Channel
+    .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+      flat : true, checkIfExists: true)
+    .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+    .groupTuple(sort:true)
+    .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
+    .first()
+    .set { namelist_ch }
+
+  } else if (params.single_end && !params.combine_read_files) {
+    Channel
+    .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+      checkIfExists: true)
+    .map { file -> file.baseName.split("_${params.single_pattern}")[0] } // THIS NEEDS TO BE UNIQUE
+    .unique()
+    .collectFile(name: "${params.outdir}/01_namelist/namelist.txt", newLine: true)
+    .first()
+    .set { namelist_ch }
+
+  } else if (params.single_end && params.combine_read_files) {
+    Channel
+    .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+      checkIfExists: true)
+    .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
+    .groupTuple(sort:true)
+    .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
+    .first()
+    .set { namelist_ch }
+  }
+
+  if (user_provided_namelist_for_filtering) {
+  user_provided_namelist_for_filtering = user_provided_namelist_for_filtering.findAll { item -> !item.isEmpty() }
+
+  log.info("""
+    INFO: A namelist has been supplied by the user. Only the following samples will be processed: ${user_provided_namelist_for_filtering}\n""".stripIndent())
+  }
+
+  //////////////////////////////
+  //  Illumina reads channel  //
+  //////////////////////////////
+
+  /*
+  Single-end reads.
+  Don't group reads from multi-lane (default).
+  */
+  if (params.single_end && !params.combine_read_files && user_provided_namelist_for_filtering) {
+    Channel
+    .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+      checkIfExists: true)
+    .map { file -> tuple(file.baseName.split("_${params.single_pattern}")[0], file) } // THIS NEEDS TO BE UNIQUE
+    .filter { it[0] in user_provided_namelist_for_filtering }
+    // .view()
+    .set { illumina_reads_single_end_ch }
+
+  } else if (params.single_end && !params.combine_read_files && 
+    !user_provided_namelist_for_filtering) {
+    Channel
+    .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+      checkIfExists: true)
+    .map { file -> tuple(file.baseName.split("_${params.single_pattern}")[0], file) } // THIS NEEDS TO BE UNIQUE
+    .set { illumina_reads_single_end_ch }
+
+  } else if (params.single_end && params.combine_read_files && user_provided_namelist_for_filtering) {
+    Channel
+    .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+    checkIfExists: true)
+    .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
+    .groupTuple(sort:true)
+    // .view()
+    .filter { it[0] in user_provided_namelist_for_filtering }
+    // .view()
+    .set { illumina_reads_single_end_ch }
+
+  } else if (params.single_end && params.combine_read_files && !user_provided_namelist_for_filtering) {
+    Channel
+    .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+    checkIfExists: true)
+    .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
+    .groupTuple(sort:true)
+    .set { illumina_reads_single_end_ch }
+
+  } else {
+    illumina_reads_single_end_ch = Channel.empty()
+  }
+
+
+  /*
+  Paired-end reads and a file of unpaired reads.
+  */
+  if (params.paired_and_single) {
+    Channel
+    .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern,$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", flat : true,
+    checkIfExists: true, size: 3)
+    .set { illumina_paired_reads_with_unpaired_ch }
+  } else {
+    illumina_paired_reads_with_unpaired_ch = Channel.empty()
+  }
+
+
+  /* 
+  Paired-end reads.
+  Don't group reads from multi-lane (default).
+  */
+  if (!params.paired_and_single && !params.single_end  && !params.combine_read_files && user_provided_namelist_for_filtering) {
+    Channel
+      .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+      flat : true, checkIfExists: true)
+      .filter { it[0] in user_provided_namelist_for_filtering }
+      // .view()
+      .set { illumina_paired_reads_ch }
+
+  } else if (!params.paired_and_single && !params.single_end  && !params.combine_read_files && !user_provided_namelist_for_filtering) {
+      Channel
+      .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+      flat : true, checkIfExists: true)
+      // .view()
+      .set { illumina_paired_reads_ch }
+
+  } else if (!params.paired_and_single && !params.single_end  && params.combine_read_files && user_provided_namelist_for_filtering) {
+      Channel
+      .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+      flat : true, checkIfExists: true)
+      .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+      .groupTuple(sort:true)
+      .filter { it[0] in user_provided_namelist_for_filtering }
+      // .view()
+      .set { illumina_paired_reads_ch }
+
+  } else if (!params.paired_and_single && !params.single_end && params.combine_read_files && !user_provided_namelist_for_filtering) {
+      Channel
+      .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+      flat : true, checkIfExists: true)
+      .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+      .groupTuple(sort:true)
+      .set { illumina_paired_reads_ch }
+
+  } else {
+    illumina_paired_reads_ch = Channel.empty()
+  }
 
   // Run OPTIONAL combine read file step: 
   COMBINE_LANES_PAIRED_END( illumina_paired_reads_ch )
