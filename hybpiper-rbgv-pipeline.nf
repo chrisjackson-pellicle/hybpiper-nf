@@ -292,7 +292,7 @@ if (!workflow.commandLine.contains('-entry check_targetfile')) {
   } else if (params.targetfile_dna && params.targetfile_aa) {
     println('Please use --targetfile_dna OR --targetfile_aa, not both!')
     exit 0
-  } else if (params.targetfile_aa && params.use_bwa) {
+  } else if (params.targetfile_aa && params.bwa) {
     println('You can not use BWA with a target file containing protein sequences. \
     Please use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.')
     exit 0
