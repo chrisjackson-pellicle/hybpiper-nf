@@ -112,6 +112,12 @@ def helpMessage() {
                                   Specifies the average quality required within the 
                                   sliding window. Default is 20
 
+      #######################################################################################
+      ############################## Target file QC options: ################################
+      #######################################################################################
+      
+      -entry check_targetfile     Check your target file for formatting errors and sequences
+                                  with lowe complexity regions, then exit
 
       #######################################################################################
       ############################# hybpiper assemble options: ##############################
@@ -249,18 +255,70 @@ void printAllMethods( obj ){
   println "${str}\r\n";
 }
 
-/* 
-Include a few default params here to print useful help (if requested) or if minimal input is not provided.
-*/
-params.help = false
-params.illumina_reads_directory = false
-params.target_file = false
+
+//  Set the target file channel:
+if (params.targetfile_dna) {
+  Channel
+    .fromPath("${params.targetfile_dna}", checkIfExists: true)
+    .first()
+    .set { target_file_ch }
+} else if (params.targetfile_aa) {
+  Channel
+    .fromPath("${params.targetfile_aa}", checkIfExists: true)
+    .first()
+    .set { target_file_ch }
+}
+
+
+process CHECK_TARGETFILE {
+  /*
+  Run `hybpiper check_targetfile` command.
+  */
+
+  // echo true
+  debug true
+  label 'in_container'
+
+  input:
+    path(target_file)
+
+  // output:
+  //   path("paralogs_all/*paralogs_all.fasta")
+  //   path("paralogs_no_chimeras/*paralogs_no_chimeras.fasta")
+  //   path("paralog_report.tsv")
+  //   path("paralogs_above_threshold_report.txt") 
+
+  script:
+    if (params.targetfile_dna) {
+      """
+      hybpiper check_targetfile -t_dna ${target_file}
+      """
+    } else if (params.targetfile_aa) {
+      """
+      hybpiper check_targetfileiever -t_aa ${target_file}
+      """
+    }
+}
+
+
+workflow check_targetfile_main {
+    take: target_file
+    main:
+        CHECK_TARGETFILE(target_file)  
+}
+
+
+workflow check_targetfile {
+    check_targetfile_main( target_file_ch )
+    exit 0
+}
+
 
 // Check that input directories are provided
-if (params.help || !params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa)) {
-  helpMessage()
-  exit 0
-}
+// if (params.help || !params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa)) {
+//   helpMessage()
+//   exit 0
+// }
 
 
 // Check that paralog_warning_min_len_percent value is a decimal between 0 and 1
@@ -308,7 +366,7 @@ allowed_params = ["no_stitched_contig", "chimera_test_memory","chimeric_stitched
 "bbmap_subfilter", "combine_read_files", "combine_read_files_num_fields", "namelist", \
 "keep_intermediate_files", "distribute_hi_mem", "use_diamond", "diamond_sensitivity", "single_cell_assembly", "max_target_seqs", "kvals", "target", "exclude", 
 "timeout_assemble", "timeout_exonerate_contigs", "target", "exclude", "no_padding_supercontigs",\
-"verbose_logging", "targetfile_aa", "targetfile_dna", "bwa"]
+"verbose_logging", "targetfile_aa", "targetfile_dna", "bwa", "check_targetfile"]
 
 params.each { entry ->
   if (! allowed_params.contains(entry.key)) {
@@ -323,17 +381,17 @@ params.each { entry ->
 //////////////////////////////////
 
 
-if (params.targetfile_dna) {
-  Channel
-    .fromPath("${params.targetfile_dna}", checkIfExists: true)
-    .first()
-    .set { target_file_ch }
-} else if (params.targetfile_aa) {
-  Channel
-    .fromPath("${params.targetfile_aa}", checkIfExists: true)
-    .first()
-    .set { target_file_ch }
-}
+// if (params.targetfile_dna) {
+//   Channel
+//     .fromPath("${params.targetfile_dna}", checkIfExists: true)
+//     .first()
+//     .set { target_file_ch }
+// } else if (params.targetfile_aa) {
+//   Channel
+//     .fromPath("${params.targetfile_aa}", checkIfExists: true)
+//     .first()
+//     .set { target_file_ch }
+// }
 
 end_field = params.combine_read_files_num_fields - 1  // Due to zero-based indexing
 
