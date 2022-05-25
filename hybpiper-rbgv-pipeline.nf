@@ -292,6 +292,7 @@ process CHECK_TARGETFILE {
   script:
     if (params.targetfile_dna) {
       """
+      echo 'hello'
       hybpiper check_targetfile -t_dna ${target_file}
       """
     } else if (params.targetfile_aa) {
