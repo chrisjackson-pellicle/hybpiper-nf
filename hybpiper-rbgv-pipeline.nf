@@ -312,7 +312,7 @@ workflow check_targetfile_main {
 
 workflow check_targetfile {
     check_targetfile_main( target_file_ch )
-    exit 0
+    // exit 0
 }
 
 
