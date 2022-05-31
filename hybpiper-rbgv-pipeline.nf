@@ -916,6 +916,7 @@ process PARALOG_RETRIEVER {
     path("paralogs_no_chimeras/*paralogs_no_chimeras.fasta")
     path("paralog_report.tsv")
     path("paralogs_above_threshold_report.txt") 
+    path("paralog_heatmap.png")
 
   script:
     if (params.targetfile_dna) {
