@@ -711,7 +711,6 @@ process ASSEMBLE_SINGLE_END {
     """
     echo ${assemble_command}
     ${assemble_command}
-    ${cleanup}
     """
 }
 
@@ -753,7 +752,6 @@ process ASSEMBLE_PAIRED_AND_SINGLE_END {
     """
     echo ${assemble_command}
     ${assemble_command}
-    ${cleanup}
     """
   } 
 
