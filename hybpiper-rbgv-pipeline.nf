@@ -117,7 +117,7 @@ def helpMessage() {
       #######################################################################################
       
       -entry check_targetfile     Check your target file for formatting errors and sequences
-                                  with lowe complexity regions, then exit
+                                  with low complexity regions, then exit
 
       #######################################################################################
       ############################# hybpiper assemble options: ##############################
@@ -233,28 +233,6 @@ def helpMessage() {
 }
 
 
-/**
-* @function printAllMethods
-* @purpose Prints an objects class name and then list the associated class functions.
-* From https://bateru.com/news/2011/11/code-of-the-day-groovy-print-all-methods-of-an-object/
-**/
-// Filename: printAllMethodsExample.groovy
-void printAllMethods( obj ){
-    if( !obj ){
-    println( "Object is null\r\n" );
-    return;
-    }
-  if( !obj.metaClass && obj.getClass() ){
-        printAllMethods( obj.getClass() );
-    return;
-    }
-  def str = "class ${obj.getClass().name} functions:\r\n";
-  obj.metaClass.methods.name.unique().each{ 
-    str += it+"(); "; 
-  }
-  println "${str}\r\n";
-}
-
 
 //  Set the target file channel:
 if (params.targetfile_dna) {
@@ -293,8 +271,7 @@ if (!workflow.commandLine.contains('-entry check_targetfile')) {
     println('Please use --targetfile_dna OR --targetfile_aa, not both!')
     exit 0
   } else if (params.targetfile_aa && params.bwa) {
-    println('You can not use BWA with a target file containing protein sequences. \
-    Please use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.')
+    println('You can not use BWA with a target file containing protein sequences.\nPlease use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.')
     exit 0
   }
 }
@@ -313,41 +290,6 @@ workflow check_targetfile {
     check_targetfile_main( target_file_ch )
     // exit 0
 }
-
-
-
-// // Check that paralog_warning_min_len_percent value is a decimal between 0 and 1
-// if (params.paralog_min_length_percentage < 0 || params.paralog_min_length_percentage >1) {
-// println("""
-//   The value for --paralog_min_length_percentage should be between 0 and 1. 
-//   Your value is ${params.paralog_min_length_percentage}""".stripIndent())
-// exit 0
-// }
-
-// // Check that non-overlapping options are provided
-// if (params.single_end && params.paired_and_single) {
-//   println('Please use --single_end OR --paired_and_single, not both!')
-//   exit 0
-// }
-// if (params.targetfile_dna && params.targetfile_aa) {
-//   println('Please use --targetfile_dna OR --targetfile_aa, not both!')
-//   exit 0
-// }
-// if (params.targetfile_aa && params.use_bwa) {
-//   println('You can not use BWA with a target file containing protein sequences. \
-//   Please use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.')
-//   exit 0
-// }
-
-
-// // Don't allow params.paired_and_single and params.use_trimmomatic
-// if (params.paired_and_single && params.use_trimmomatic) {
-//   println("""
-//     Trimmomatic can't be used with paired plus single reads yet - 
-//     let me know if this would be useful!""".stripIndent())
-//   exit 0
-// }
-
 
 
 // Check for unrecognised pararmeters
@@ -371,22 +313,116 @@ params.each { entry ->
 }
 
 
-//////////////////////////////////
-//  Target gene sequences file  //
-//////////////////////////////////
+
+// Create `hybpiper assemble` command string:
+def command_list = []
+
+if (params.targetfile_dna) {
+  command_list << "--targetfile_dna ${params.targetfile_dna}"
+  }
+if (params.targetfile_aa) {
+  command_list << "--targetfile_dna ${params.targetfile_dna}"
+  }
+if (params.bwa) {
+  command_list << "--bwa"
+  }
+if (params.use_diamond) {
+  command_list << "--diamond"
+  }
+if (params.diamond_sensitivity) {
+  command_list << "--diamond_sensitivity ${params.diamond_sensitivity}"
+  }
+if (params.distribute_hi_mem) {
+  command_list << "--distribute_hi_mem"
+  }
+if (params.evalue) {
+  command_list << "--evalue ${params.evalue}"
+  }
+if (params.max_target_seqs) {
+  command_list << "--max_target_seqs ${params.max_target_seqs}"
+  }
+if (params.cov_cutoff) {
+  command_list << "--cov_cutoff ${params.cov_cutoff}"
+  }
+if (params.single_cell_assembly) {
+  command_list << "--single_cell_assembly"
+  }
+if (params.kvals) {
+  command_list << "--kvals ${params.kvals}"
+  }
+if (params.paralog_min_length_percentage) {
+  command_list << "--paralog_min_length_percentage ${params.paralog_min_length_percentage}"
+  }
+if (params.timeout_assemble) {
+  command_list << "--timeout_assemble ${params.timeout_assemble}"
+  }
+if (params.timeout_exonerate_contigs) {
+  command_list << "--timeout_exonerate_contigs ${params.timeout_exonerate_contigs}"
+  }
+if (params.target) {
+  command_list << "--target ${params.target}"
+  }
+if (params.exclude) {
+  command_list << "--exclude ${params.exclude}"
+  }
+if (params.no_stitched_contig) {
+  command_list << "--no_stitched_contig"
+  }
+if (params.chimera_test_memory) {
+  command_list << "--bbmap_memory ${params.chimera_test_memory}"
+  }
+if (params.bbmap_subfilter) {
+  command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
+  }
+if (params.chimeric_stitched_contig_edit_distance) {
+  command_list << "--chimeric_stitched_contig_edit_distance ${params.chimeric_stitched_contig_edit_distance}"
+  }
+if (params.chimeric_stitched_contig_discordant_reads_cutoff) {
+  command_list << "--chimeric_stitched_contig_discordant_reads_cutoff ${params.chimeric_stitched_contig_discordant_reads_cutoff}"
+  }
+if (params.merged) {
+  command_list << "--merged"
+  }
+if (params.run_intronerate) {
+  command_list << "--run_intronerate"
+  }
+if (params.keep_intermediate_files) {
+  command_list << "--keep_intermediate_files"
+  }
+if (params.no_padding_supercontigs) {
+  command_list << "--no_padding_supercontigs"
+  }
+if (params.verbose_logging) {
+  command_list << "--verbose_logging"
+  }
+
+/////////////////////////////
+//    DEFINE FUNCTIONSS    //
+/////////////////////////////
 
 
-// if (params.targetfile_dna) {
-//   Channel
-//     .fromPath("${params.targetfile_dna}", checkIfExists: true)
-//     .first()
-//     .set { target_file_ch }
-// } else if (params.targetfile_aa) {
-//   Channel
-//     .fromPath("${params.targetfile_aa}", checkIfExists: true)
-//     .first()
-//     .set { target_file_ch }
-// }
+/**
+* @function printAllMethods
+* @purpose Prints an objects class name and then list the associated class functions.
+* From https://bateru.com/news/2011/11/code-of-the-day-groovy-print-all-methods-of-an-object/
+**/
+// Filename: printAllMethodsExample.groovy
+void printAllMethods( obj ){
+    if( !obj ){
+    println( "Object is null\r\n" );
+    return;
+    }
+  if( !obj.metaClass && obj.getClass() ){
+        printAllMethods( obj.getClass() );
+    return;
+    }
+  def str = "class ${obj.getClass().name} functions:\r\n";
+  obj.metaClass.methods.name.unique().each{ 
+    str += it+"(); "; 
+  }
+  println "${str}\r\n";
+}
+
 
 end_field = params.combine_read_files_num_fields - 1  // Due to zero-based indexing
 
@@ -400,174 +436,6 @@ def getLibraryId( prefix ){
   groupby_select = filename_list[0..end_field]
   groupby_joined = groupby_select.join("_")
 }
-
-
-// /////////////////////////////////////////////////////////
-// //  Create 'namelist.txt' file and associated channel  //
-// /////////////////////////////////////////////////////////
-
-// def user_provided_namelist_for_filtering = []
-
-// if (params.namelist) {
-//   user_provided_namelist_file = file("${params.namelist}", checkIfExists: true)
-//     .readLines()
-//     .each { user_provided_namelist_for_filtering << it }
-//   Channel
-//   .fromPath("${params.namelist}", checkIfExists: true)
-//   .first()
-//   .set { namelist_ch }
-
-// } else if (!params.single_end && !params.combine_read_files) {
-//   Channel
-//   .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-//     flat : true, checkIfExists: true)
-//   .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
-//   .first()
-//   .set { namelist_ch }
-
-// } else if (!params.single_end && params.combine_read_files) {
-//   Channel
-//   .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-//     flat : true, checkIfExists: true)
-//   .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
-//   .groupTuple(sort:true)
-//   .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
-//   .first()
-//   .set { namelist_ch }
-
-// } else if (params.single_end && !params.combine_read_files) {
-//   Channel
-//   .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-//     checkIfExists: true)
-//   .map { file -> file.baseName.split("_${params.single_pattern}")[0] } // THIS NEEDS TO BE UNIQUE
-//   .unique()
-//   .collectFile(name: "${params.outdir}/01_namelist/namelist.txt", newLine: true)
-//   .first()
-//   .set { namelist_ch }
-
-// } else if (params.single_end && params.combine_read_files) {
-//   Channel
-//   .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-//     checkIfExists: true)
-//   .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
-//   .groupTuple(sort:true)
-//   .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
-//   .first()
-//   .set { namelist_ch }
-// }
-
-
-
-// if (user_provided_namelist_for_filtering) {
-//   user_provided_namelist_for_filtering = user_provided_namelist_for_filtering.findAll { item -> !item.isEmpty() }
-
-//   log.info("""
-//     INFO: A namelist has been supplied by the user. Only the following samples will be processed: ${user_provided_namelist_for_filtering}\n""".stripIndent())
-// }
-
-
-// //////////////////////////////
-// //  Illumina reads channel  //
-// //////////////////////////////
-
-// /*
-// Single-end reads.
-// Don't group reads from multi-lane (default).
-// */
-// if (params.single_end && !params.combine_read_files && user_provided_namelist_for_filtering) {
-//   Channel
-//   .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-//     checkIfExists: true)
-//   .map { file -> tuple(file.baseName.split("_${params.single_pattern}")[0], file) } // THIS NEEDS TO BE UNIQUE
-//   .filter { it[0] in user_provided_namelist_for_filtering }
-//   // .view()
-//   .set { illumina_reads_single_end_ch }
-
-// } else if (params.single_end && !params.combine_read_files && 
-//   !user_provided_namelist_for_filtering) {
-//   Channel
-//   .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-//     checkIfExists: true)
-//   .map { file -> tuple(file.baseName.split("_${params.single_pattern}")[0], file) } // THIS NEEDS TO BE UNIQUE
-//   .set { illumina_reads_single_end_ch }
-
-// } else if (params.single_end && params.combine_read_files && user_provided_namelist_for_filtering) {
-//   Channel
-//   .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-//   checkIfExists: true)
-//   .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
-//   .groupTuple(sort:true)
-//   // .view()
-//   .filter { it[0] in user_provided_namelist_for_filtering }
-//   // .view()
-//   .set { illumina_reads_single_end_ch }
-
-// } else if (params.single_end && params.combine_read_files && !user_provided_namelist_for_filtering) {
-//   Channel
-//   .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-//   checkIfExists: true)
-//   .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
-//   .groupTuple(sort:true)
-//   .set { illumina_reads_single_end_ch }
-
-// } else {
-//   illumina_reads_single_end_ch = Channel.empty()
-// }
-
-
-// /*
-// Paired-end reads and a file of unpaired reads.
-// */
-// if (params.paired_and_single) {
-//   Channel
-//   .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern,$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", flat : true,
-//   checkIfExists: true, size: 3)
-//   .set { illumina_paired_reads_with_unpaired_ch }
-// } else {
-//   illumina_paired_reads_with_unpaired_ch = Channel.empty()
-// }
-
-
-// /* 
-// Paired-end reads.
-// Don't group reads from multi-lane (default).
-// */
-// if (!params.paired_and_single && !params.single_end  && !params.combine_read_files && user_provided_namelist_for_filtering) {
-//   Channel
-//     .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-//     flat : true, checkIfExists: true)
-//     .filter { it[0] in user_provided_namelist_for_filtering }
-//     // .view()
-//     .set { illumina_paired_reads_ch }
-
-// } else if (!params.paired_and_single && !params.single_end  && !params.combine_read_files && !user_provided_namelist_for_filtering) {
-//     Channel
-//     .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-//     flat : true, checkIfExists: true)
-//     // .view()
-//     .set { illumina_paired_reads_ch }
-
-// } else if (!params.paired_and_single && !params.single_end  && params.combine_read_files && user_provided_namelist_for_filtering) {
-//     Channel
-//     .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-//     flat : true, checkIfExists: true)
-//     .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
-//     .groupTuple(sort:true)
-//     .filter { it[0] in user_provided_namelist_for_filtering }
-//     // .view()
-//     .set { illumina_paired_reads_ch }
-
-// } else if (!params.paired_and_single && !params.single_end && params.combine_read_files && !user_provided_namelist_for_filtering) {
-//     Channel
-//     .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-//     flat : true, checkIfExists: true)
-//     .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
-//     .groupTuple(sort:true)
-//     .set { illumina_paired_reads_ch }
-
-// } else {
-//   illumina_paired_reads_ch = Channel.empty()
-// }
 
 
 /////////////////////////////
@@ -836,40 +704,40 @@ process ASSEMBLE_SINGLE_END {
     path("${prefix}/${prefix}_supercontigs_with_discordant_reads.csv") optional true
 
   script:
-    def command_list = []
+    // def command_list = []
 
-    if (params.nosupercontigs) {
-      command_list << "--nosupercontigs"
-      }
-    if (params.memory) {
-      command_list << "--memory ${params.memory}"
-      }
-    if (params.discordant_reads_edit_distance) {
-      command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
-      }
-    if (params.discordant_reads_cutoff) {
-      command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
-      } 
-    if (params.merged) {
-      command_list << "--merged"
-      }
-    if (!params.use_blastx && !params.translate_target_file_for_blastx) {
-      command_list << "--bwa"
-    }
-    if (params.blastx_evalue) {
-      command_list << "--evalue ${params.blastx_evalue}"
-    }
-    if (params.paralog_warning_min_len_percent) {
-      command_list << "--paralog_warning_min_length_percentage ${params.paralog_warning_min_len_percent}"
-    }
-    if (params.cov_cutoff) {
-      command_list << "--cov_cutoff ${params.cov_cutoff}"
-    }
-    if (params.cleanup) {
-      cleanup = "python /HybPiper/cleanup.py ${prefix}"
-    } else {
-      cleanup = ''
-    }
+    // if (params.nosupercontigs) {
+    //   command_list << "--nosupercontigs"
+    //   }
+    // if (params.memory) {
+    //   command_list << "--memory ${params.memory}"
+    //   }
+    // if (params.discordant_reads_edit_distance) {
+    //   command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
+    //   }
+    // if (params.discordant_reads_cutoff) {
+    //   command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
+    //   } 
+    // if (params.merged) {
+    //   command_list << "--merged"
+    //   }
+    // if (!params.use_blastx && !params.translate_target_file_for_blastx) {
+    //   command_list << "--bwa"
+    // }
+    // if (params.blastx_evalue) {
+    //   command_list << "--evalue ${params.blastx_evalue}"
+    // }
+    // if (params.paralog_warning_min_len_percent) {
+    //   command_list << "--paralog_warning_min_length_percentage ${params.paralog_warning_min_len_percent}"
+    // }
+    // if (params.cov_cutoff) {
+    //   command_list << "--cov_cutoff ${params.cov_cutoff}"
+    // }
+    // if (params.cleanup) {
+    //   cleanup = "python /HybPiper/cleanup.py ${prefix}"
+    // } else {
+    //   cleanup = ''
+    // }
     assemble_command = "python /HybPiper/assemble.py -b ${target_file} -r ${reads_single} --prefix ${prefix} --cpu ${task.cpus} " + command_list.join(' ')
 
     """
@@ -911,43 +779,43 @@ process ASSEMBLE_PAIRED_AND_SINGLE_END {
     path("${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv") optional true
 
   script:
-    def command_list = []
+    // def command_list = []
 
-    if (params.nosupercontigs) {
-      command_list << "--nosupercontigs"
-      }
-    if (params.memory) {
-      command_list << "--memory ${params.memory}"
-      }
-    if (params.bbmap_subfilter) {
-      command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
-      }
-    if (params.discordant_reads_edit_distance) {
-      command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
-      }
-    if (params.discordant_reads_cutoff) {
-      command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
-      } 
-    if (params.merged) {
-      command_list << "--merged"
-      }
-    if (!params.use_blastx && !params.translate_target_file_for_blastx) {
-      command_list << "--bwa"
-    }
-    if (params.blastx_evalue) {
-      command_list << "--evalue ${params.blastx_evalue}"
-    }
-    if (params.paralog_warning_min_len_percent) {
-      command_list << "--paralog_warning_min_length_percentage ${params.paralog_warning_min_len_percent}"
-    }
-    if (params.cov_cutoff) {
-      command_list << "--cov_cutoff ${params.cov_cutoff}"
-    }
-    if (params.cleanup) {
-      cleanup = "python /HybPiper/cleanup.py ${pair_id}"
-    } else {
-      cleanup = ''
-    }
+    // if (params.nosupercontigs) {
+    //   command_list << "--nosupercontigs"
+    //   }
+    // if (params.memory) {
+    //   command_list << "--memory ${params.memory}"
+    //   }
+    // if (params.bbmap_subfilter) {
+    //   command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
+    //   }
+    // if (params.discordant_reads_edit_distance) {
+    //   command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
+    //   }
+    // if (params.discordant_reads_cutoff) {
+    //   command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
+    //   } 
+    // if (params.merged) {
+    //   command_list << "--merged"
+    //   }
+    // if (!params.use_blastx && !params.translate_target_file_for_blastx) {
+    //   command_list << "--bwa"
+    // }
+    // if (params.blastx_evalue) {
+    //   command_list << "--evalue ${params.blastx_evalue}"
+    // }
+    // if (params.paralog_warning_min_len_percent) {
+    //   command_list << "--paralog_warning_min_length_percentage ${params.paralog_warning_min_len_percent}"
+    // }
+    // if (params.cov_cutoff) {
+    //   command_list << "--cov_cutoff ${params.cov_cutoff}"
+    // }
+    // if (params.cleanup) {
+    //   cleanup = "python /HybPiper/cleanup.py ${pair_id}"
+    // } else {
+    //   cleanup = ''
+    // }
     assemble_command = "python /HybPiper/assemble.py -b ${target_file} -r ${reads_R1} ${reads_R2} --unpaired ${reads_unpaired} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
 
     script:
@@ -990,86 +858,86 @@ process ASSEMBLE_PAIRED_END {
     path("${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv") optional true
 
   script:
-    def command_list = []
+    // def command_list = []
 
-    if (params.targetfile_dna) {
-      command_list << "--targetfile_dna ${params.targetfile_dna}"
-      }
-    if (params.targetfile_aa) {
-      command_list << "--targetfile_dna ${params.targetfile_dna}"
-      }
-    if (params.bwa) {
-      command_list << "--bwa"
-      }
-    if (params.use_diamond) {
-      command_list << "--diamond"
-      }
-    if (params.diamond_sensitivity) {
-      command_list << "--diamond_sensitivity ${params.diamond_sensitivity}"
-      }
-    if (params.distribute_hi_mem) {
-      command_list << "--distribute_hi_mem"
-      }
-    if (params.evalue) {
-      command_list << "--evalue ${params.evalue}"
-      }
-    if (params.max_target_seqs) {
-      command_list << "--max_target_seqs ${params.max_target_seqs}"
-      }
-    if (params.cov_cutoff) {
-      command_list << "--cov_cutoff ${params.cov_cutoff}"
-      }
-    if (params.single_cell_assembly) {
-      command_list << "--single_cell_assembly"
-      }
-    if (params.kvals) {
-      command_list << "--kvals ${params.kvals}"
-      }
-    if (params.paralog_min_length_percentage) {
-      command_list << "--paralog_min_length_percentage ${params.paralog_min_length_percentage}"
-      }
-    if (params.timeout_assemble) {
-      command_list << "--timeout_assemble ${params.timeout_assemble}"
-      }
-    if (params.timeout_exonerate_contigs) {
-      command_list << "--timeout_exonerate_contigs ${params.timeout_exonerate_contigs}"
-      }
-    if (params.target) {
-      command_list << "--target ${params.target}"
-      }
-    if (params.exclude) {
-      command_list << "--exclude ${params.exclude}"
-      }
-    if (params.no_stitched_contig) {
-      command_list << "--no_stitched_contig"
-      }
-    if (params.chimera_test_memory) {
-      command_list << "--bbmap_memory ${params.chimera_test_memory}"
-      }
-    if (params.bbmap_subfilter) {
-      command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
-      }
-    if (params.chimeric_stitched_contig_edit_distance) {
-      command_list << "--chimeric_stitched_contig_edit_distance ${params.chimeric_stitched_contig_edit_distance}"
-      }
-    if (params.chimeric_stitched_contig_discordant_reads_cutoff) {
-      command_list << "--chimeric_stitched_contig_discordant_reads_cutoff ${params.chimeric_stitched_contig_discordant_reads_cutoff}"
-      }
-    if (params.merged) {
-      command_list << "--merged"
-      }
-    if (params.run_intronerate) {
-      command_list << "--run_intronerate"
-      }
-    if (params.keep_intermediate_files) {
-      command_list << "--keep_intermediate_files"
-      }
-    if (params.no_padding_supercontigs) {
-      command_list << "--no_padding_supercontigs"
-      }
-    if (params.verbose_logging) {
-      command_list << "--verbose_logging"
-      }
+    // if (params.targetfile_dna) {
+    //   command_list << "--targetfile_dna ${params.targetfile_dna}"
+    //   }
+    // if (params.targetfile_aa) {
+    //   command_list << "--targetfile_dna ${params.targetfile_dna}"
+    //   }
+    // if (params.bwa) {
+    //   command_list << "--bwa"
+    //   }
+    // if (params.use_diamond) {
+    //   command_list << "--diamond"
+    //   }
+    // if (params.diamond_sensitivity) {
+    //   command_list << "--diamond_sensitivity ${params.diamond_sensitivity}"
+    //   }
+    // if (params.distribute_hi_mem) {
+    //   command_list << "--distribute_hi_mem"
+    //   }
+    // if (params.evalue) {
+    //   command_list << "--evalue ${params.evalue}"
+    //   }
+    // if (params.max_target_seqs) {
+    //   command_list << "--max_target_seqs ${params.max_target_seqs}"
+    //   }
+    // if (params.cov_cutoff) {
+    //   command_list << "--cov_cutoff ${params.cov_cutoff}"
+    //   }
+    // if (params.single_cell_assembly) {
+    //   command_list << "--single_cell_assembly"
+    //   }
+    // if (params.kvals) {
+    //   command_list << "--kvals ${params.kvals}"
+    //   }
+    // if (params.paralog_min_length_percentage) {
+    //   command_list << "--paralog_min_length_percentage ${params.paralog_min_length_percentage}"
+    //   }
+    // if (params.timeout_assemble) {
+    //   command_list << "--timeout_assemble ${params.timeout_assemble}"
+    //   }
+    // if (params.timeout_exonerate_contigs) {
+    //   command_list << "--timeout_exonerate_contigs ${params.timeout_exonerate_contigs}"
+    //   }
+    // if (params.target) {
+    //   command_list << "--target ${params.target}"
+    //   }
+    // if (params.exclude) {
+    //   command_list << "--exclude ${params.exclude}"
+    //   }
+    // if (params.no_stitched_contig) {
+    //   command_list << "--no_stitched_contig"
+    //   }
+    // if (params.chimera_test_memory) {
+    //   command_list << "--bbmap_memory ${params.chimera_test_memory}"
+    //   }
+    // if (params.bbmap_subfilter) {
+    //   command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
+    //   }
+    // if (params.chimeric_stitched_contig_edit_distance) {
+    //   command_list << "--chimeric_stitched_contig_edit_distance ${params.chimeric_stitched_contig_edit_distance}"
+    //   }
+    // if (params.chimeric_stitched_contig_discordant_reads_cutoff) {
+    //   command_list << "--chimeric_stitched_contig_discordant_reads_cutoff ${params.chimeric_stitched_contig_discordant_reads_cutoff}"
+    //   }
+    // if (params.merged) {
+    //   command_list << "--merged"
+    //   }
+    // if (params.run_intronerate) {
+    //   command_list << "--run_intronerate"
+    //   }
+    // if (params.keep_intermediate_files) {
+    //   command_list << "--keep_intermediate_files"
+    //   }
+    // if (params.no_padding_supercontigs) {
+    //   command_list << "--no_padding_supercontigs"
+    //   }
+    // if (params.verbose_logging) {
+    //   command_list << "--verbose_logging"
+    //   }
 
     assemble_command = "hybpiper assemble -r ${reads_R1} ${reads_R2} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
 
@@ -1221,29 +1089,6 @@ process PARALOG_RETRIEVER {
 ////////////////////////
 
 workflow {
-
-  //   // Check that paralog_warning_min_len_percent value is a decimal between 0 and 1
-  // if (params.paralog_min_length_percentage < 0 || params.paralog_min_length_percentage >1) {
-  // println("""
-  //   The value for --paralog_min_length_percentage should be between 0 and 1. 
-  //   Your value is ${params.paralog_min_length_percentage}""".stripIndent())
-  // exit 0
-  // }
-
-  // // Check that non-overlapping options are provided
-  // if (params.single_end && params.paired_and_single) {
-  //   println('Please use --single_end OR --paired_and_single, not both!')
-  //   exit 0
-  // }
-  // if (params.targetfile_dna && params.targetfile_aa) {
-  //   println('Please use --targetfile_dna OR --targetfile_aa, not both!')
-  //   exit 0
-  // }
-  // if (params.targetfile_aa && params.use_bwa) {
-  //   println('You can not use BWA with a target file containing protein sequences. \
-  //   Please use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.')
-  //   exit 0
-  // }
 
 
   // Don't allow params.paired_and_single and params.use_trimmomatic
