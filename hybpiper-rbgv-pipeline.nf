@@ -684,8 +684,9 @@ process ASSEMBLE_SINGLE_END {
 
   // echo true
   label 'in_container'
-  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${prefix}/${prefix}_genes_with_supercontigs.csv"
-  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${prefix}/${prefix}_supercontigs_with_discordant_reads.csv"
+  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_stitched_contig.csv"
+  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt"
+  publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv"
 
   if (params.num_forks) {
     maxForks params.num_forks
@@ -700,45 +701,12 @@ process ASSEMBLE_SINGLE_END {
 
   output:
     path("${prefix}"), emit: assemble_with_single_end_ch optional true
-    path("${prefix}/${prefix}_genes_with_supercontigs.csv") optional true
-    path("${prefix}/${prefix}_supercontigs_with_discordant_reads.csv") optional true
+    path("${pair_id}/${pair_id}_genes_with_stitched_contig.csv") optional true
+    path("${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt") optional true
+    path("${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv") optional true
 
   script:
-    // def command_list = []
-
-    // if (params.nosupercontigs) {
-    //   command_list << "--nosupercontigs"
-    //   }
-    // if (params.memory) {
-    //   command_list << "--memory ${params.memory}"
-    //   }
-    // if (params.discordant_reads_edit_distance) {
-    //   command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
-    //   }
-    // if (params.discordant_reads_cutoff) {
-    //   command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
-    //   } 
-    // if (params.merged) {
-    //   command_list << "--merged"
-    //   }
-    // if (!params.use_blastx && !params.translate_target_file_for_blastx) {
-    //   command_list << "--bwa"
-    // }
-    // if (params.blastx_evalue) {
-    //   command_list << "--evalue ${params.blastx_evalue}"
-    // }
-    // if (params.paralog_warning_min_len_percent) {
-    //   command_list << "--paralog_warning_min_length_percentage ${params.paralog_warning_min_len_percent}"
-    // }
-    // if (params.cov_cutoff) {
-    //   command_list << "--cov_cutoff ${params.cov_cutoff}"
-    // }
-    // if (params.cleanup) {
-    //   cleanup = "python /HybPiper/cleanup.py ${prefix}"
-    // } else {
-    //   cleanup = ''
-    // }
-    assemble_command = "python /HybPiper/assemble.py -b ${target_file} -r ${reads_single} --prefix ${prefix} --cpu ${task.cpus} " + command_list.join(' ')
+    assemble_command = "hybpiper assemble -r ${reads_single} --prefix ${prefix} --cpu ${task.cpus} " + command_list.join(' ')
 
     """
     echo ${assemble_command}
@@ -779,44 +747,7 @@ process ASSEMBLE_PAIRED_AND_SINGLE_END {
     path("${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv") optional true
 
   script:
-    // def command_list = []
-
-    // if (params.nosupercontigs) {
-    //   command_list << "--nosupercontigs"
-    //   }
-    // if (params.memory) {
-    //   command_list << "--memory ${params.memory}"
-    //   }
-    // if (params.bbmap_subfilter) {
-    //   command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
-    //   }
-    // if (params.discordant_reads_edit_distance) {
-    //   command_list << "--discordant_reads_edit_distance ${params.discordant_reads_edit_distance}"
-    //   }
-    // if (params.discordant_reads_cutoff) {
-    //   command_list << "--discordant_reads_cutoff ${params.discordant_reads_cutoff}"
-    //   } 
-    // if (params.merged) {
-    //   command_list << "--merged"
-    //   }
-    // if (!params.use_blastx && !params.translate_target_file_for_blastx) {
-    //   command_list << "--bwa"
-    // }
-    // if (params.blastx_evalue) {
-    //   command_list << "--evalue ${params.blastx_evalue}"
-    // }
-    // if (params.paralog_warning_min_len_percent) {
-    //   command_list << "--paralog_warning_min_length_percentage ${params.paralog_warning_min_len_percent}"
-    // }
-    // if (params.cov_cutoff) {
-    //   command_list << "--cov_cutoff ${params.cov_cutoff}"
-    // }
-    // if (params.cleanup) {
-    //   cleanup = "python /HybPiper/cleanup.py ${pair_id}"
-    // } else {
-    //   cleanup = ''
-    // }
-    assemble_command = "python /HybPiper/assemble.py -b ${target_file} -r ${reads_R1} ${reads_R2} --unpaired ${reads_unpaired} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
+    assemble_command = "hybpiper assemble -r ${reads_R1} ${reads_R2} --unpaired ${reads_unpaired} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
 
     script:
     """
@@ -858,89 +789,7 @@ process ASSEMBLE_PAIRED_END {
     path("${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv") optional true
 
   script:
-    // def command_list = []
-
-    // if (params.targetfile_dna) {
-    //   command_list << "--targetfile_dna ${params.targetfile_dna}"
-    //   }
-    // if (params.targetfile_aa) {
-    //   command_list << "--targetfile_dna ${params.targetfile_dna}"
-    //   }
-    // if (params.bwa) {
-    //   command_list << "--bwa"
-    //   }
-    // if (params.use_diamond) {
-    //   command_list << "--diamond"
-    //   }
-    // if (params.diamond_sensitivity) {
-    //   command_list << "--diamond_sensitivity ${params.diamond_sensitivity}"
-    //   }
-    // if (params.distribute_hi_mem) {
-    //   command_list << "--distribute_hi_mem"
-    //   }
-    // if (params.evalue) {
-    //   command_list << "--evalue ${params.evalue}"
-    //   }
-    // if (params.max_target_seqs) {
-    //   command_list << "--max_target_seqs ${params.max_target_seqs}"
-    //   }
-    // if (params.cov_cutoff) {
-    //   command_list << "--cov_cutoff ${params.cov_cutoff}"
-    //   }
-    // if (params.single_cell_assembly) {
-    //   command_list << "--single_cell_assembly"
-    //   }
-    // if (params.kvals) {
-    //   command_list << "--kvals ${params.kvals}"
-    //   }
-    // if (params.paralog_min_length_percentage) {
-    //   command_list << "--paralog_min_length_percentage ${params.paralog_min_length_percentage}"
-    //   }
-    // if (params.timeout_assemble) {
-    //   command_list << "--timeout_assemble ${params.timeout_assemble}"
-    //   }
-    // if (params.timeout_exonerate_contigs) {
-    //   command_list << "--timeout_exonerate_contigs ${params.timeout_exonerate_contigs}"
-    //   }
-    // if (params.target) {
-    //   command_list << "--target ${params.target}"
-    //   }
-    // if (params.exclude) {
-    //   command_list << "--exclude ${params.exclude}"
-    //   }
-    // if (params.no_stitched_contig) {
-    //   command_list << "--no_stitched_contig"
-    //   }
-    // if (params.chimera_test_memory) {
-    //   command_list << "--bbmap_memory ${params.chimera_test_memory}"
-    //   }
-    // if (params.bbmap_subfilter) {
-    //   command_list << "--bbmap_subfilter ${params.bbmap_subfilter}"
-    //   }
-    // if (params.chimeric_stitched_contig_edit_distance) {
-    //   command_list << "--chimeric_stitched_contig_edit_distance ${params.chimeric_stitched_contig_edit_distance}"
-    //   }
-    // if (params.chimeric_stitched_contig_discordant_reads_cutoff) {
-    //   command_list << "--chimeric_stitched_contig_discordant_reads_cutoff ${params.chimeric_stitched_contig_discordant_reads_cutoff}"
-    //   }
-    // if (params.merged) {
-    //   command_list << "--merged"
-    //   }
-    // if (params.run_intronerate) {
-    //   command_list << "--run_intronerate"
-    //   }
-    // if (params.keep_intermediate_files) {
-    //   command_list << "--keep_intermediate_files"
-    //   }
-    // if (params.no_padding_supercontigs) {
-    //   command_list << "--no_padding_supercontigs"
-    //   }
-    // if (params.verbose_logging) {
-    //   command_list << "--verbose_logging"
-    //   }
-
     assemble_command = "hybpiper assemble -r ${reads_R1} ${reads_R2} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
-
 
     script:
     """
