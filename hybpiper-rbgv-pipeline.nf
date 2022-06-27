@@ -483,8 +483,6 @@ process CHECK_TARGETFILE {
     stdout emit: check_results
     path("check_targetfile_report.txt")
 
-
-
   script:
   check_targetfile_assemble_command = "hybpiper check_targetfile " + check_targetfile_command_list.join(' ') + "| tee check_targetfile_report.txt"
 
@@ -492,16 +490,6 @@ process CHECK_TARGETFILE {
     echo "Executing command: ${check_targetfile_assemble_command}"
     ${check_targetfile_assemble_command}
     """
-
-    // if (params.targetfile_dna) {
-    //   """ 
-    //   hybpiper check_targetfile -t_dna ${target_file} ${check_targetfile_command_list} 2>&1 | tee check_targetfile_report.txt
-    //   """
-    // } else if (params.targetfile_aa) {
-    //   """
-    //   hybpiper check_targetfile -t_aa ${target_file} ${check_targetfile_command_list} 2>&1 | tee check_targetfile_report.txt
-    //   """
-    // }
 }
 
 
