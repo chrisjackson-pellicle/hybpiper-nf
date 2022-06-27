@@ -312,7 +312,8 @@ allowed_params = ["no_stitched_contig", "chimera_test_memory","chimeric_stitched
 "bbmap_subfilter", "combine_read_files", "combine_read_files_num_fields", "namelist", \
 "keep_intermediate_files", "distribute_hi_mem", "use_diamond", "diamond_sensitivity", "single_cell_assembly", "max_target_seqs", "kvals", "target", "exclude", 
 "timeout_assemble", "timeout_exonerate_contigs", "target", "exclude", "no_padding_supercontigs",\
-"verbose_logging", "targetfile_aa", "targetfile_dna", "bwa", "check_targetfile"]
+"verbose_logging", "targetfile_aa", "targetfile_dna", "bwa", "check_targetfile", "sliding_window_size",
+"complexity_minimum_threshold"]
 
 params.each { entry ->
   if (! allowed_params.contains(entry.key)) {
@@ -322,8 +323,14 @@ params.each { entry ->
 }
 
 // Create `hybpiper check_targetfile` command string:
-def command_list = []
+def check_targetfile_command_list = []
 
+if (params.targetfile_dna) {
+  check_targetfile_command_list << "--targetfile_dna ${params.targetfile_dna}"
+  }
+if (params.targetfile_aa) {
+  check_targetfile_command_list << "--targetfile_aa ${params.targetfile_aa}"
+  }
 if (params.sliding_window_size) {
   check_targetfile_command_list << "--sliding_window_size ${params.sliding_window_size}"
   } 
@@ -339,7 +346,7 @@ if (params.targetfile_dna) {
   command_list << "--targetfile_dna ${params.targetfile_dna}"
   }
 if (params.targetfile_aa) {
-  command_list << "--targetfile_dna ${params.targetfile_dna}"
+  command_list << "--targetfile_aa ${params.targetfile_aa}"
   }
 if (params.bwa) {
   command_list << "--bwa"
@@ -476,16 +483,25 @@ process CHECK_TARGETFILE {
     stdout emit: check_results
     path("check_targetfile_report.txt")
 
+
+
   script:
-    if (params.targetfile_dna) {
-      """ 
-      hybpiper check_targetfile -t_dna ${target_file} ${check_targetfile_command_list} 2>&1 | tee check_targetfile_report.txt
-      """
-    } else if (params.targetfile_aa) {
-      """
-      hybpiper check_targetfileiever -t_aa ${target_file} ${check_targetfile_command_list} 2>&1 | tee check_targetfile_report.txt
-      """
-    }
+  check_targetfile_assemble_command = "hybpiper check_targetfile " + check_targetfile_command_list.join(' ')
+
+    """
+    echo "Executing command: ${check_targetfile_assemble_command}"
+    ${check_targetfile_assemble_command}
+    """
+
+    // if (params.targetfile_dna) {
+    //   """ 
+    //   hybpiper check_targetfile -t_dna ${target_file} ${check_targetfile_command_list} 2>&1 | tee check_targetfile_report.txt
+    //   """
+    // } else if (params.targetfile_aa) {
+    //   """
+    //   hybpiper check_targetfile -t_aa ${target_file} ${check_targetfile_command_list} 2>&1 | tee check_targetfile_report.txt
+    //   """
+    // }
 }
 
 
@@ -766,7 +782,6 @@ process ASSEMBLE_PAIRED_AND_SINGLE_END {
   script:
     assemble_command = "hybpiper assemble -r ${reads_R1} ${reads_R2} --unpaired ${reads_unpaired} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
 
-    script:
     """
     echo ${assemble_command}
     ${assemble_command}
@@ -807,7 +822,6 @@ process ASSEMBLE_PAIRED_END {
   script:
     assemble_command = "hybpiper assemble -r ${reads_R1} ${reads_R2} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
 
-    script:
     """
     echo "Executing command: ${assemble_command}"
     ${assemble_command}
@@ -976,7 +990,7 @@ workflow {
       .each { user_provided_namelist_for_filtering << it }
     Channel
     .fromPath("${params.namelist}", checkIfExists: true)
-    .first()≠
+    .first()
     .set { namelist_ch }
 
   } else if (!params.single_end && !params.combine_read_files) {
