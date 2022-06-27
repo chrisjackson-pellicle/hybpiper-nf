@@ -486,7 +486,7 @@ process CHECK_TARGETFILE {
 
 
   script:
-  check_targetfile_assemble_command = "hybpiper check_targetfile " + check_targetfile_command_list.join(' ')
+  check_targetfile_assemble_command = "hybpiper check_targetfile " + check_targetfile_command_list.join(' ') + "| tee check_targetfile_report.txt"
 
     """
     echo "Executing command: ${check_targetfile_assemble_command}"
