@@ -119,6 +119,15 @@ def helpMessage() {
       -entry check_targetfile     Check your target file for formatting errors and sequences
                                   with low complexity regions, then exit
 
+      --sliding_window_size       Number of characters (single-letter DNA or amino-acid 
+                                  codes) to include in the sliding window for low-complexity 
+                                  check. Default is 100 for DNA or 50 for amino-acid.
+      --complexity_minimum_threshold
+                                  Minimum threshold value. Beneath this value, the sequence 
+                                  in the sliding window is flagged as low-complexity, and 
+                                  the corresponding target file sequence is reported as 
+                                  having low-complexity regions
+
       #######################################################################################
       ############################# hybpiper assemble options: ##############################
       #######################################################################################
@@ -312,6 +321,15 @@ params.each { entry ->
   }
 }
 
+// Create `hybpiper check_targetfile` command string:
+def command_list = []
+
+if (params.sliding_window_size) {
+  check_targetfile_command_list << "--sliding_window_size ${params.sliding_window_size}"
+  } 
+if (params.complexity_minimum_threshold) {
+  check_targetfile_command_list << "--complexity_minimum_threshold ${params.complexity_minimum_threshold}"
+  } 
 
 
 // Create `hybpiper assemble` command string:
@@ -397,7 +415,7 @@ if (params.verbose_logging) {
   }
 
 /////////////////////////////
-//    DEFINE FUNCTIONSS    //
+//    DEFINE FUNCTIONS     //
 /////////////////////////////
 
 
@@ -461,11 +479,11 @@ process CHECK_TARGETFILE {
   script:
     if (params.targetfile_dna) {
       """ 
-      hybpiper check_targetfile -t_dna ${target_file} 2>&1 | tee check_targetfile_report.txt
+      hybpiper check_targetfile -t_dna ${target_file} ${check_targetfile_command_list} 2>&1 | tee check_targetfile_report.txt
       """
     } else if (params.targetfile_aa) {
       """
-      hybpiper check_targetfileiever -t_aa ${target_file} 2>&1 | tee check_targetfile_report.txt
+      hybpiper check_targetfileiever -t_aa ${target_file} ${check_targetfile_command_list} 2>&1 | tee check_targetfile_report.txt
       """
     }
 }
@@ -905,7 +923,6 @@ process PARALOG_RETRIEVER {
   publishDir "${params.outdir}/11_paralogs/logs", mode: 'copy', pattern: "*report*"
 
   input:
-    // path(paralog_complete_list)
     path(assemble)
     path(namelist)
     path(target_file)
@@ -959,7 +976,7 @@ workflow {
       .each { user_provided_namelist_for_filtering << it }
     Channel
     .fromPath("${params.namelist}", checkIfExists: true)
-    .first()
+    .first()≠
     .set { namelist_ch }
 
   } else if (!params.single_end && !params.combine_read_files) {
