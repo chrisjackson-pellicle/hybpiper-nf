@@ -706,7 +706,7 @@ process ASSEMBLE_SINGLE_END {
 
   // echo true
   label 'in_container'
-  publishDir "${params.outdir}/04_processed_sample_directories", mode: 'copy', pattern: ${pair_id}
+  publishDir "${params.outdir}/04_processed_sample_directories", mode: 'copy', pattern: "${pair_id}"
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_stitched_contig.csv"
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt"
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv"
@@ -745,7 +745,7 @@ process ASSEMBLE_PAIRED_AND_SINGLE_END {
 
   //echo true
   label 'in_container'
-  publishDir "${params.outdir}/04_processed_sample_directories", mode: 'copy', pattern: ${pair_id}
+  publishDir "${params.outdir}/04_processed_sample_directories", mode: 'copy', pattern: "${pair_id}"
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_stitched_contig.csv"
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_derived_from_putative_chimeric_stitched_contig.csv"
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt"
@@ -786,7 +786,7 @@ process ASSEMBLE_PAIRED_END {
 
   // echo true
   label 'in_container'
-  publishDir "${params.outdir}/04_processed_sample_directories", mode: 'copy', pattern: ${pair_id}
+  publishDir "${params.outdir}/04_processed_sample_directories", mode: 'copy', pattern: "${pair_id}"
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_stitched_contig.csv"
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_derived_from_putative_chimeric_stitched_contig.csv"
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt"
