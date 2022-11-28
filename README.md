@@ -1,18 +1,22 @@
-# HybPiper-RBGV
+***Note: this repository was previous called `HybPiper-RBGV`. It was renamed to  `hybpiper-nf`  on 28 November 2022.***
+
+---
+
+# hybpiper-nf
 
 ## Original HybPiper github, wiki and tutorial:
 
-For an explanation of the general purpose of [HybPiper][17], and the approach it takes to generate target locus sequences from sequence capture data, please see the excellent documentation, wiki and tutorial at the `mossmatters` repo:
+For an explanation of the general purpose of [HybPiper][17], and the approach it takes to generate target locus sequences from sequence capture data, please see the documentation, wiki and tutorial at the `mossmatters` repo:
 
 - https://github.com/mossmatters/HybPiper/
 - https://github.com/mossmatters/HybPiper/wiki
 - https://github.com/mossmatters/HybPiper/wiki/Tutorial
 
-## HybPiper-RBGV: containerised and pipelined using Singularity and Nextflow
+## hybpiper-nf: containerised and pipelined using Singularity and Nextflow
 
-To simplify running HybPiper, I’ve provided a [Singularity][15] container based on the Linux distribution Ubuntu 20.04, with all the scripts required to run the HybPiper pipeline (including modifications, additions and bug fixes, see below for details), as well as all the dependencies ([BioPython][9], [BLAST][8], [BWA][11], [BBmap][12], [Exonerate][13], [SPAdes][10], [Samtools][14]). The container is called `hybpiper-yang-and-smith-rbgv.sif`.
+To simplify running HybPiper, I’ve provided a [Singularity][15] container based on the Linux distribution Ubuntu 20.04, with all the software required to run the HybPiper pipeline (including some additional functionality, see below for details), as well as all the dependencies ([BioPython][9], [BLAST][8], [BWA][11], [BBmap][12], [Exonerate][13], [SPAdes][10], [Samtools][14]). The container is called `hybpiper-paragone.sif`.
 
-To run HybPiper using this container, I’ve provided a [Nextflow][16] pipeline that uses the software in the Singularity container. This pipeline runs all HybPiper steps with a single command. The pipeline script is called `hybpiper-rbgv-pipeline.nf`. It comes with an associated config file called `hybpiper-rbgv.config`. The only input required is a folder of sequencing reads for your samples, and a target file in `.fasta` format. The Nextflow pipeline will automatically generate the `namelist.txt` file required by some of the HybPiper scripts, and will run all HybPiper scripts on each sample in parallel. It also includes an optional read-trimmming step to QC your reads prior to running HybPiper, using the software [Trimmomatic][7]. The number of parallel processes running at any time, as well as computing resources given to each process (e.g. number of CPUs, amount of RAM etc) can be configured by the user by modifying the provided config file. The pipeline can be run directly on your local computer, and on an HPC system submitting jobs via a scheduler (e.g. [SLURM][21], PBS, etc). 
+To run HybPiper using this container, I’ve provided a [Nextflow][16] pipeline that uses the software in the Singularity container. This pipeline runs all HybPiper steps with a single command. The pipeline script is called `hybpiper.nf`. It comes with an associated config file called `hybpiper.config`. The only input required is a folder of sequencing reads for your samples, and a target file in `.fasta` format. The Nextflow pipeline will automatically generate the `namelist.txt` file required by some of the HybPiper scripts, and will run all HybPiper scripts on each sample in parallel. It also includes an optional read-trimmming step to QC your reads prior to running HybPiper, using the software [Trimmomatic][7]. The number of parallel processes running at any time, as well as computing resources given to each process (e.g. number of CPUs, amount of RAM etc) can be configured by the user by modifying the provided config file. The pipeline can be run directly on your local computer, and on an HPC system submitting jobs via a scheduler (e.g. [SLURM][21], PBS, etc). 
 
 ## Input data
 
@@ -34,7 +38,7 @@ Your **`target file`**, which can contain either nucleotide OR protein sequences
 
 ### Read files
 
-You will need to provide the `hybpiper-rbgv-pipeline.nf` pipeline with either:
+You will need to provide the `hybpiper.nf` pipeline with either:
 
 a) A directory of paired-end forwards and reverse reads (and, optionally, a file of single-end reads) for each sample; or
 
@@ -51,7 +55,6 @@ OR
     *_R1.fq 
     *_R2.fq
     *_single.fq (optional; will be used if running with the flag `--paired_and_single`)
-    
 
 **NOTE:**
 
@@ -61,7 +64,6 @@ OR
 - You can specify a custom pattern used for read file matching via the parameters `--read_pairs_pattern <pattern>` or `--single_pattern <pattern>`.
 - If your samples have been run across multiple lanes, you'll likely want to combine read files for each sample before processing. The pipeline can do this for you - see [here][22] for details.
 
-
 ## Running on Linux
 
 Please see the Wiki entry [Running on Linux][3].
@@ -70,7 +72,7 @@ Please see the Wiki entry [Running on Linux][3].
 
 Please see the Wiki entry [Running on a Mac][1].
 
-**NOTE:** Macs using the new Apple M1 chip are not yet supported. 
+**NOTE:** Macs using the new Apple M1 chip are not yet supported.
 
 ## Running on a PC (Windows)
 
@@ -80,114 +82,231 @@ Please see the Wiki entry [Running on a PC][20].
 
 Example run command:
 
-    nextflow run hybpiper-rbgv-pipeline.nf -c hybpiper-rbgv.config --illumina_reads_directory reads_for_hybpiper --target_file Angiosperms353_targetSequences.fasta
+    nextflow run hybpiper.nf -c hybpiper.config --illumina_reads_directory reads_for_hybpiper --targetfile_dna Angiosperms353_targetSequences.fasta
 
-
-Options:
-
-
+```    
     Mandatory arguments:
 
-    #######################################################################################################################
+      ############################################################################
 
-    --illumina_reads_directory <directory>    Path to folder containing illumina read file(s)
-  
-    --target_file <file>                      File containing fasta sequences of target genes
+      --illumina_reads_directory <directory>    
+                                  Path to folder containing illumina read file(s)
 
-    #######################################################################################################################
+      AND
+
+      --targetfile_dna <file>     File containing fasta sequences of target genes
+                                  (nucleotides)
+                                        
+      OR
+
+      --targetfile_aa <file>      File containing fasta sequences of target genes
+                                  (amino-acids)
+
+      #############################################################################
 
     Optional arguments:
 
-     -profile <profile>                       Configuration profile to use. Can use multiple (comma separated)
-                                              Available: standard (default), slurm
-     
-     -resume                                  If restarting the pipeline, use cached results from previously completed 
-                                              processes
+      -profile <profile>          Configuration profile to use. Can use multiple 
+                                  (comma separated). Available: standard (default), 
+                                  slurm
 
-     --cleanup                                Run 'cleanup.py' for each gene directory after 'reads_first.py'
+      --namelist                  A text file containing sample names. Only these 
+                                  samples will be processed, By default, all samples 
+                                  in the provided <Illumina_reads_directory> 
+                                  directory are processed
 
-     --nosupercontigs                         Do not create supercontigs. Use longest Exonerate hit only. Default is off.
-     
-     --bbmap_subfilter <int>                  Ban alignments with more than this many substitutions when performing 
-                                              read-pair mapping to supercontig reference (bbmap.sh). Default is 7
+      --combine_read_files        Group and concatenate read-files via a common prefix. 
+                                  Useful if samples have been run across multiple lanes. 
+                                  Default prefix is all text preceding the first 
+                                  underscore (_) in read filenames
 
-     --memory <int>                           Memory (RAM) amount in GB to use for bbmap.sh with exonerate_hits.py. 
-                                              Default is 1 GB
+      --combine_read_files_num_fields <int>     
+                                  Number of fields (delimited by an underscore) to use 
+                                  for combining read files when using the 
+                                  `--combine_read_files` flag. Default is 1
 
-     --discordant_reads_edit_distance <int>   Minimum number of base differences between one read of a read pair 
-                                              vs the supercontig reference for a read pair to be flagged as discordant. 
-                                              Default is 5
+      --num_forks <int>           Specify the number of parallel processes (e.g. 
+                                  concurrent runs of 'hybpiper assemble') to run at any 
+                                  one time. Can be used to prevent Nextflow from using 
+                                  all the threads/cpus on your machine. Default is 
+                                  to use the maximum number possible  
+      
+      --outdir <directory_name>                 
+                                  Specify the name of the pipeline results directory. 
+                                  Default is 'results'        
 
-     --discordant_reads_cutoff <int>          Minimum number of discordant reads pairs required to flag a supercontigs 
-                                              as a potential hybrid of contigs from multiple paralogs. Default is 5
+      --paired_and_single         Use when providing both paired-end R1 and R2 read 
+                                  files as well as a file of single-end reads for each 
+                                  sample       
 
-     --merged                                 Merge forward and reverse reads, and run SPAdes assembly with merged and 
-                                              unmerged (the latter in interleaved format) data. Default is off
+      --single_end                Use when providing providing only a folder of 
+                                  single-end reads                         
 
-     --paired_and_single                      Use when providing both paired R1 and R2 read files as well as a file of 
-                                              single-end reads for each sample
+      --read_pairs_pattern <pattern>            
+                                  Provide a comma-separated read-pair pattern for 
+                                  matching fowards and reverse paired-end readfiles, 
+                                  e.g. '1P,2P'. Default is 'R1,R2'
 
-     --single_only                            Use when providing providing only a folder of single-end reads
+      --single_pattern <pattern>                
+                                  Provide a pattern for matching single-end read 
+                                  files. Default is 'single'
 
-     --outdir <directory_name>                Specify the name of the pipeline results directory. Default is 'results'
+      #######################################################################################
+      ################################ Trimmomatic options: #################################
+      #######################################################################################
 
-     --read_pairs_pattern <pattern>           Provide a comma-separated read pair pattern for matching forwards and 
-                                              reverse paired-end read-files. Default is 'R1,R2'
+      --use_trimmomatic           Trim forwards and reverse reads using Trimmomatic.
+                                  Default is off
 
-     --single_pattern <pattern>               Provide a pattern for matching single-end read files. Default is 'single'
+      --trimmomatic_leading_quality <int>       
+                                  Cut bases off the start of a read, if below this 
+                                  threshold quality.Default is 3
 
-     --use_blastx                             Use a protein target file and map reads to targets with BLASTx. Default 
-                                              is a nucleotide target file and mapping of reads to targets using BWA
+      --trimmomatic_trailing_quality <int>      
+                                  Cut bases off the end of a read, if below this 
+                                  threshold quality. Default is 3
 
-     --num_forks <int>                        Specify the number of parallel processes (e.g. concurrent runs of 
-                                              reads.first.py) to run at any one time. Can be used to prevent Nextflow 
-                                              from using all the threads/cpus on your machine. Default is to use the 
-                                              maximum number possible
+      --trimmomatic_min_length <int>            
+                                  Drop a read if it is below this specified length. 
+                                  Default is 36
 
-     --cov_cutoff <int>                       Coverage cutoff to pass to the SPAdes assembler. Default is 8
+      --trimmomatic_sliding_window_size <int>   
+                                  Size of the sliding window used by Trimmomatic; 
+                                  specifies the number of bases to average across. 
+                                  Default is 4
 
-     --blastx_evalue <value>                  Evalue to pass to blastx when using blastx mapping (i.e. when the 
-                                              --use_blastx flag is specified). Default is 1e-4
+      --trimmomatic_sliding_window_quality <int>
+                                  Specifies the average quality required within the 
+                                  sliding window. Default is 20
 
-     --paralog_warning_min_len_percent <decimal>
-                                              Minimum length percentage of a contig vs reference protein length for 
-                                              a paralog warning to be generated and a putative paralog contig to be 
-                                              recovered. Default is 0.75
+      #######################################################################################
+      ############################## Target file QC options: ################################
+      #######################################################################################
+      
+      -entry check_targetfile     Check your target file for formatting errors and sequences
+                                  with low complexity regions, then exit
 
-     --translate_target_file_for_blastx       Translate a nucleotide target file. If set, the --use_blastx is set 
-                                              by default. Default is off
+      --sliding_window_size       Number of characters (single-letter DNA or amino-acid 
+                                  codes) to include in the sliding window for low-complexity 
+                                  check. Default is 100 for DNA or 50 for amino-acid.
+      --complexity_minimum_threshold
+                                  Minimum threshold value. Beneath this value, the sequence 
+                                  in the sliding window is flagged as low-complexity, and 
+                                  the corresponding target file sequence is reported as 
+                                  having low-complexity regions
 
-     --use_trimmomatic                        Trim forwards and reverse reads using Trimmomatic. Default is off
+      #######################################################################################
+      ############################# hybpiper assemble options: ##############################
+      #######################################################################################
 
-     --trimmomatic_leading_quality <int>      Cut bases off the start of a read, if below this threshold quality. 
-                                              Default is 3
+      --bwa                       Use BWA to search reads for hits to target. Requires
+                                  BWA and a target file that is nucleotides!
 
-     --trimmomatic_trailing_quality <int>     Cut bases off the end of a read, if below this threshold quality. 
-                                              Default is 3
+      --diamond                   Use DIAMOND instead of BLASTx
 
-     --trimmomatic_min_length <int>           Drop a read if it is below this specified length. Default is 36
+      --diamond_sensitivity       Use the provided sensitivity for DIAMOND searches. 
+                                  Option are: 'mid-sensitive', 'sensitive', 
+                                  'more-sensitive', 'very-sensitive', 'ultra-sensitive'
 
-     --trimmomatic_sliding_window_size <int>  Size of the sliding window used by Trimmomatic; specifies the number of 
-                                              bases to average across. Default is 4
+      --distribute_hi_mem         Distributing and writing reads to individual gene 
+                                  directories  will be 40-50 percent faster, but can use 
+                                  more memory/RAM with large input files
 
-     --trimmomatic_sliding_window_quality <int>
-                                              Specifies the average quality required within the sliding window. 
-                                              Default is 20
+      --evalue                    Evalue to pass to blastx when using blastx mapping, 
+                                  i.e., when the --use_blastx or 
+                                  --translate_target_file_for_blastx flag is specified. 
+                                  Default is 1e-4
 
-     --run_intronerate                        Run intronerate.py to recover (hopefully) intron and supercontig sequences.
-                                              Default is off, and so results `subfolders 09_sequences_intron` and 
-                                              `10_sequences_supercontig` will be empty
-                                          
-     --combine_read_files                     Group and concatenate read-files via a common prefix. Useful if samples 
-                                              have been run across multiple lanes. Default prefix is all text preceding 
-                                              the first underscore (_) in read filenames
-                                              
-     --combine_read_files_num_fields <int>    Number of fields (delimited by an underscore) to use for combining read 
-                                              files when using the `--combine_read_files` flag. Default is 1
-                                            
-                                            
+      --max_target_seqs           Max target seqs to save in BLASTx search, default is 10
+
+      --cov_cutoff <int>          Coverage cutoff to pass to the SPAdes assembler. 
+                                  Default is 8
+
+      --single_cell_assembly      Run SPAdes assemblies in MDA (single-cell) mode. 
+                                  Default is False
+
+      --kvals                     Values of k for SPAdes assemblies. SPAdes needs to be 
+                                  compiled to handle larger k-values! Default is 
+                                  auto-detection by SPAdes
+
+      --thresh                    Percent identity threshold for retaining Exonerate
+                                  hits. Default is 55, but increase this if you are 
+                                  worried about contaminant sequences
+
+      --paralog_min_length_percentage <decimal> 
+                                  Minimum length percentage of a SPAdes contig vs 
+                                  reference protein query for a paralog warning to be 
+                                  generated and a putative paralog contig to be 
+                                  recovered. Default is 0.75 
+
+      --depth_multiplier          Assign a long paralog as the "main" sequence if it 
+                                  has a coverage depth <depth_multiplier> times all 
+                                  other long paralogs. Set to zero to not use depth. 
+                                  Default is 10
+
+      --timeout_assemble          Kill long-running gene assemblies if they take longer 
+                                  than X percent of average
+
+      --timeout_exonerate_contigs Kill long-running processes if they take longer than 
+                                  X seconds. Default is 120
+
+      --target                    Use the target file sequence with this taxon name in 
+                                  Exonerate searches for each gene. Other targets for 
+                                  that gene will be used only for read sorting. Can be a 
+                                  tab-delimited file (one <gene>\\t<taxon_name> per line) 
+                                  or a single taxon name
+
+      --exclude                   Do not use any sequence with the specified taxon name 
+                                  string in Exonerate searches. Sequenced from this 
+                                  taxon will still be used for read sorting
+
+      --no_stitched_contig        Do not create stitched contigs; use longest Exonerate 
+                                  hit only. Default is off
+
+
+
+      --chimera_test_memory <int> Memory (RAM) amount in MB to use for bbmap.sh when
+                                  peforming stitched-contig chimera tests. Default is 
+                                  1000 MB
+
+      --bbmap_subfilter <int>     Ban alignments with more than this many 
+                                  substitutions when performing read-pair mapping to 
+                                  supercontig reference (bbmap.sh). Default is 7
+
+      --chimeric_stitched_contig_edit_distance <int>    
+                                  Minimum number of base differences between one read 
+                                  of a read pair vs the stitched-contig reference for a 
+                                  read pair to be flagged as discordant. Default is 5
+      
+      --chimeric_stitched_contig_discordant_reads_cutoff <int>           
+                                  Minimum number of discordant reads pairs required 
+                                  to flag a stitched-contig as a potential chimera of 
+                                  contigs from multiple paralogs. Default is 5
+
+      --merged                    Merge forward and reverse reads, and run SPAdes 
+                                  assembly with merged and unmerged (the latter 
+                                  in interleaved format) data. Default is off
+      
+      --run_intronerate           Run the intronerate() fuction to recover intron 
+                                  and supercontig sequences. Default is off, and so 
+                                  fasta files in `subfolders 09_sequences_intron` and 
+                                  `10_sequences_supercontig` will be empty
+
+      --keep_intermediate_files   Keep all intermediate files and logs, which can be 
+                                  useful for debugging. Default action is to delete 
+                                  them, which greatly reduces the total file number
+
+      --no_padding_supercontigs   If Intronerate is run, and a supercontig is created 
+                                  by concatenating multiple SPAdes contigs, do not add 
+                                  10 "N" characters between contig joins. By default, 
+                                  Ns will be added
+
+      --verbose_logging           If supplied, enable verbose login. NOTE: this can 
+                                  increase the size of the log files by an order of 
+                                  magnitude
+```
+
 Please see the Wiki entry [Additional pipeline features and details][5] for further explanation of the parameters above, and general pipeline functionality.
-             
 
 ## Output folders and files
 
@@ -201,7 +320,7 @@ If you need the per-sample output folders produced by a standard HybPiper run, t
 - `04_processed_gene_directories`
 
 For a full explanation of output folders and files, please see the Wiki entry [Output folders and files][6].
-             
+
 ## General information
 
 For details on adapting the pipeline to run on local and HPC computing resources, see [here][18].
@@ -210,30 +329,29 @@ For details on adapting the pipeline to run on local and HPC computing resources
 
 Please see the Wiki entry [Bug fixes and changes][2].
 
-
-
 ## Issues still to deal with (WIP)
 
 Please see the Wiki entry [Issues][4].
 
-
 ## Changelog
+
+*28 November 2022*
+
+- Change repository name from `HybPiper-RBGV` to `hybpiper-nf`.
+- Update the required container name from `hybpiper-yang-and-smith-rbgv.sif` to `hybpiper-paragone.sif`.
+- Update containerised HybPiper version and corresponding Nextflow scripts to HybPiper version 2
 
 *09 November 2021* 
 
 - Nextflow script updated to DSL2. **NOTE:** Nextflow version >= 21.04.1 is now required!
 - Singularity *.def file updated to use Ubuntu 20.04, and to install Muscle and FastTreeMP.
 
-
-
-
-
-[1]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-a-Mac-(macOS)-with-Vagrant "Link to Running on a Mac Wiki"
-[2]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Bug-fixes-and-changes-(WIP) "Link to bug fixes and changes Wiki"
-[3]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-Linux "Link to Running on Linux Wiki"
-[4]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Issues-(WIP) "Link to Issues Wiki"
-[5]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Additional-pipeline-features-and-details "Link to Additional pipeline features and details Wiki"
-[6]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Output-folders-and-files "Link to Output folders and files Wiki"
+[1]:https://github.com/chrisjackson-pellicle/hybpiper-nf/wiki/Running-on-a-Mac-(macOS)-with-Vagrant "Link to Running on a Mac Wiki"
+[2]:https://github.com/chrisjackson-pellicle/hybpiper-nf/wiki/Bug-fixes-and-changes-(WIP) "Link to bug fixes and changes Wiki"
+[3]:https://github.com/chrisjackson-pellicle/hybpiper-nf/wiki/Running-on-Linux "Link to Running on Linux Wiki"
+[4]:https://github.com/chrisjackson-pellicle/hybpiper-nf/wiki/Issues-(WIP) "Link to Issues Wiki"
+[5]:https://github.com/chrisjackson-pellicle/hybpiper-nf/wiki/Additional-pipeline-features-and-details "Link to Additional pipeline features and details Wiki"
+[6]:https://github.com/chrisjackson-pellicle/hybpiper-nf/wiki/Output-folders-and-files "Link to Output folders and files Wiki"
 [7]:http://www.usadellab.org/cms/?page=trimmomatic "Link to Trimmomatic website"
 [8]:https://www.ncbi.nlm.nih.gov/books/NBK279690/ "Link to BLAST command line documentation"
 [9]:https://biopython.org/ "Link to BioPython website"
@@ -245,9 +363,8 @@ Please see the Wiki entry [Issues][4].
 [15]:https://sylabs.io/docs/ "Link to Singularity website"
 [16]:https://www.nextflow.io/ "Link to Nextflow website"
 [17]:https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4948903/ "Link to HybPiper manuscript"
-[18]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Additional-pipeline-features-and-details#managing-computing-resources "Link to managing computing resources"
+[18]:https://github.com/chrisjackson-pellicle/hybpiper-nf/wiki/Additional-pipeline-features-and-details#managing-computing-resources "Link to managing computing resources"
 [19]:https://github.com/mossmatters/HybPiper/wiki#target-file "Link to HybPiper Wiki target file details"
-[20]:https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Running-on-a-PC-(Windows)-with-Vagrant "Link to Running on a PC Wiki"
+[20]:https://github.com/chrisjackson-pellicle/hybpiper-nf/wiki/Running-on-a-PC-(Windows)-with-Vagrant "Link to Running on a PC Wiki"
 [21]:https://slurm.schedmd.com/overview.html "Link to SLURM website"
-[22]: https://github.com/chrisjackson-pellicle/HybPiper-RBGV/wiki/Additional-pipeline-features-and-details#combining-read-files-for-samples-run-across-multiple-lanes "Link to Wiki section combining-read-files-for-samples-run-across-multiple-lane"
-
+[22]: https://github.com/chrisjackson-pellicle/hybpiper-nf/wiki/Additional-pipeline-features-and-details#combining-read-files-for-samples-run-across-multiple-lanes "Link to Wiki section combining-read-files-for-samples-run-across-multiple-lane"

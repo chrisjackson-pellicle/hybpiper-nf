@@ -62,7 +62,7 @@ Vagrant.configure("2") do |config|
     # Customize the amount of memory on the VM:
     vb.memory = "5120"
     vb.cpus = "4"
-    vb.name = "hybpiper-yang-and-smith-vm"
+    vb.name = "hybpiper-paragone-vm"
   end
   #
   # View the documentation for the provider you are using for more
@@ -162,14 +162,14 @@ Vagrant.configure("2") do |config|
     # Clone the HybPiper-RBGV repo:
     runuser -l vagrant -c '
     cd bin; \
-    git clone https://github.com/chrisjackson-pellicle/HybPiper-RBGV.git; \
+    git clone https://github.com/chrisjackson-pellicle/hybpiper-nf.git; \
     cd ..'
 
 
     # Clone the Yang-and-Smith repo:
     runuser -l vagrant -c '
     cd bin; \
-    git clone https://github.com/chrisjackson-pellicle/Yang-and-Smith-paralogy-resolution.git; \
+    git clone https://github.com/chrisjackson-pellicle/paragone-nf.git; \
     cd ..'
 
 
