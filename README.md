@@ -325,10 +325,6 @@ For a full explanation of output folders and files, please see the Wiki entry [O
 
 For details on adapting the pipeline to run on local and HPC computing resources, see [here][18].
 
-## Bug fixes and changes (WIP)
-
-Please see the Wiki entry [Bug fixes and changes][2].
-
 ## Issues still to deal with (WIP)
 
 Please see the Wiki entry [Issues][4].
@@ -347,7 +343,6 @@ Please see the Wiki entry [Issues][4].
 - Singularity *.def file updated to use Ubuntu 20.04, and to install Muscle and FastTreeMP.
 
 [1]:https://github.com/chrisjackson-pellicle/hybpiper-nf/wiki/Running-on-a-Mac-(macOS)-with-Vagrant "Link to Running on a Mac Wiki"
-[2]:https://github.com/chrisjackson-pellicle/hybpiper-nf/wiki/Bug-fixes-and-changes-(WIP) "Link to bug fixes and changes Wiki"
 [3]:https://github.com/chrisjackson-pellicle/hybpiper-nf/wiki/Running-on-Linux "Link to Running on Linux Wiki"
 [4]:https://github.com/chrisjackson-pellicle/hybpiper-nf/wiki/Issues-(WIP) "Link to Issues Wiki"
 [5]:https://github.com/chrisjackson-pellicle/hybpiper-nf/wiki/Additional-pipeline-features-and-details "Link to Additional pipeline features and details Wiki"
