@@ -287,7 +287,7 @@ Example run command:
                                   assembly with merged and unmerged (the latter 
                                   in interleaved format) data. Default is off
       
-      --run_intronerate           Run the intronerate() fuction to recover intron 
+      --run_intronerate           Run the intronerate() function to recover intron 
                                   and supercontig sequences. Default is off, and so 
                                   fasta files in `subfolders 09_sequences_intron` and 
                                   `10_sequences_supercontig` will be empty
