@@ -1,12 +1,458 @@
 #!/usr/bin/env nextflow
 
-////////////////////////////////////////////////
-//  Nextflow Pipeline for HybPiper version 2  // 
-////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+////////////////////  Nextflow Pipeline for HybPiper version 2.1.1  /////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
 
 nextflow.enable.dsl=2
 
-def helpMessage() {
+/////////////////////////////////////////////////////////////////////////////////////////
+// PRINT HYBPIPER-NF NEXTFLOW SCRIPT VERSION
+/////////////////////////////////////////////////////////////////////////////////////////
+
+if( params.remove('version') ) {
+    println('hybpiper-nf version 1.0.0, running HybPiper version 2.1.1')
+    exit 0
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// HELP MESSAGE IF DEFAULT WORKFLOW RUN (i.e. no entry point provided)
+/////////////////////////////////////////////////////////////////////////////////////////
+
+workflow {
+
+  println(
+  """
+  Please provide a workflow name using the parameter "-entry" and one of:
+
+      check_targetfile
+      fix_targetfile
+      assemble
+
+  Use e.g. `-entry check_targetfile --help` to see the full parameters for the workflow.
+  """
+  )
+  exit(0)
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// CHECK FOR UNRECOGNISED PARAMETERS
+/////////////////////////////////////////////////////////////////////////////////////////
+
+allowed_params = [
+                  "no_stitched_contig", 
+                  "chimera_test_memory",
+                  "chimeric_stitched_contig_edit_distance",
+                  "chimeric_stitched_contig_discordant_reads_cutoff", 
+                  "merged", 
+                  "paired_and_single", 
+                  "single_end", 
+                  "outdir",
+                  "illumina_reads_directory", 
+                  "target_file", 
+                  "help", 
+                  "memory", 
+                  "read_pairs_pattern",
+                  "single_pattern", 
+                  "num_forks", "cov_cutoff", "evalue",
+                  "paralog_min_length_percentage", 
+                  "translate_target_file_for_blastx", 
+                  "use_trimmomatic",
+                  "trimmomatic_leading_quality", 
+                  "trimmomatic_trailing_quality",
+                  "trimmomatic_min_length",
+                  "trimmomatic_sliding_window_size", 
+                  "trimmomatic_sliding_window_quality", 
+                  "run_intronerate",
+                  "bbmap_subfilter", 
+                  "combine_read_files", 
+                  "combine_read_files_num_fields", 
+                  "namelist",
+                  "keep_intermediate_files", 
+                  "distribute_low_mem", 
+                  "use_diamond", 
+                  "diamond_sensitivity",
+                  "single_cell_assembly", 
+                  "max_target_seqs", 
+                  "kvals", 
+                  "target", 
+                  "exclude",
+                  "timeout_assemble",
+                  "timeout_exonerate_contigs", 
+                  "target", 
+                  "exclude", 
+                  "no_padding_supercontigs",
+                  "verbose_logging", 
+                  "targetfile_aa", 
+                  "targetfile_dna", 
+                  "bwa", 
+                  "check_targetfile", 
+                  "sliding_window_size",
+                  "complexity_minimum_threshold", 
+                  "run_profiler", 
+                  "control_file", 
+                  "no_terminal_stop_codons",
+                  "reference_protein_file", 
+                  "maximum_distance",  
+                  "filter_by_length_percentage",  
+                  "keep_low_complexity_sequences",
+                  "alignments",  
+                  "concurrent_alignments",  
+                  "threads_per_concurrent_alignment", 
+                  "write_all_fasta_files",
+                  "allow_gene_removal", 
+                  "thresh", 
+                  "depth_multiplier",
+                  "figure_length", 
+                  "figure_height", 
+                  "sample_text_size", 
+                  "gene_text_size", 
+                  "heatmap_filetype", 
+                  "heatmap_dpi", 
+                  "paralogs_list_threshold_percentage"
+                  ]
+
+params.each { entry ->
+  if (!allowed_params.contains(entry.key)) {
+      println("The parameter <${entry.key}> is not known");
+      exit 0;
+  }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// SET CHANNELS FOR TARGET FILE AND CONTROL FILE
+/////////////////////////////////////////////////////////////////////////////////////////
+
+//  Set the target file channel:
+if (params.targetfile_dna) {
+  Channel
+    .fromPath("${params.targetfile_dna}", checkIfExists: true)
+    .first()
+    .set { target_file_ch }
+} else if (params.targetfile_aa) {
+  Channel
+    .fromPath("${params.targetfile_aa}", checkIfExists: true)
+    .first()
+    .set { target_file_ch }
+}
+
+
+//  Set the control *.ctl file channel:
+if (params.control_file) {
+  Channel
+    .fromPath("${params.control_file}", checkIfExists: true)
+    .first()
+    .set { control_file_ch }
+} 
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// DEFINE SOME FUNCTIONS     
+/////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+* @function printAllMethods
+* @purpose Prints an objects class name and then list the associated class functions.
+* From https://bateru.com/news/2011/11/code-of-the-day-groovy-print-all-methods-of-an-object/
+**/
+// Filename: printAllMethodsExample.groovy
+void printAllMethods( obj ){
+    if( !obj ){
+    println( "Object is null\r\n" );
+    return;
+    }
+  if( !obj.metaClass && obj.getClass() ){
+        printAllMethods( obj.getClass() );
+    return;
+    }
+  def str = "class ${obj.getClass().name} functions:\r\n";
+  obj.metaClass.methods.name.unique().each{ 
+    str += it+"(); "; 
+  }
+  println "${str}\r\n";
+}
+
+
+end_field = params.combine_read_files_num_fields - 1  // Due to zero-based indexing
+
+def getLibraryId( prefix ){
+  /* 
+  Function for grouping reads from multiple lanes, based on a shared filename 
+  prefix preceeding the first underscore.
+  */
+
+  filename_list = prefix.split("_")
+  groupby_select = filename_list[0..end_field]
+  groupby_joined = groupby_select.join("_")
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// CHECK TARGET FILE
+/////////////////////////////////////////////////////////////////////////////////////////
+
+def check_targetfile_help() {
+  log.info """
+  #######################################################################################
+  #################### hybpiper check_targetfile options: ###############################
+  #######################################################################################
+
+      --targetfile_dna TARGETFILE_DNA, -t_dna TARGETFILE_DNA
+                            FASTA file containing DNA target sequences for each
+                            gene. The fasta headers must follow the naming
+                            convention: >TaxonID-geneName
+      --targetfile_aa TARGETFILE_AA, -t_aa TARGETFILE_AA
+                            FASTA file containing amino-acid target sequences for
+                            each gene. The fasta headers must follow the naming
+                            convention: >TaxonID-geneName
+      --no_terminal_stop_codons
+                            When testing for open reading frames, do not allow a
+                            translated frame to have a single stop codon at the
+                            C-terminus of the translated protein sequence. Default
+                            is False.
+      --sliding_window_size SLIDING_WINDOW_SIZE
+                            Number of characters (single-letter DNA or amino-acid
+                            codes) to include in the sliding window when checking
+                            for sequences with low-complexity-regions.
+      --complexity_minimum_threshold COMPLEXITY_MINIMUM_THRESHOLD
+                            Minimum threshold value. Beneath this value, the
+                            sequence in the sliding window is flagged as low
+                            complexity, and the corresponding target file sequence
+                            is reported as having low-complexity regions.
+      --run_profiler        If supplied, run the subcommand using cProfile. Saves
+                            a *.csv file of results
+
+  #######################################################################################
+  """.stripIndent()
+}
+
+// Check for `--help` parameter if running `-entry check_targetfile`:
+if (workflow.commandLine.contains('-entry check_targetfile') && params.remove('help') ) {
+  check_targetfile_help()
+  exit 0
+} 
+
+// Check minimal input provided if `-entry check_targetfile`:
+if (workflow.commandLine.contains('-entry check_targetfile')  && 
+(!params.targetfile_dna && !params.targetfile_aa)) {
+  println(
+  """
+  ERROR: Parameter "-entry check_targetfile" provided, but no target file provided!
+  Please provide your target file using the "--targetfile_dna" or "--targetfile_aa" parameter.
+  """
+  )
+  exit 0
+} 
+
+// Create `hybpiper check_targetfile` command string:
+def check_targetfile_command_list = []
+
+if (params.targetfile_dna) {
+  check_targetfile_command_list << "--targetfile_dna ${params.targetfile_dna}"
+  }
+if (params.targetfile_aa) {
+  check_targetfile_command_list << "--targetfile_aa ${params.targetfile_aa}"
+  }
+if (params.sliding_window_size) {
+  check_targetfile_command_list << "--sliding_window_size ${params.sliding_window_size}"
+  } 
+if (params.complexity_minimum_threshold) {
+  check_targetfile_command_list << "--complexity_minimum_threshold ${params.complexity_minimum_threshold}"
+  }
+if (params.run_profiler) {
+  check_targetfile_command_list << "--run_profiler ${params.run_profiler}"
+  } 
+
+// Workflow to run the check_targetfile_main workflow with target_file_ch as input:
+workflow check_targetfile {
+    check_targetfile_main( target_file_ch )
+}
+
+// Workflow to run the CHECK_TARGETFILE process
+workflow check_targetfile_main {
+    take: target_file
+    main:
+        CHECK_TARGETFILE(target_file)
+        CHECK_TARGETFILE.out.check_results.view()
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// FIX TARGET FILE
+/////////////////////////////////////////////////////////////////////////////////////////
+
+def fix_targetfile_help() {
+  log.info """
+  #######################################################################################
+  ###################### hybpiper fix_targetfile options: ###############################
+  #######################################################################################
+
+      --control_file CONTROL_FILE
+                            The *.ctl file, as output by the command 
+                            "-entry check_targetfile".
+
+      --targetfile_dna TARGETFILE_DNA, -t_dna TARGETFILE_DNA
+                            FASTA file containing DNA target sequences for each gene. 
+                            The fasta headers must follow the naming convention: 
+                            >TaxonID-geneName
+      --targetfile_aa TARGETFILE_AA, -t_aa TARGETFILE_AA
+                            FASTA file containing amino-acid target sequences for each 
+                            gene. The fasta headers must follow the naming convention: 
+                            >TaxonID-geneName
+      --no_terminal_stop_codons
+                            When testing for open reading frames, do not allow a 
+                            translated frame to have a single stop codon at the 
+                            C-terminus of the translated protein sequence. Default is 
+                            False. If supplied, this parameter will override the setting 
+                            in the *.ctl file.
+      --allow_gene_removal  Allow frame-correction and filtering steps to remove all 
+                            representative sequences for a given gene. Default is False; 
+                            HybPiper will exit with an information message instead. 
+                            If supplied, this parameter will override the setting in 
+                            the *.ctl file.
+      --reference_protein_file REFERENCE_PROTEIN_FILE
+                            If a given DNA sequence can be translated in more than one 
+                            forward frame without stop codons, choose the translation 
+                            that best matches the corresponding reference protein 
+                            provided in this fasta file. The fasta headers must follow 
+                            the naming convention: >TaxonID-geneName
+      --maximum_distance FLOAT
+                            When comparing candidate DNA translation frames to a 
+                            reference protein, the maximum distance allowed between the 
+                            translated frame and the reference sequence for any candidate 
+                            translation frame to be selected. Useful to filter out 
+                            sequences with frameshifts that do NOT introduce stop codons. 
+                            0.0 means identical sequences, 1.0 means completely different 
+                            sequences. Default is 0.5
+      --filter_by_length_percentage FLOAT
+                            If more than one representative sequence is present for a 
+                            given gene, filter out sequences shorter than this percentage 
+                            of the longest gene sequence length. Default is 0.0 (all 
+                            sequences retained).
+      --keep_low_complexity_sequences
+                            Keep sequences that contain regions of low complexity, as 
+                            identified by the command "hybpiper check_targetfile". Default 
+                            is to remove these sequences.
+      --alignments          Create per-gene alignments from the final fixed/filtered 
+                            target file sequences. Note that DNA sequences will be 
+                            translated prior to alignment.
+      --concurrent_alignments INTEGER
+                            Number of alignments to run concurrently. Default is 1.
+      --threads_per_concurrent_alignment INTEGER
+                            Number of threads to run each concurrent alignment with. 
+                            Default is 1.
+      --write_all_fasta_files
+                            If provided, *.fasta files will be written for sequences 
+                            removed from the fixed/filtered target file, according to 
+                            filtering categories (length threshold, low-complexity 
+                            regions, etc.). By default, these files will not be written.
+      --verbose_logging     If supplied, enable verbose logging. NOTE: this will 
+                            increase the size of the log files.
+      --run_profiler        If supplied, run the subcommand using cProfile. Saves a 
+                            *.csv file of results
+
+  #######################################################################################
+  """.stripIndent()
+}
+
+// Check for `--help` parameter if running `-entry fix_targetfile`:
+if (workflow.commandLine.contains('-entry fix_targetfile') && params.remove('help') ) {
+  fix_targetfile_help()
+  exit 0
+} 
+
+// Check minimal input provided if `-entry fix_targetfile`:
+if (workflow.commandLine.contains('-entry fix_targetfile')  && 
+(!params.targetfile_dna && !params.targetfile_aa)) {
+  println(
+  """
+  ERROR: Parameter "-entry fix_targetfile" provided, but no target file provided!
+  Please provide your target file using the "--targetfile_dna" or "--targetfile_aa" parameter.
+  """
+  )
+} 
+
+if (workflow.commandLine.contains('-entry fix_targetfile')  && 
+(!params.control_file)) {
+  println(
+  """
+  ERROR: Parameter "-entry fix_targetfile" provided, but no control file provided!
+  Please provide your control file using the "--control_file" parameter.
+  """
+  )
+  exit 0
+} 
+
+// Create `hybpiper fix_targetfile` command string:
+def fix_targetfile_command_list = []
+
+fix_targetfile_command_list << "${params.control_file}"
+
+if (params.targetfile_dna) {
+  fix_targetfile_command_list << "--targetfile_dna ${params.targetfile_dna}"
+  }
+if (params.targetfile_aa) {
+  fix_targetfile_command_list << "--targetfile_aa ${params.targetfile_aa}"
+  }
+if (params.no_terminal_stop_codons) {
+  fix_targetfile_command_list << "--no_terminal_stop_codons"
+  } 
+if (params.allow_gene_removal) {
+  fix_targetfile_command_list << "--allow_gene_removal"
+  }
+if (params.reference_protein_file) {
+  fix_targetfile_command_list << "--reference_protein_file ${params.reference_protein_file}"
+  }
+if (params.maximum_distance) {
+  fix_targetfile_command_list << "--maximum_distance ${params.maximum_distance}"
+  }
+if (params.filter_by_length_percentage) {
+  fix_targetfile_command_list << "--filter_by_length_percentage ${params.filter_by_length_percentage}"
+  }
+if (params.keep_low_complexity_sequences) {
+  fix_targetfile_command_list << "--keep_low_complexity_sequences ${params.keep_low_complexity_sequences}"
+  }
+if (params.alignments) {
+  fix_targetfile_command_list << "--alignments"
+  }
+if (params.concurrent_alignments) {
+  fix_targetfile_command_list << "--concurrent_alignments ${params.concurrent_alignments}"
+  }
+if (params.threads_per_concurrent_alignment) {
+  fix_targetfile_command_list << "--threads_per_concurrent_alignment ${params.threads_per_concurrent_alignment}"
+  }
+if (params.write_all_fasta_files) {
+  fix_targetfile_command_list << "--write_all_fasta_files"
+  }
+if (params.verbose_logging) {
+  fix_targetfile_command_list << "--verbose_logging"
+  }
+if (params.run_profiler) {
+  fix_targetfile_command_list << "--run_profiler ${params.run_profiler}"
+  } 
+
+// Workflow to run the fix_targetfile_main workflow with target_file_ch as input:
+workflow fix_targetfile {
+    fix_targetfile_main( target_file_ch, control_file_ch )
+}
+
+// Workflow to run the FIX_TARGETFILE process
+workflow fix_targetfile_main {
+    take: target_file
+    take: control_file
+    main:
+        FIX_TARGETFILE(target_file, control_file)
+        FIX_TARGETFILE.out.fix_results.view()
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// HYBPIPER ASSEMBLE
+/////////////////////////////////////////////////////////////////////////////////////////
+
+def assemble_help() {
     log.info """
 
     Usage:
@@ -113,22 +559,6 @@ def helpMessage() {
                                   sliding window. Default is 20
 
       #######################################################################################
-      ############################## Target file QC options: ################################
-      #######################################################################################
-      
-      -entry check_targetfile     Check your target file for formatting errors and sequences
-                                  with low complexity regions, then exit
-
-      --sliding_window_size       Number of characters (single-letter DNA or amino-acid 
-                                  codes) to include in the sliding window for low-complexity 
-                                  check. Default is 100 for DNA or 50 for amino-acid.
-      --complexity_minimum_threshold
-                                  Minimum threshold value. Beneath this value, the sequence 
-                                  in the sliding window is flagged as low-complexity, and 
-                                  the corresponding target file sequence is reported as 
-                                  having low-complexity regions
-
-      #######################################################################################
       ############################# hybpiper assemble options: ##############################
       #######################################################################################
 
@@ -141,14 +571,11 @@ def helpMessage() {
                                   Option are: 'mid-sensitive', 'sensitive', 
                                   'more-sensitive', 'very-sensitive', 'ultra-sensitive'
 
-      --distribute_hi_mem         Distributing and writing reads to individual gene 
-                                  directories  will be 40-50 percent faster, but can use 
-                                  more memory/RAM with large input files
+      --distribute_low_mem        Distributing and writing reads to individual gene 
+                                  directories  will be 40-50 percent slower, but can use 
+                                  less memory/RAM with large input files
 
-      --evalue                    Evalue to pass to blastx when using blastx mapping, 
-                                  i.e., when the --use_blastx or 
-                                  --translate_target_file_for_blastx flag is specified. 
-                                  Default is 1e-4
+      --evalue                    e-value threshold for blastx/DIAMOND hits, default: 0.0001
 
       --max_target_seqs           Max target seqs to save in BLASTx search, default is 10
 
@@ -196,8 +623,6 @@ def helpMessage() {
       --no_stitched_contig        Do not create stitched contigs; use longest Exonerate 
                                   hit only. Default is off
 
-
-
       --chimera_test_memory <int> Memory (RAM) amount in MB to use for bbmap.sh when
                                   peforming stitched-contig chimera tests. Default is 
                                   1000 MB
@@ -238,105 +663,143 @@ def helpMessage() {
                                   increase the size of the log files by an order of 
                                   magnitude
 
+      #######################################################################################
+      ####################### hybpiper paralog_retriever options: ###########################
+      #######################################################################################
+
+      --paralogs_list_threshold_percentage PARALOGS_LIST_THRESHOLD_PERCENTAGE
+                                  Percent of total number of samples and genes that must
+                                  have paralog warnings to be reported in the
+                                  <genes_with_paralogs.txt> report file. The default is
+                                  0.0, meaning that all genes and samples with at least
+                                  one paralog warning will be reported
+      --figure_length FIGURE_LENGTH
+                                  Length dimension (in inches) for the output heatmap
+                                  file. Default is automatically calculated based on the
+                                  number of genes
+      --figure_height FIGURE_HEIGHT
+                                  Height dimension (in inches) for the output heatmap
+                                  file. Default is automatically calculated based on the
+                                  number of samples
+      --sample_text_size SAMPLE_TEXT_SIZE
+                                  Size (in points) for the sample text labels in the
+                                  output heatmap file. Default is automatically
+                                  calculated based on the number of samples
+      --gene_text_size GENE_TEXT_SIZE
+                                  Size (in points) for the gene text labels in the
+                                  output heatmap file. Default is automatically
+                                  calculated based on the number of genes
+      --heatmap_filetype {png,pdf,eps,tiff,svg}
+                                  File type to save the output heatmap image as. Default
+                                  is png
+      --heatmap_dpi HEATMAP_DPI
+                                  Dots per inch (DPI) for the output heatmap image.
+                                  Default is 300
+
+      #######################################################################################
+      ######################## hybpiper recovery_heatmap options: ###########################
+      #######################################################################################
+
+      --figure_length FIGURE_LENGTH
+                                  Length dimension (in inches) for the output heatmap
+                                  file. Default is automatically calculated based on the
+                                  number of genes
+      --figure_height FIGURE_HEIGHT
+                                  Height dimension (in inches) for the output heatmap
+                                  file. Default is automatically calculated based on the
+                                  number of samples
+      --sample_text_size SAMPLE_TEXT_SIZE
+                                  Size (in points) for the sample text labels in the
+                                  output heatmap file. Default is automatically
+                                  calculated based on the number of samples
+      --gene_text_size GENE_TEXT_SIZE
+                                  Size (in points) for the gene text labels in the
+                                  output heatmap file. Default is automatically
+                                  calculated based on the number of genes
+      --heatmap_filetype {png,pdf,eps,tiff,svg}
+                                  File type to save the output heatmap image as. Default
+                                  is *.png
+      --heatmap_dpi HEATMAP_DPI
+                                  Dot per inch (DPI) for the output heatmap image.
+                                  Default is 150
+
     """.stripIndent()
 }
 
 
-
-//  Set the target file channel:
-if (params.targetfile_dna) {
-  Channel
-    .fromPath("${params.targetfile_dna}", checkIfExists: true)
-    .first()
-    .set { target_file_ch }
-} else if (params.targetfile_aa) {
-  Channel
-    .fromPath("${params.targetfile_aa}", checkIfExists: true)
-    .first()
-    .set { target_file_ch }
-}
-
-// Check  minimal input provided if -entry check_targetfile:
-if (workflow.commandLine.contains('-entry check_targetfile')  && 
-(!params.targetfile_dna && !params.targetfile_aa)) {
-  println('\nERROR: Parameter "-entry check_targetfile" detected, but no target file provided!\nPlease provide your target file using the "--targetfile_dna" or "--targetfile_aa" parameter.')
-  exit 0
-} 
-
-// Check minimal input provided if NOT -entry check_targetfile, then check for incompatible parameters:
-if (!workflow.commandLine.contains('-entry check_targetfile')) {
-  if (params.help || !params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa)) {
-  helpMessage()
-  exit 0
-  } else if (params.paralog_min_length_percentage < 0 || params.paralog_min_length_percentage >1) {
-  println("""
-    The value for --paralog_min_length_percentage should be between 0 and 1. 
-    Your value is ${params.paralog_min_length_percentage}""".stripIndent())
-  exit 0
-  } else if (params.single_end && params.paired_and_single) {
-    println('Please use --single_end OR --paired_and_single, not both!')
-    exit 0
-  } else if (params.targetfile_dna && params.targetfile_aa) {
-    println('Please use --targetfile_dna OR --targetfile_aa, not both!')
-    exit 0
-  } else if (params.targetfile_aa && params.bwa) {
-    println('You can not use BWA with a target file containing protein sequences.\nPlease use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.')
+// Check for `--help` parameter if running `-entry assemble`
+if (workflow.commandLine.contains('-entry assemble') && 
+params.help) {
+  // if (params.help || !params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa)) {
+    assemble_help()
     exit 0
   }
-}
 
-// Workflow to run the CHECK_TARGETFILE process
-workflow check_targetfile_main {
-    take: target_file
-    main:
-        CHECK_TARGETFILE(target_file)
-        CHECK_TARGETFILE.out.check_results.view()
-        // exit 0 
-}
+// Check minimal input provided if `-entry assemble`, then check for incompatible parameters:
+if (workflow.commandLine.contains('-entry assemble') && 
+(!params.illumina_reads_directory || (!params.targetfile_dna && !params.targetfile_aa))) {
 
-// Workflow to run the check_targetfile_main workflow with target_file_ch as input:
-workflow check_targetfile {
-    check_targetfile_main( target_file_ch )
-    // exit 0
-}
+  println(
+  """
+  Please provide a folder of reads using the parameter "-illumina_reads_directory", and a \
+target file using one of the parameters:
 
+      --targetfile_dna 
+      --targetfile_aa
 
-// Check for unrecognised pararmeters
-allowed_params = ["no_stitched_contig", "chimera_test_memory","chimeric_stitched_contig_edit_distance", \
-"chimeric_stitched_contig_discordant_reads_cutoff", "merged", "paired_and_single", "single_end", "outdir", \
-"illumina_reads_directory", "target_file", "help", "memory", "read_pairs_pattern", \
-"single_pattern", "use_blastx", "num_forks", "cov_cutoff", "evalue", \
-"paralog_min_length_percentage", "translate_target_file_for_blastx", "use_trimmomatic", \
-"trimmomatic_leading_quality", "trimmomatic_trailing_quality", "trimmomatic_min_length", \
-"trimmomatic_sliding_window_size", "trimmomatic_sliding_window_quality", "run_intronerate", \
-"bbmap_subfilter", "combine_read_files", "combine_read_files_num_fields", "namelist", \
-"keep_intermediate_files", "distribute_hi_mem", "use_diamond", "diamond_sensitivity", "single_cell_assembly", "max_target_seqs", "kvals", "target", "exclude", 
-"timeout_assemble", "timeout_exonerate_contigs", "target", "exclude", "no_padding_supercontigs",\
-"verbose_logging", "targetfile_aa", "targetfile_dna", "bwa", "check_targetfile", "sliding_window_size",
-"complexity_minimum_threshold"]
-
-params.each { entry ->
-  if (! allowed_params.contains(entry.key)) {
-      println("The parameter <${entry.key}> is not known");
-      exit 0;
-  }
-}
-
-// Create `hybpiper check_targetfile` command string:
-def check_targetfile_command_list = []
-
-if (params.targetfile_dna) {
-  check_targetfile_command_list << "--targetfile_dna ${params.targetfile_dna}"
-  }
-if (params.targetfile_aa) {
-  check_targetfile_command_list << "--targetfile_aa ${params.targetfile_aa}"
-  }
-if (params.sliding_window_size) {
-  check_targetfile_command_list << "--sliding_window_size ${params.sliding_window_size}"
+  Use `--entry assemble --help` for more details.
+  """
+  )
+  exit 0
   } 
-if (params.complexity_minimum_threshold) {
-  check_targetfile_command_list << "--complexity_minimum_threshold ${params.complexity_minimum_threshold}"
+  
+if (params.paralog_min_length_percentage < 0 || params.paralog_min_length_percentage >1) {
+    println(
+      """
+      The value for --paralog_min_length_percentage should be between 0 and 1. 
+      Your value is ${params.paralog_min_length_percentage}
+      """.stripIndent()
+      )
+    exit 0
   } 
+  
+if (params.single_end && params.paired_and_single) {
+    println(
+    """
+    Please use --single_end OR --paired_and_single, not both!
+    """
+    )
+    exit 0
+  } 
+
+if (params.paired_and_single && params.use_trimmomatic) {
+    println(
+    """
+    Trimmomatic can't be used with paired plus single reads yet - 
+    let me know if this would be useful!
+    """.stripIndent()
+    )
+    exit 0
+  } 
+  
+if (params.targetfile_dna && params.targetfile_aa) {
+    println(
+    """
+    Please use --targetfile_dna OR --targetfile_aa, not both!
+    """
+    )
+    exit 0
+  } 
+  
+if (params.targetfile_aa && params.bwa) {
+    println(
+    """
+    You can not use BWA with a target file containing protein sequences.
+    Please use BLASTx or DIAMOND, or provide a target file with nucleotide sequences.
+    """
+    )
+    exit 0
+  }
 
 
 // Create `hybpiper assemble` command string:
@@ -357,8 +820,8 @@ if (params.use_diamond) {
 if (params.diamond_sensitivity) {
   command_list << "--diamond_sensitivity ${params.diamond_sensitivity}"
   }
-if (params.distribute_hi_mem) {
-  command_list << "--distribute_hi_mem"
+if (params.distribute_low_mem) {
+  command_list << "--distribute_low_mem"
   }
 if (params.evalue) {
   command_list << "--evalue ${params.evalue}"
@@ -375,8 +838,14 @@ if (params.single_cell_assembly) {
 if (params.kvals) {
   command_list << "--kvals ${params.kvals}"
   }
+if (params.thresh) {
+  command_list << "--thresh ${params.thresh}"
+  }
 if (params.paralog_min_length_percentage) {
   command_list << "--paralog_min_length_percentage ${params.paralog_min_length_percentage}"
+  }
+if (params.depth_multiplier) {
+  command_list << "--depth_multiplier ${params.depth_multiplier}"
   }
 if (params.timeout_assemble) {
   command_list << "--timeout_assemble ${params.timeout_assemble}"
@@ -420,52 +889,311 @@ if (params.no_padding_supercontigs) {
 if (params.verbose_logging) {
   command_list << "--verbose_logging"
   }
-
-/////////////////////////////
-//    DEFINE FUNCTIONS     //
-/////////////////////////////
-
-
-/**
-* @function printAllMethods
-* @purpose Prints an objects class name and then list the associated class functions.
-* From https://bateru.com/news/2011/11/code-of-the-day-groovy-print-all-methods-of-an-object/
-**/
-// Filename: printAllMethodsExample.groovy
-void printAllMethods( obj ){
-    if( !obj ){
-    println( "Object is null\r\n" );
-    return;
-    }
-  if( !obj.metaClass && obj.getClass() ){
-        printAllMethods( obj.getClass() );
-    return;
-    }
-  def str = "class ${obj.getClass().name} functions:\r\n";
-  obj.metaClass.methods.name.unique().each{ 
-    str += it+"(); "; 
+if (params.run_profiler) {
+  command_list << "--run_profiler ${params.run_profiler}"
   }
-  println "${str}\r\n";
+
+
+// Create `hybpiper recovery_heatmap` command string:
+def recovery_heatmap_command_list = []
+
+if (params.figure_length) {
+  recovery_heatmap << "--figure_length ${params.figure_length}"
+  }
+if (params.figure_height) {
+  recovery_heatmap << "--figure_height ${params.figure_height}"
+  }
+if (params.sample_text_size) {
+  recovery_heatmap << "--sample_text_size ${params.sample_text_size}"
+  }
+if (params.gene_text_size) {
+  recovery_heatmap << "--gene_text_size ${params.gene_text_size}"
+  }
+if (params.heatmap_filetype) {
+  recovery_heatmap << "--heatmap_filetype ${params.heatmap_filetype}"
+  }
+if (params.heatmap_dpi) {
+  recovery_heatmap << "--heatmap_dpi ${params.heatmap_dpi}"
+  }
+
+
+// Create `hybpiper paralog_retriever` command string:
+def paralog_retriever_command_list = []
+
+if (params.paralogs_list_threshold_percentage) {
+  paralog_retriever_command_list << "--paralogs_list_threshold_percentage ${params.paralogs_list_threshold_percentage}"
+  }
+if (params.figure_length) {
+  paralog_retriever_command_list << "--figure_length ${params.figure_length}"
+  }
+if (params.figure_height) {
+  paralog_retriever_command_list << "--figure_height ${params.figure_height}"
+  }
+if (params.sample_text_size) {
+  paralog_retriever_command_list << "--sample_text_size ${params.sample_text_size}"
+  }
+if (params.gene_text_size) {
+  paralog_retriever_command_list << "--gene_text_size ${params.gene_text_size}"
+  }
+if (params.heatmap_filetype) {
+  paralog_retriever_command_list << "--heatmap_filetype ${params.heatmap_filetype}"
+  }
+if (params.heatmap_dpi) {
+  paralog_retriever_command_list << "--heatmap_dpi ${params.heatmap_dpi}"
+  }
+
+
+
+// Workflow to run the assemble_main workflow with target_file_ch as input:
+workflow assemble {
+    assemble_main( target_file_ch )
+}
+
+// Workflow to run the `hybpiper assemble` pipeline:
+workflow assemble_main {
+    take: target_file
+    main:
+
+      //  Create 'namelist.txt' file and associated channel:
+      def user_provided_namelist_for_filtering = []
+
+      if (params.namelist) {
+        user_provided_namelist_file = file("${params.namelist}", checkIfExists: true)
+          .readLines()
+          .each { user_provided_namelist_for_filtering << it }
+        Channel
+        .fromPath("${params.namelist}", checkIfExists: true)
+        .first()
+        .set { namelist_ch }
+
+      } else if (!params.single_end && !params.combine_read_files) {
+        Channel
+        .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+          flat : true, checkIfExists: true)
+        .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
+        .first()
+        .set { namelist_ch }
+
+      } else if (!params.single_end && params.combine_read_files) {
+        Channel
+        .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+          flat : true, checkIfExists: true)
+        .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+        .groupTuple(sort:true)
+        .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
+        .first()
+        .set { namelist_ch }
+
+      } else if (params.single_end && !params.combine_read_files) {
+        Channel
+        .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+          checkIfExists: true)
+        .map { file -> file.baseName.split("_${params.single_pattern}")[0] } // THIS NEEDS TO BE UNIQUE
+        .unique()
+        .collectFile(name: "${params.outdir}/01_namelist/namelist.txt", newLine: true)
+        .first()
+        .set { namelist_ch }
+
+      } else if (params.single_end && params.combine_read_files) {
+        Channel
+        .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+          checkIfExists: true)
+        .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
+        .groupTuple(sort:true)
+        .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
+        .first()
+        .set { namelist_ch }
+      }
+
+      if (user_provided_namelist_for_filtering) {
+      user_provided_namelist_for_filtering = user_provided_namelist_for_filtering.findAll { item -> !item.isEmpty() }
+
+      log.info("""
+        INFO: A namelist has been supplied by the user. Only the following samples will be processed: ${user_provided_namelist_for_filtering}\n""".stripIndent())
+      }
+
+
+      //  Illumina reads channel:
+      /*
+      Single-end reads.
+      Don't group reads from multi-lane (default).
+      */
+      if (params.single_end && !params.combine_read_files && user_provided_namelist_for_filtering) {
+        Channel
+        .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+          checkIfExists: true)
+        .map { file -> tuple(file.baseName.split("_${params.single_pattern}")[0], file) } // THIS NEEDS TO BE UNIQUE
+        .filter { it[0] in user_provided_namelist_for_filtering }
+        // .view()
+        .set { illumina_reads_single_end_ch }
+
+      } else if (params.single_end && !params.combine_read_files && 
+        !user_provided_namelist_for_filtering) {
+        Channel
+        .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+          checkIfExists: true)
+        .map { file -> tuple(file.baseName.split("_${params.single_pattern}")[0], file) } // THIS NEEDS TO BE UNIQUE
+        .set { illumina_reads_single_end_ch }
+
+      } else if (params.single_end && params.combine_read_files && user_provided_namelist_for_filtering) {
+        Channel
+        .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+        checkIfExists: true)
+        .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
+        .groupTuple(sort:true)
+        // .view()
+        .filter { it[0] in user_provided_namelist_for_filtering }
+        // .view()
+        .set { illumina_reads_single_end_ch }
+
+      } else if (params.single_end && params.combine_read_files && !user_provided_namelist_for_filtering) {
+        Channel
+        .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+        checkIfExists: true)
+        .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
+        .groupTuple(sort:true)
+        .set { illumina_reads_single_end_ch }
+
+      } else {
+        illumina_reads_single_end_ch = Channel.empty()
+      }
+
+
+      /*
+      Paired-end reads and a file of unpaired reads.
+      */
+      if (params.paired_and_single) {
+        Channel
+        .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern,$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", flat : true,
+        checkIfExists: true, size: 3)
+        .set { illumina_paired_reads_with_unpaired_ch }
+      } else {
+        illumina_paired_reads_with_unpaired_ch = Channel.empty()
+      }
+
+
+      /* 
+      Paired-end reads.
+      Don't group reads from multi-lane (default).
+      */
+      if (!params.paired_and_single && !params.single_end  && !params.combine_read_files && user_provided_namelist_for_filtering) {
+        Channel
+          .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+          flat : true, checkIfExists: true)
+          .filter { it[0] in user_provided_namelist_for_filtering }
+          // .view()
+          .set { illumina_paired_reads_ch }
+
+      } else if (!params.paired_and_single && !params.single_end  && !params.combine_read_files && !user_provided_namelist_for_filtering) {
+          Channel
+          .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+          flat : true, checkIfExists: true)
+          // .view()
+          .set { illumina_paired_reads_ch }
+
+      } else if (!params.paired_and_single && !params.single_end  && params.combine_read_files && user_provided_namelist_for_filtering) {
+          Channel
+          .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+          flat : true, checkIfExists: true)
+          .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+          .groupTuple(sort:true)
+          .filter { it[0] in user_provided_namelist_for_filtering }
+          // .view()
+          .set { illumina_paired_reads_ch }
+
+      } else if (!params.paired_and_single && !params.single_end && params.combine_read_files && !user_provided_namelist_for_filtering) {
+          Channel
+          .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
+          flat : true, checkIfExists: true)
+          .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+          .groupTuple(sort:true)
+          .set { illumina_paired_reads_ch }
+
+      } else {
+        illumina_paired_reads_ch = Channel.empty()
+      }
+
+      // Run OPTIONAL combine read file step: 
+      COMBINE_LANES_PAIRED_END( illumina_paired_reads_ch )
+      COMBINE_LANES_SINGLE_END( illumina_reads_single_end_ch )
+
+      // Set up correct channel for combined vs non-combined:
+      if (params.combine_read_files) {
+        trimmomatic_PE_input_ch = COMBINE_LANES_PAIRED_END.out.combined_lane_paired_reads
+        trimmomatic_SE_input_ch = COMBINE_LANES_SINGLE_END.out.combined_lane_single_reads_ch
+      } else {
+        trimmomatic_PE_input_ch = illumina_paired_reads_ch
+        trimmomatic_SE_input_ch = illumina_reads_single_end_ch
+      }
+
+      // Run OPTIONAL trimmomatic QC step:
+      TRIMMOMATIC_PAIRED( trimmomatic_PE_input_ch )
+      TRIMMOMATIC_SINGLE( trimmomatic_SE_input_ch )
+
+      // Set up input channels for `hybpiper assemble`:
+      if (params.use_trimmomatic) {
+        assemble_with_single_end_only_input_ch = TRIMMOMATIC_SINGLE.out.trimmed_single_ch
+        assemble_with_unpaired_input_ch = TRIMMOMATIC_PAIRED.out.trimmed_paired_and_orphaned_ch
+        assemble_no_unpaired_input_ch = Channel.empty()
+      } else if (params.combine_read_files) {
+        assemble_with_single_end_only_input_ch = COMBINE_LANES_SINGLE_END.out.combined_lane_single_reads_ch
+        assemble_with_unpaired_input_ch = Channel.empty()
+        assemble_no_unpaired_input_ch = COMBINE_LANES_PAIRED_END.out.combined_lane_paired_reads
+      } else {
+        assemble_with_single_end_only_input_ch = illumina_reads_single_end_ch
+        assemble_with_unpaired_input_ch = illumina_paired_reads_with_unpaired_ch
+        assemble_no_unpaired_input_ch = illumina_paired_reads_ch
+      }
+
+      // Run `hybpiper assemble`:
+      ASSEMBLE_PAIRED_AND_SINGLE_END( 
+        target_file_ch, 
+        assemble_with_unpaired_input_ch 
+        )
+      ASSEMBLE_PAIRED_END( 
+        target_file_ch, 
+        assemble_no_unpaired_input_ch 
+        )
+      ASSEMBLE_SINGLE_END( 
+        target_file_ch, 
+        assemble_with_single_end_only_input_ch 
+        )
+
+      // Run `hybpiper stats`:
+      SUMMARY_STATS( 
+        ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect()
+        .mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect()
+        .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), 
+        target_file_ch, 
+        namelist_ch 
+        ) 
+
+      // Run `hybpiper recovery_heatmap`: 
+      VISUALISE( SUMMARY_STATS.out.seq_lengths_file ) 
+
+      // Run hybpiper `retrieve_sequences` for all sequence types:
+      RETRIEVE_SEQUENCES( 
+        ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().
+        mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().
+        mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), 
+        target_file_ch, 
+        namelist_ch 
+        )
+
+      // Run `hybpiper paralog_retriever`: 
+      PARALOG_RETRIEVER( 
+        ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().
+        mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().
+        mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), 
+        namelist_ch, 
+        target_file_ch )
+      
 }
 
 
-end_field = params.combine_read_files_num_fields - 1  // Due to zero-based indexing
-
-def getLibraryId( prefix ){
-  /* 
-  Function for grouping reads from multiple lanes, based on a shared filename 
-  prefix preceeding the first underscore.
-  */
-
-  filename_list = prefix.split("_")
-  groupby_select = filename_list[0..end_field]
-  groupby_joined = groupby_select.join("_")
-}
-
-
-/////////////////////////////
-//  DEFINE DSL2 PROCESSES  //
-/////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+//  DEFINE DSL2 PROCESSES
+/////////////////////////////////////////////////////////////////////////////////////////
 
 
 process CHECK_TARGETFILE {
@@ -473,8 +1201,8 @@ process CHECK_TARGETFILE {
   Run `hybpiper check_targetfile` command.
   */
 
-  label 'in_container'
-  publishDir "${params.outdir}/00_check_targetfile", mode: 'copy', pattern: "check_targetfile_report.txt"
+  publishDir "${workflow.launchDir}", mode: 'copy', pattern: "check_targetfile_report.txt"
+  publishDir "${workflow.launchDir}", mode: 'copy', pattern: "fix_targetfile_*.ctl"
 
   input:
     path(target_file)
@@ -482,6 +1210,7 @@ process CHECK_TARGETFILE {
   output:
     stdout emit: check_results
     path("check_targetfile_report.txt")
+    path("fix_targetfile_*.ctl")
 
   script:
   check_targetfile_assemble_command = "hybpiper check_targetfile " + check_targetfile_command_list.join(' ') + "| tee check_targetfile_report.txt"
@@ -489,6 +1218,41 @@ process CHECK_TARGETFILE {
     """
     echo "Executing command: ${check_targetfile_assemble_command}"
     ${check_targetfile_assemble_command}
+    """
+}
+
+
+process FIX_TARGETFILE {
+  /*
+  Run `hybpiper fix_targetfile` command.
+  */
+
+  publishDir "${workflow.launchDir}", mode: 'copy', pattern: "fix_targetfile_report.txt"
+  publishDir "${workflow.launchDir}", mode: 'copy', pattern: "fix_targetfile_report.tsv"
+  publishDir "${workflow.launchDir}", mode: 'copy', pattern: "fix_targetfile_*.log"
+  publishDir "${workflow.launchDir}", mode: 'copy', pattern: "fix_targetfile_alignments"
+  publishDir "${workflow.launchDir}", mode: 'copy', pattern: "fix_targetfile_additional_sequence_files"
+  publishDir "${workflow.launchDir}", mode: 'copy', pattern: "*fixed*"
+  
+
+  input:
+    path(target_file)
+    path(control_file)
+
+  output:
+    stdout emit: fix_results
+    path("fix_targetfile_report.txt")
+    path("fix_targetfile_report.tsv")
+    path("*fixed*")
+    path("fix_targetfile_alignments") optional true
+    path("fix_targetfile_additional_sequence_files") optional true
+
+  script:
+  fix_targetfile_assemble_command = "hybpiper fix_targetfile " + fix_targetfile_command_list.join(' ') + " | tee fix_targetfile_report.txt"
+
+    """
+    echo "Executing command: ${fix_targetfile_assemble_command}"
+    ${fix_targetfile_assemble_command}
     """
 }
 
@@ -868,8 +1632,11 @@ process VISUALISE {
     path("recovery_heatmap.png")
 
   script:
+    heatmap_command = "hybpiper recovery_heatmap ${seq_lengths_file} " + recovery_heatmap_command_list.join(' ')
+
     """
-    hybpiper recovery_heatmap ${seq_lengths_file}
+    echo "Executing command: ${heatmap_command}"
+    ${heatmap_command}
     """
 }
 
@@ -922,7 +1689,7 @@ process PARALOG_RETRIEVER {
 
   //echo true
   label 'in_container'
-  publishDir "${params.outdir}/05_visualise", mode: 'copy', pattern: "paralog_heatmap.png"
+  publishDir "${params.outdir}/05_visualise", mode: 'copy', pattern: "paralog_heatmap.*"
   publishDir "${params.outdir}/11_paralogs", mode: 'copy', pattern: "paralogs_all/*paralogs_all.fasta", saveAs: { filename -> file(filename).getName() }
   publishDir "${params.outdir}/12_paralogs_no_chimeras", mode: 'copy', pattern: "paralogs_no_chimeras/*paralogs_no_chimeras.fasta", saveAs: { filename -> file(filename).getName() }
   publishDir "${params.outdir}/11_paralogs/logs", mode: 'copy', pattern: "*report*"
@@ -938,251 +1705,23 @@ process PARALOG_RETRIEVER {
     path("paralogs_no_chimeras/*paralogs_no_chimeras.fasta")
     path("paralog_report.tsv")
     path("paralogs_above_threshold_report.txt") 
-    path("paralog_heatmap.png")
+    path("paralog_heatmap.*")
 
   script:
     if (params.targetfile_dna) {
-      """
-      hybpiper paralog_retriever  ${namelist} -t_dna ${target_file}
-      """
+      paralog_command = "hybpiper paralog_retriever ${namelist} -t_dna ${target_file} " + paralog_retriever_command_list.join(' ')
+
     } else if (params.targetfile_aa) {
+      paralog_command = "hybpiper paralog_retriever ${namelist} -t_aa ${target_file} " + paralog_retriever_command_list.join(' ')
+
       """
-      hybpiper paralog_retriever  ${namelist} -t_aa ${target_file}
+      echo "Executing command: ${paralog_command}"
+      ${paralog_command}
       """
     }
 }
 
 
-
-////////////////////////
-//  Define workflows  //
-////////////////////////
-
-workflow {
-
-
-  // Don't allow params.paired_and_single and params.use_trimmomatic
-  if (params.paired_and_single && params.use_trimmomatic) {
-    println("""
-      Trimmomatic can't be used with paired plus single reads yet - 
-      let me know if this would be useful!""".stripIndent())
-    exit 0
-  }
-
-  /////////////////////////////////////////////////////////
-  //  Create 'namelist.txt' file and associated channel  //
-  /////////////////////////////////////////////////////////
-
-  def user_provided_namelist_for_filtering = []
-
-  if (params.namelist) {
-    user_provided_namelist_file = file("${params.namelist}", checkIfExists: true)
-      .readLines()
-      .each { user_provided_namelist_for_filtering << it }
-    Channel
-    .fromPath("${params.namelist}", checkIfExists: true)
-    .first()
-    .set { namelist_ch }
-
-  } else if (!params.single_end && !params.combine_read_files) {
-    Channel
-    .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-      flat : true, checkIfExists: true)
-    .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
-    .first()
-    .set { namelist_ch }
-
-  } else if (!params.single_end && params.combine_read_files) {
-    Channel
-    .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-      flat : true, checkIfExists: true)
-    .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
-    .groupTuple(sort:true)
-    .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
-    .first()
-    .set { namelist_ch }
-
-  } else if (params.single_end && !params.combine_read_files) {
-    Channel
-    .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-      checkIfExists: true)
-    .map { file -> file.baseName.split("_${params.single_pattern}")[0] } // THIS NEEDS TO BE UNIQUE
-    .unique()
-    .collectFile(name: "${params.outdir}/01_namelist/namelist.txt", newLine: true)
-    .first()
-    .set { namelist_ch }
-
-  } else if (params.single_end && params.combine_read_files) {
-    Channel
-    .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-      checkIfExists: true)
-    .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
-    .groupTuple(sort:true)
-    .collectFile(name: "${params.outdir}/01_namelist/namelist.txt") { item -> item[0] + "\n" }
-    .first()
-    .set { namelist_ch }
-  }
-
-  if (user_provided_namelist_for_filtering) {
-  user_provided_namelist_for_filtering = user_provided_namelist_for_filtering.findAll { item -> !item.isEmpty() }
-
-  log.info("""
-    INFO: A namelist has been supplied by the user. Only the following samples will be processed: ${user_provided_namelist_for_filtering}\n""".stripIndent())
-  }
-
-  //////////////////////////////
-  //  Illumina reads channel  //
-  //////////////////////////////
-
-  /*
-  Single-end reads.
-  Don't group reads from multi-lane (default).
-  */
-  if (params.single_end && !params.combine_read_files && user_provided_namelist_for_filtering) {
-    Channel
-    .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-      checkIfExists: true)
-    .map { file -> tuple(file.baseName.split("_${params.single_pattern}")[0], file) } // THIS NEEDS TO BE UNIQUE
-    .filter { it[0] in user_provided_namelist_for_filtering }
-    // .view()
-    .set { illumina_reads_single_end_ch }
-
-  } else if (params.single_end && !params.combine_read_files && 
-    !user_provided_namelist_for_filtering) {
-    Channel
-    .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-      checkIfExists: true)
-    .map { file -> tuple(file.baseName.split("_${params.single_pattern}")[0], file) } // THIS NEEDS TO BE UNIQUE
-    .set { illumina_reads_single_end_ch }
-
-  } else if (params.single_end && params.combine_read_files && user_provided_namelist_for_filtering) {
-    Channel
-    .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-    checkIfExists: true)
-    .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
-    .groupTuple(sort:true)
-    // .view()
-    .filter { it[0] in user_provided_namelist_for_filtering }
-    // .view()
-    .set { illumina_reads_single_end_ch }
-
-  } else if (params.single_end && params.combine_read_files && !user_provided_namelist_for_filtering) {
-    Channel
-    .fromPath("${params.illumina_reads_directory}/*_{$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-    checkIfExists: true)
-    .map { file -> tuple((file.baseName.split('_')[0..end_field]).join("_"), file) }
-    .groupTuple(sort:true)
-    .set { illumina_reads_single_end_ch }
-
-  } else {
-    illumina_reads_single_end_ch = Channel.empty()
-  }
-
-
-  /*
-  Paired-end reads and a file of unpaired reads.
-  */
-  if (params.paired_and_single) {
-    Channel
-    .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern,$params.single_pattern}*.{fastq.gz,fastq,fq.gz,fq}", flat : true,
-    checkIfExists: true, size: 3)
-    .set { illumina_paired_reads_with_unpaired_ch }
-  } else {
-    illumina_paired_reads_with_unpaired_ch = Channel.empty()
-  }
-
-
-  /* 
-  Paired-end reads.
-  Don't group reads from multi-lane (default).
-  */
-  if (!params.paired_and_single && !params.single_end  && !params.combine_read_files && user_provided_namelist_for_filtering) {
-    Channel
-      .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-      flat : true, checkIfExists: true)
-      .filter { it[0] in user_provided_namelist_for_filtering }
-      // .view()
-      .set { illumina_paired_reads_ch }
-
-  } else if (!params.paired_and_single && !params.single_end  && !params.combine_read_files && !user_provided_namelist_for_filtering) {
-      Channel
-      .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-      flat : true, checkIfExists: true)
-      // .view()
-      .set { illumina_paired_reads_ch }
-
-  } else if (!params.paired_and_single && !params.single_end  && params.combine_read_files && user_provided_namelist_for_filtering) {
-      Channel
-      .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-      flat : true, checkIfExists: true)
-      .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
-      .groupTuple(sort:true)
-      .filter { it[0] in user_provided_namelist_for_filtering }
-      // .view()
-      .set { illumina_paired_reads_ch }
-
-  } else if (!params.paired_and_single && !params.single_end && params.combine_read_files && !user_provided_namelist_for_filtering) {
-      Channel
-      .fromFilePairs("${params.illumina_reads_directory}/*_{$params.read_pairs_pattern}*.{fastq.gz,fastq,fq.gz,fq}", \
-      flat : true, checkIfExists: true)
-      .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
-      .groupTuple(sort:true)
-      .set { illumina_paired_reads_ch }
-
-  } else {
-    illumina_paired_reads_ch = Channel.empty()
-  }
-
-  // Run OPTIONAL combine read file step: 
-  COMBINE_LANES_PAIRED_END( illumina_paired_reads_ch )
-  COMBINE_LANES_SINGLE_END( illumina_reads_single_end_ch )
-
-  // Set up correct channel for combined vs non-combined:
-  if (params.combine_read_files) {
-    trimmomatic_PE_input_ch = COMBINE_LANES_PAIRED_END.out.combined_lane_paired_reads
-    trimmomatic_SE_input_ch = COMBINE_LANES_SINGLE_END.out.combined_lane_single_reads_ch
-  } else {
-    trimmomatic_PE_input_ch = illumina_paired_reads_ch
-    trimmomatic_SE_input_ch = illumina_reads_single_end_ch
-  }
-
-  // Run OPTIONAL trimmomatic QC step:
-  TRIMMOMATIC_PAIRED( trimmomatic_PE_input_ch )
-  TRIMMOMATIC_SINGLE( trimmomatic_SE_input_ch )
-
-  // Set up input channels for assemble.py:
-  if (params.use_trimmomatic) {
-    assemble_with_single_end_only_input_ch = TRIMMOMATIC_SINGLE.out.trimmed_single_ch
-    assemble_with_unpaired_input_ch = TRIMMOMATIC_PAIRED.out.trimmed_paired_and_orphaned_ch
-    assemble_no_unpaired_input_ch = Channel.empty()
-  } else if (params.combine_read_files) {
-    assemble_with_single_end_only_input_ch = COMBINE_LANES_SINGLE_END.out.combined_lane_single_reads_ch
-    assemble_with_unpaired_input_ch = Channel.empty()
-    assemble_no_unpaired_input_ch = COMBINE_LANES_PAIRED_END.out.combined_lane_paired_reads
-  } else {
-    assemble_with_single_end_only_input_ch = illumina_reads_single_end_ch
-    assemble_with_unpaired_input_ch = illumina_paired_reads_with_unpaired_ch
-    assemble_no_unpaired_input_ch = illumina_paired_reads_ch
-  }
-
-  // Run hybpiper assemble:
-  ASSEMBLE_PAIRED_AND_SINGLE_END( target_file_ch, assemble_with_unpaired_input_ch )
-  ASSEMBLE_PAIRED_END( target_file_ch, assemble_no_unpaired_input_ch )
-  ASSEMBLE_SINGLE_END ( target_file_ch, assemble_with_single_end_only_input_ch )
-
-  // Run hybpiper stats:
-  SUMMARY_STATS( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), target_file_ch, namelist_ch ) 
-
-  // Run hybpiper recovery_heatmap: 
-  VISUALISE( SUMMARY_STATS.out.seq_lengths_file ) 
-
-  // Run retrieve_sequences.py script for all sequence types:
-  RETRIEVE_SEQUENCES( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), target_file_ch, namelist_ch )
-
-  // Run hybpiper paralog_retriever: 
-  PARALOG_RETRIEVER( ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect().mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect().mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), namelist_ch, target_file_ch )
-} 
-
-///////////////////////////////////////////////////
-/////////////////  End of script  /////////////////
-///////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+// END OF SCRIPT  
+/////////////////////////////////////////////////////////////////////////////////////////
