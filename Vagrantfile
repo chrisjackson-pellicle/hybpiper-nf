@@ -159,14 +159,14 @@ Vagrant.configure("2") do |config|
     echo 'export PATH="$PATH:/home/vagrant/bin/nextflow_install"' >> /home/vagrant/.bashrc
 
 
-    # Clone the HybPiper-RBGV repo:
+    # Clone the hybpiper-nf repo:
     runuser -l vagrant -c '
     cd bin; \
     git clone https://github.com/chrisjackson-pellicle/hybpiper-nf.git; \
     cd ..'
 
 
-    # Clone the Yang-and-Smith repo:
+    # Clone the paragone-nf repo:
     runuser -l vagrant -c '
     cd bin; \
     git clone https://github.com/chrisjackson-pellicle/paragone-nf.git; \
