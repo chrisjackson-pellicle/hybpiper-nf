@@ -487,7 +487,8 @@ def assemble_help() {
 
       -profile <profile>          Configuration profile to use. Can use multiple 
                                   (comma separated). Available: standard (default), 
-                                  slurm
+                                  standard_singularity, slurm_singularity, conda, 
+                                  conda_slurm
 
       --namelist                  A text file containing sample names. Only these 
                                   samples will be processed, By default, all samples 
