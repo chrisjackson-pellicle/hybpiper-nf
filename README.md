@@ -372,6 +372,13 @@ Please see the Wiki entry [Issues][4].
 
 ## Changelog
 
+*01 February 2023*
+
+- Added a `conda` and `conda_slurm` profile. This allows the pipeline to be run using conda packages rather than the Singularity container. The corresponding conda enviroment is created in the nextflow `work` directory.
+- Updated the `hybpiper.nf` script to support all native HybPiper 2 parameters.
+- Added a script version number; view by using the flag `--version`.
+- Split the main HybPiper `assemble` pipeline, and the HybPiper commands `check_targetfile` and the `fix_targetfile`; these are now separate entry points to the `hybpiper.nf` script, accessible by using the parameter `-entry`, e.g. `-entry assemble`. 
+
 *28 November 2022*
 
 - Change repository name from `HybPiper-RBGV` to `hybpiper-nf`.
