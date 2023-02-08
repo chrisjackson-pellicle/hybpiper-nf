@@ -59,7 +59,7 @@ From: ubuntu:22.04
     cpanm -f Bio::MUST::Apps::HmmCleaner
 
 
-	if [ ! -d /usr/local/miniconda3 ]; then
+    if [ ! -d /usr/local/miniconda3 ]; then
         wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
         bash ~/miniconda.sh -b -p /usr/local/miniconda3 && \
         rm ~/miniconda.sh
@@ -82,12 +82,12 @@ From: ubuntu:22.04
     conda install -y bioconda::iqtree=2.0.3
     # conda install -y bioconda::mafft=7.471
     # conda install -y bioconda::bowtie2=2. 4.5
-     conda install -y bioconda::trimal=1.4.1
-     conda install -y bioconda:clustalo=1.2.4
-     conda install -y bioconda::trimmomatic=0.39
-     conda install -y bioconda::fastp=0.23.2
-     conda install -y conda-forge::ete3=3.1.2
-     conda install -y bioconda::muscle=3.8.1551
+    conda install -y bioconda::trimal=1.4.1
+    conda install -y bioconda:clustalo=1.2.4
+    conda install -y bioconda::trimmomatic=0.39
+    conda install -y bioconda::fastp=0.23.2
+    conda install -y conda-forge::ete3=3.1.2
+    conda install -y bioconda::muscle=3.8.1551
 
     # install astral;
     curl -OL https://github.com/smirarab/ASTRAL/raw/master/Astral.5.7.8.zip
