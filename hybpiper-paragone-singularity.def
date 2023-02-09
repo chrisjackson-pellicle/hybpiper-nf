@@ -23,7 +23,7 @@ From: ubuntu:22.04
     apt-get -y install unzip
     apt-get -y install libgl1 # necessary for ete3, see https://github.com/etetoolkit/ete/issues/195
 
-    locale-gen en_US.UTF-8
+    # locale-gen en_US.UTF-8
     echo "LANG=en_US.UTF-8" >> /etc/default/locale
 
     # Install Yang and Smith scripts:
@@ -31,32 +31,6 @@ From: ubuntu:22.04
 
     # Need to have copy of trim_tips.py that does not start with an integer, as it is imported in to 11_prune_paralogs_MI.py
     cp Yang-and-Smith-RBGV-scripts/04_trim_tips.py Yang-and-Smith-RBGV-scripts/trim_tips.py
-
-    # Install HmmCleaner:
-    curl -OL https://www.cpan.org/authors/id/P/PH/PHRED/Archive-Zip-1.68.tar.gz
-    tar -xvzf Archive-Zip-1.68.tar.gz
-    cd Archive-Zip-1.68
-    perl Makefile.PL
-    make
-    make test
-    make install
-    cd ..
-
-    cpanm https://cpan.metacpan.org/authors/id/P/PE/PEVANS/Scalar-List-Utils-1.55.tar.gz
-    cpanm https://cpan.metacpan.org/authors/id/E/ET/ETHER/Moose-2.2014.tar.gz
-    cpanm Bio::MUST::Core
-    cpanm Bio::MUST::Drivers
-    
-    # Install HMMER
-    curl -OL http://eddylab.org/software/hmmer/hmmer-3.3.tar.gz
-    tar -xvzf hmmer-3.3.tar.gz
-    cd hmmer-3.3
-    ./configure
-    make
-    make install
-    cd ..
-
-    cpanm -f Bio::MUST::Apps::HmmCleaner
 
 
     if [ ! -d /usr/local/miniconda3 ]; then
@@ -73,21 +47,21 @@ From: ubuntu:22.04
     conda config --add channels bioconda
     conda config --add channels conda-forge
 
-    # update conda:
-    conda update -n base -c defaults conda
 
     # install programs using conda:
-    conda install -y conda-forge::python=3.11
-    conda install -y chrisjackson-pellicle::hybpiper
-    conda install -y bioconda::iqtree=2.0.3
-    # conda install -y bioconda::mafft=7.471
-    # conda install -y bioconda::bowtie2=2. 4.5
-    conda install -y bioconda::trimal=1.4.1
-    conda install -y bioconda:clustalo=1.2.4
-    conda install -y bioconda::trimmomatic=0.39
-    conda install -y bioconda::fastp=0.23.2
-    conda install -y conda-forge::ete3=3.1.2
-    conda install -y bioconda::muscle=3.8.1551
+
+    conda install -c conda-forge mamba
+    mamba install -y conda-forge::python=3.11
+    mamba install -y chrisjackson-pellicle::hybpiper=2.1.2
+    mamba install -y chrisjackson-pellicle::hmmcleaner
+    mamba install -y bioconda::iqtree=2.0.3
+    mamba install -y bioconda::trimal=1.4.1
+    mamba install -y bioconda:clustalo=1.2.4
+    mamba install -y bioconda::trimmomatic=0.39
+    mamba install -y bioconda::fastp=0.23.2
+    mamba install -y conda-forge::ete3=3.1.2
+    mamba install -y bioconda::muscle=3.8.1551
+
 
     # install astral;
     curl -OL https://github.com/smirarab/ASTRAL/raw/master/Astral.5.7.8.zip
@@ -113,4 +87,3 @@ From: ubuntu:22.04
 
 %labels
     Author Chris_J
-
