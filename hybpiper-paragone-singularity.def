@@ -8,7 +8,6 @@ From: ubuntu:22.04
     apt-get install -y software-properties-common
     add-apt-repository universe
     apt-get -y update
-    apt-get -y install libwww-perl
     apt-get -y install curl
     apt-get -y install wget
     apt-get -y install git
@@ -18,12 +17,10 @@ From: ubuntu:22.04
     apt-get -y install build-essential
     apt-get -y install pkg-config
     apt-get -y install vim
-    apt-get -y install perl
-    apt-get -y install cpanminus
     apt-get -y install unzip
     apt-get -y install libgl1 # necessary for ete3, see https://github.com/etetoolkit/ete/issues/195
 
-    # locale-gen en_US.UTF-8
+    locale-gen en_US.UTF-8
     echo "LANG=en_US.UTF-8" >> /etc/default/locale
 
     # Install Yang and Smith scripts:
