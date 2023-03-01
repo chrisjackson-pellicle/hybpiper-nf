@@ -899,22 +899,22 @@ if (params.run_profiler) {
 def recovery_heatmap_command_list = []
 
 if (params.figure_length) {
-  recovery_heatmap << "--figure_length ${params.figure_length}"
+  recovery_heatmap_command_list << "--figure_length ${params.figure_length}"
   }
 if (params.figure_height) {
-  recovery_heatmap << "--figure_height ${params.figure_height}"
+  recovery_heatmap_command_list << "--figure_height ${params.figure_height}"
   }
 if (params.sample_text_size) {
-  recovery_heatmap << "--sample_text_size ${params.sample_text_size}"
+  recovery_heatmap_command_list << "--sample_text_size ${params.sample_text_size}"
   }
 if (params.gene_text_size) {
-  recovery_heatmap << "--gene_text_size ${params.gene_text_size}"
+  recovery_heatmap_command_list << "--gene_text_size ${params.gene_text_size}"
   }
 if (params.heatmap_filetype) {
-  recovery_heatmap << "--heatmap_filetype ${params.heatmap_filetype}"
+  recovery_heatmap_command_list << "--heatmap_filetype ${params.heatmap_filetype}"
   }
 if (params.heatmap_dpi) {
-  recovery_heatmap << "--heatmap_dpi ${params.heatmap_dpi}"
+  recovery_heatmap_command_list << "--heatmap_dpi ${params.heatmap_dpi}"
   }
 
 
