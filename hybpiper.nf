@@ -1617,12 +1617,16 @@ Run the `hybpiper stats` command.
 
   script:
   if (params.targetfile_dna) {
+  File target_file = new File(params.targetfile_dna)
+  target_file_basename = target_file.getName()
   """
-  hybpiper stats -t_dna ${target_file} gene ${namelist}
+  hybpiper stats -t_dna ${target_file_basename} gene ${namelist}
   """
-  } else if (params.targetfile_dna) {
+  } else if (params.targetfile_aa) {
+  File target_file = new File(params.targetfile_aa)
+  target_file_basename = target_file.getName()
   """
-  hybpiper stats -t_aa ${target_file} gene ${namelist}
+  hybpiper stats -t_aa ${target_file_basename} gene ${namelist}
   """
   }
 
@@ -1678,18 +1682,22 @@ process RETRIEVE_SEQUENCES {
 
   script:
   if (params.targetfile_dna) {
+    File target_file = new File(params.targetfile_dna)
+    target_file_basename = target_file.getName()
     """
-    hybpiper retrieve_sequences -t_dna ${target_file} --sample_names ${namelist} dna
-    hybpiper retrieve_sequences -t_dna ${target_file} --sample_names ${namelist} aa
-    hybpiper retrieve_sequences -t_dna ${target_file} --sample_names ${namelist} intron
-    hybpiper retrieve_sequences -t_dna ${target_file} --sample_names ${namelist} supercontig
+    hybpiper retrieve_sequences -t_dna ${target_file_basename} --sample_names ${namelist} dna
+    hybpiper retrieve_sequences -t_dna ${target_file_basename} --sample_names ${namelist} aa
+    hybpiper retrieve_sequences -t_dna ${target_file_basename} --sample_names ${namelist} intron
+    hybpiper retrieve_sequences -t_dna ${target_file_basename} --sample_names ${namelist} supercontig
     """
   } else if (params.targetfile_aa) {
+    File target_file = new File(params.targetfile_aa)
+    target_file_basename = target_file.getName()
     """
-    hybpiper retrieve_sequences -t_aa ${target_file} --sample_names ${namelist} . dna
-    hybpiper retrieve_sequences -t_aa ${target_file} --sample_names ${namelist} . aa
-    hybpiper retrieve_sequences -t_aa ${target_file} --sample_names ${namelist} . intron
-    hybpiper retrieve_sequences -t_aa ${target_file} --sample_names ${namelist} . supercontig
+    hybpiper retrieve_sequences -t_aa ${target_file_basename} --sample_names ${namelist} . dna
+    hybpiper retrieve_sequences -t_aa ${target_file_basename} --sample_names ${namelist} . aa
+    hybpiper retrieve_sequences -t_aa ${target_file_basename} --sample_names ${namelist} . intron
+    hybpiper retrieve_sequences -t_aa ${target_file_basename} --sample_names ${namelist} . supercontig
     """
   }
 }
@@ -1722,10 +1730,14 @@ process PARALOG_RETRIEVER {
 
   script:
     if (params.targetfile_dna) {
-      paralog_command = "hybpiper paralog_retriever ${namelist} -t_dna ${target_file} " + paralog_retriever_command_list.join(' ')
+      File target_file = new File(params.targetfile_dna)
+      target_file_basename = target_file.getName()
+      paralog_command = "hybpiper paralog_retriever ${namelist} -t_dna ${target_file_basename} " + paralog_retriever_command_list.join(' ')
 
     } else if (params.targetfile_aa) {
-      paralog_command = "hybpiper paralog_retriever ${namelist} -t_aa ${target_file} " + paralog_retriever_command_list.join(' ')
+      File target_file = new File(params.targetfile_aa)
+      target_file_basename = target_file.getName()
+      paralog_command = "hybpiper paralog_retriever ${namelist} -t_aa ${target_file_basename} " + paralog_retriever_command_list.join(' ')
 
       """
       echo "Executing command: ${paralog_command}"
