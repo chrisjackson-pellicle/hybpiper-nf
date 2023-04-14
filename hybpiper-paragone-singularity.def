@@ -49,7 +49,7 @@ From: ubuntu:22.04
 
     conda install -c conda-forge mamba
     mamba install -y conda-forge::python=3.11
-    mamba install -y chrisjackson-pellicle::hybpiper=2.1.2
+    mamba install -y chrisjackson-pellicle::hybpiper=2.1.3
     mamba install -y chrisjackson-pellicle::hmmcleaner
     mamba install -y bioconda::iqtree=2.0.3
     mamba install -y bioconda::trimal=1.4.1

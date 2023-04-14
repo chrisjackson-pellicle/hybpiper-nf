@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 /////////////////////////////////////////////////////////////////////////////////////////
-////////////////////  Nextflow Pipeline for HybPiper version 2.1.1  /////////////////////
+////////////////////  Nextflow Pipeline for HybPiper version 2.1.3  /////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
 nextflow.enable.dsl=2
@@ -11,9 +11,9 @@ nextflow.enable.dsl=2
 /////////////////////////////////////////////////////////////////////////////////////////
 
 if( params.remove('version') ) {
-    println('hybpiper-nf version 1.0.0, running HybPiper version 2.1.1')
+    println('hybpiper-nf version 1.0.1, running HybPiper version 2.1.3')
     exit 0
-}
+} 
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -250,10 +250,14 @@ if (workflow.commandLine.contains('-entry check_targetfile')  &&
 def check_targetfile_command_list = []
 
 if (params.targetfile_dna) {
-  check_targetfile_command_list << "--targetfile_dna ${params.targetfile_dna}"
+  File target_file = new File(params.targetfile_dna)
+  target_file_basename = target_file.getName()
+  check_targetfile_command_list << "--targetfile_dna ${target_file_basename}"
   }
 if (params.targetfile_aa) {
-  check_targetfile_command_list << "--targetfile_aa ${params.targetfile_aa}"
+  File target_file = new File(params.targetfile_aa)
+  target_file_basename = target_file.getName()
+  check_targetfile_command_list << "--targetfile_aa ${target_file_basename}"
   }
 if (params.sliding_window_size) {
   check_targetfile_command_list << "--sliding_window_size ${params.sliding_window_size}"
@@ -391,10 +395,14 @@ def fix_targetfile_command_list = []
 fix_targetfile_command_list << "${params.control_file}"
 
 if (params.targetfile_dna) {
-  fix_targetfile_command_list << "--targetfile_dna ${params.targetfile_dna}"
+  File target_file = new File(params.targetfile_dna)
+  target_file_basename = target_file.getName()
+  fix_targetfile_command_list << "--targetfile_dna ${target_file_basename}"
   }
 if (params.targetfile_aa) {
-  fix_targetfile_command_list << "--targetfile_aa ${params.targetfile_aa}"
+  File target_file = new File(params.targetfile_aa)
+  target_file_basename = target_file.getName()
+  fix_targetfile_command_list << "--targetfile_aa ${target_file_basename}"
   }
 if (params.no_terminal_stop_codons) {
   fix_targetfile_command_list << "--no_terminal_stop_codons"
@@ -807,10 +815,14 @@ if (params.targetfile_aa && params.bwa) {
 def command_list = []
 
 if (params.targetfile_dna) {
-  command_list << "--targetfile_dna ${params.targetfile_dna}"
+  File target_file = new File(params.targetfile_dna)
+  target_file_basename = target_file.getName()
+  command_list << "--targetfile_dna ${target_file_basename}"
   }
 if (params.targetfile_aa) {
-  command_list << "--targetfile_aa ${params.targetfile_aa}"
+  File target_file = new File(params.targetfile_aa)
+  target_file_basename = target_file.getName()
+  command_list << "--targetfile_aa ${target_file_basename}"
   }
 if (params.bwa) {
   command_list << "--bwa"
