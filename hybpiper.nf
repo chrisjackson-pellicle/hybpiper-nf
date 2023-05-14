@@ -11,7 +11,7 @@ nextflow.enable.dsl=2
 /////////////////////////////////////////////////////////////////////////////////////////
 
 if( params.remove('version') ) {
-    println('hybpiper-nf version 1.0.1, running HybPiper version 2.1.3')
+    println('hybpiper-nf version 1.0.2, running HybPiper version 2.1.3')
     exit 0
 } 
 

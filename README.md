@@ -373,6 +373,11 @@ Please see the Wiki entry [Issues][4].
 
 ## Changelog
 
+*15 May 2023*
+
+- Bugfix: BBmap.sh memory for Hybpiper chimera test was set to a default of 1 Mb. Changed to 1000 Mb.
+- Update version in hybpiper-nf script to version 1.0.2
+
 *14 April 2023*
 
 - Updated the HybPiper version in the Singularity container `hybpiper-paragone` to version 2.1.3, and updated the hybpiper-nf script to version 1.0.1
