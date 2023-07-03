@@ -14,7 +14,7 @@ For an explanation of the general purpose of [HybPiper][17], and the approach it
 
 ## hybpiper-nf: containerised and pipelined using Singularity and Nextflow
 
-To simplify running HybPiper, I’ve provided a [Singularity][15] container based on the Linux distribution Ubuntu 20.04, with all the software required to run the HybPiper pipeline (including some additional functionality, see below for details), as well as all the dependencies ([BioPython][9], [BLAST][8], [BWA][11], [BBmap][12], [Exonerate][13], [SPAdes][10], [Samtools][14]). The container is called `hybpiper-paragone.sif`.
+To simplify running HybPiper, I’ve provided a [Singularity][15] container based on the Linux distribution Ubuntu 22.04, with all the software required to run the HybPiper pipeline (including some additional functionality, see below for details), as well as all the dependencies ([BioPython][9], [BLAST][8], [BWA][11], [BBmap][12], [Exonerate][13], [SPAdes][10], [Samtools][14]). The container is called `hybpiper-paragone.sif`.
 
 To run HybPiper using this container, I’ve provided a [Nextflow][16] pipeline that uses the software in the Singularity container. This pipeline runs all HybPiper steps with a single command. The pipeline script is called `hybpiper.nf`. It comes with an associated config file called `hybpiper.config`. The only input required is a folder of sequencing reads for your samples, and a target file in `.fasta` format. The Nextflow pipeline will automatically generate the `namelist.txt` file required by some of the HybPiper scripts, and will run all HybPiper scripts on each sample in parallel. It also includes an optional read-trimmming step to QC your reads prior to running HybPiper, using the software [Trimmomatic][7]. The number of parallel processes running at any time, as well as computing resources given to each process (e.g. number of CPUs, amount of RAM etc) can be configured by the user by modifying the provided config file. The pipeline can be run directly on your local computer, and on an HPC system submitting jobs via a scheduler (e.g. [SLURM][21], PBS, etc). 
 
@@ -83,7 +83,7 @@ Please see the Wiki entry [Running on a PC][20].
 
 Example run command:
 
-    nextflow run hybpiper.nf -c hybpiper.config -entry assemble --illumina_reads_directory reads_for_hybpiper --targetfile_dna Angiosperms353_targetSequences.fasta
+    nextflow run hybpiper.nf -c hybpiper.config -entry assemble -profile standard_singularity --illumina_reads_directory reads_for_hybpiper --targetfile_dna Angiosperms353_targetSequences.fasta
 
 ```   
 Mandatory arguments:
@@ -264,6 +264,15 @@ Optional arguments:
                               to flag a stitched-contig as a potential chimera of 
                               contigs from multiple paralogs. Default is 5
 
+  --exonerate_hit_sliding_window_size <int>
+                              Size of the sliding window (in amino-acids) when 
+                              trimming termini of Exonerate hits. Default is 3.
+
+  --exonerate_hit_sliding_window_thresh <int>
+                              Percentage similarity threshold for the sliding window 
+                              (in amino-acids) when trimming termini of Exonerate hits. 
+                              Default is 55.
+
   --merged                    Merge forward and reverse reads, and run SPAdes 
                               assembly with merged and unmerged (the latter 
                               in interleaved format) data. Default is off
@@ -373,6 +382,11 @@ Please see the Wiki entry [Issues][4].
 
 ## Changelog
 
+*03 July 2023*
+
+- Updated the HybPiper version in the Singularity container `hybpiper-paragone` to version 2.1.5, and updated the `hybpiper-nf` script to version 1.0.3
+- Added the new options `exonerate_hit_sliding_window_size` and `exonerate_hit_sliding_window_thresh` to the `hybpiper assemble` options.
+
 *15 May 2023*
 
 - Bugfix: BBmap.sh memory for Hybpiper chimera test was set to a default of 1 Mb. Changed to 1000 Mb.
@@ -380,7 +394,7 @@ Please see the Wiki entry [Issues][4].
 
 *14 April 2023*
 
-- Updated the HybPiper version in the Singularity container `hybpiper-paragone` to version 2.1.3, and updated the hybpiper-nf script to version 1.0.1
+- Updated the HybPiper version in the Singularity container `hybpiper-paragone` to version 2.1.3, and updated the `hybpiper-nf` script to version 1.0.1
 - Bugfix: get target file basename for HybPiper commands (fixes error when using a target file that isn't in the current working directory)
 
 *01 February 2023*

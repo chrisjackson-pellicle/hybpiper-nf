@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 /////////////////////////////////////////////////////////////////////////////////////////
-////////////////////  Nextflow Pipeline for HybPiper version 2.1.3  /////////////////////
+////////////////////  Nextflow Pipeline for HybPiper version 2.1.5  /////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
 nextflow.enable.dsl=2
@@ -11,7 +11,7 @@ nextflow.enable.dsl=2
 /////////////////////////////////////////////////////////////////////////////////////////
 
 if( params.remove('version') ) {
-    println('hybpiper-nf version 1.0.2, running HybPiper version 2.1.3')
+    println('hybpiper-nf version 1.0.3, running HybPiper version 2.1.5')
     exit 0
 } 
 
@@ -42,7 +42,9 @@ workflow {
 /////////////////////////////////////////////////////////////////////////////////////////
 
 allowed_params = [
-                  "no_stitched_contig", 
+                  "no_stitched_contig",
+                  "exonerate_hit_sliding_window_size",
+                  "exonerate_hit_sliding_window_thresh", 
                   "chimera_test_memory",
                   "chimeric_stitched_contig_edit_distance",
                   "chimeric_stitched_contig_discordant_reads_cutoff", 
@@ -650,6 +652,15 @@ def assemble_help() {
                                   to flag a stitched-contig as a potential chimera of 
                                   contigs from multiple paralogs. Default is 5
 
+      --exonerate_hit_sliding_window_size <int>
+                                  Size of the sliding window (in amino-acids) when 
+                                  trimming termini of Exonerate hits. Default is 3.
+
+      --exonerate_hit_sliding_window_thresh <int>
+                                  Percentage similarity threshold for the sliding window 
+                                  (in amino-acids) when trimming termini of Exonerate hits. 
+                                  Default is 55.
+                                  
       --merged                    Merge forward and reverse reads, and run SPAdes 
                                   assembly with merged and unmerged (the latter 
                                   in interleaved format) data. Default is off
@@ -886,6 +897,12 @@ if (params.chimeric_stitched_contig_edit_distance) {
   }
 if (params.chimeric_stitched_contig_discordant_reads_cutoff) {
   command_list << "--chimeric_stitched_contig_discordant_reads_cutoff ${params.chimeric_stitched_contig_discordant_reads_cutoff}"
+  }
+if (params.exonerate_hit_sliding_window_size) {
+  command_list << "--exonerate_hit_sliding_window_size ${params.exonerate_hit_sliding_window_size}"
+  }
+if (params.exonerate_hit_sliding_window_thresh) {
+  command_list << "--exonerate_hit_sliding_window_thresh ${params.exonerate_hit_sliding_window_thresh}"
   }
 if (params.merged) {
   command_list << "--merged"
