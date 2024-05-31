@@ -74,7 +74,7 @@ allowed_params = [
                   "namelist",
                   "keep_intermediate_files", 
                   "distribute_low_mem", 
-                  "use_diamond", 
+                  "diamond", 
                   "diamond_sensitivity",
                   "single_cell_assembly", 
                   "max_target_seqs", 
@@ -838,7 +838,7 @@ if (params.targetfile_aa) {
 if (params.bwa) {
   command_list << "--bwa"
   }
-if (params.use_diamond) {
+if (params.diamond) {
   command_list << "--diamond"
   }
 if (params.diamond_sensitivity) {
