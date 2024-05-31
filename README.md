@@ -1,7 +1,3 @@
-***Note: this repository was previous called `HybPiper-RBGV`. It was renamed to  `hybpiper-nf`  on 28 November 2022.***
-
----
-
 # hybpiper-nf
 
 ## Original HybPiper github, wiki and tutorial:
