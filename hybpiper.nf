@@ -1711,10 +1711,10 @@ process RETRIEVE_SEQUENCES {
     File target_file = new File(params.targetfile_aa)
     target_file_basename = target_file.getName()
     """
-    hybpiper retrieve_sequences -t_aa ${target_file_basename} --sample_names ${namelist} . dna
-    hybpiper retrieve_sequences -t_aa ${target_file_basename} --sample_names ${namelist} . aa
-    hybpiper retrieve_sequences -t_aa ${target_file_basename} --sample_names ${namelist} . intron
-    hybpiper retrieve_sequences -t_aa ${target_file_basename} --sample_names ${namelist} . supercontig
+    hybpiper retrieve_sequences -t_aa ${target_file_basename} --sample_names ${namelist} dna
+    hybpiper retrieve_sequences -t_aa ${target_file_basename} --sample_names ${namelist} aa
+    hybpiper retrieve_sequences -t_aa ${target_file_basename} --sample_names ${namelist} intron
+    hybpiper retrieve_sequences -t_aa ${target_file_basename} --sample_names ${namelist} supercontig
     """
   }
 }
