@@ -67,7 +67,7 @@ allowed_params = [
                   "trimmomatic_min_length",
                   "trimmomatic_sliding_window_size", 
                   "trimmomatic_sliding_window_quality", 
-                  "run_intronerate",
+                  "no_intronerate",
                   "bbmap_subfilter", 
                   "combine_read_files", 
                   "combine_read_files_num_fields", 
@@ -654,7 +654,7 @@ def assemble_help() {
 
       --exonerate_hit_sliding_window_size <int>
                                   Size of the sliding window (in amino-acids) when 
-                                  trimming termini of Exonerate hits. Default is 3.
+                                  trimming termini of Exonerate hits. Default is 3
 
       --exonerate_hit_sliding_window_thresh <int>
                                   Percentage similarity threshold for the sliding window 
@@ -665,8 +665,8 @@ def assemble_help() {
                                   assembly with merged and unmerged (the latter 
                                   in interleaved format) data. Default is off
       
-      --run_intronerate           Run the intronerate() function to recover intron 
-                                  and supercontig sequences. Default is off, and so 
+      --no_intronerate            Do not run intronerate to recover fasta files for supercontigs 
+                                  with introns (if present), and introns-only. If this flag is used, 
                                   fasta files in `subfolders 09_sequences_intron` and 
                                   `10_sequences_supercontig` will be empty
 
@@ -907,8 +907,8 @@ if (params.exonerate_hit_sliding_window_thresh) {
 if (params.merged) {
   command_list << "--merged"
   }
-if (params.run_intronerate) {
-  command_list << "--run_intronerate"
+if (params.no_intronerate) {
+  command_list << "--no_intronerate"
   }
 if (params.keep_intermediate_files) {
   command_list << "--keep_intermediate_files"
