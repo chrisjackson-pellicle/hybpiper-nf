@@ -378,6 +378,14 @@ Please see the Wiki entry [Issues][4].
 
 ## Changelog
 
+*31 May 2024*
+
+- Updated the HybPiper version in the Singularity container `hybpiper-paragone` to version 2.1.7, and updated the `hybpiper-nf` script to version 1.0.4
+- Fixed an issue when calling `hybpiper retreive_sequences` with an amino-acid target file.
+- Updated the flag `--use_diamond` to `--diamond` to match standalong HybPiper.
+- Updated the flag `--run_intronerate` to `--no_intronerate` to reflect changes made in HybPiper >= 2.1.6
+
+
 *03 July 2023*
 
 - Updated the HybPiper version in the Singularity container `hybpiper-paragone` to version 2.1.5, and updated the `hybpiper-nf` script to version 1.0.3
