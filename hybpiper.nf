@@ -1423,7 +1423,7 @@ workflow assemble_main {
         .mix(ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_gz_ch).collect()
         .mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect()
         .mix(ASSEMBLE_PAIRED_END.out.assemble_gz_ch).collect()
-        .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), 
+        .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect() 
         .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_gz_ch).collect(), 
         target_file_ch, 
         namelist_ch 
@@ -1438,7 +1438,7 @@ workflow assemble_main {
         .mix(ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_gz_ch).collect()
         .mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect()
         .mix(ASSEMBLE_PAIRED_END.out.assemble_gz_ch).collect()
-        .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), 
+        .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect() 
         .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_gz_ch).collect(), 
         target_file_ch, 
         namelist_ch 
@@ -1450,7 +1450,7 @@ workflow assemble_main {
         .mix(ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_gz_ch).collect()
         .mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect()
         .mix(ASSEMBLE_PAIRED_END.out.assemble_gz_ch).collect()
-        .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), 
+        .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect() 
         .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_gz_ch).collect(), 
         namelist_ch, 
         target_file_ch )
