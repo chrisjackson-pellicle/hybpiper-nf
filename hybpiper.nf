@@ -1420,9 +1420,11 @@ workflow assemble_main {
       // Run `hybpiper stats`:
       SUMMARY_STATS( 
         ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect()
+        .mix(ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_gz_ch).collect()
         .mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect()
         .mix(ASSEMBLE_PAIRED_END.out.assemble_gz_ch).collect()
         .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), 
+        .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_gz_ch).collect(), 
         target_file_ch, 
         namelist_ch 
         ) 
@@ -1433,9 +1435,11 @@ workflow assemble_main {
       // Run hybpiper `retrieve_sequences` for all sequence types:
       RETRIEVE_SEQUENCES( 
         ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect()
+        .mix(ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_gz_ch).collect()
         .mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect()
         .mix(ASSEMBLE_PAIRED_END.out.assemble_gz_ch).collect()
         .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), 
+        .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_gz_ch).collect(), 
         target_file_ch, 
         namelist_ch 
         )
@@ -1443,9 +1447,11 @@ workflow assemble_main {
       // Run `hybpiper paralog_retriever`: 
       PARALOG_RETRIEVER( 
         ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_ch.collect()
+        .mix(ASSEMBLE_PAIRED_AND_SINGLE_END.out.assemble_with_unPaired_gz_ch).collect()
         .mix(ASSEMBLE_PAIRED_END.out.assemble_ch).collect()
         .mix(ASSEMBLE_PAIRED_END.out.assemble_gz_ch).collect()
         .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_ch).collect(), 
+        .mix(ASSEMBLE_SINGLE_END.out.assemble_with_single_end_gz_ch).collect(), 
         namelist_ch, 
         target_file_ch )
       
@@ -1732,6 +1738,7 @@ process ASSEMBLE_SINGLE_END {
   // echo true
   label 'in_container'
   publishDir "${params.outdir}/04_processed_sample_directories", mode: 'copy', pattern: "${pair_id}"
+  publishDir "${params.outdir}/04_processed_sample_directories", mode: 'copy', pattern: "${pair_id}.tar.gz"
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_stitched_contig.csv"
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt"
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv"
@@ -1749,6 +1756,7 @@ process ASSEMBLE_SINGLE_END {
 
   output:
     path("${prefix}"), emit: assemble_with_single_end_ch optional true
+    path("${prefix}.tar.gz"), emit: assemble_with_single_end_gz_ch optional true
     path("${pair_id}/${pair_id}_genes_with_stitched_contig.csv") optional true
     path("${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt") optional true
     path("${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv") optional true
@@ -1771,6 +1779,7 @@ process ASSEMBLE_PAIRED_AND_SINGLE_END {
   //echo true
   label 'in_container'
   publishDir "${params.outdir}/04_processed_sample_directories", mode: 'copy', pattern: "${pair_id}"
+  publishDir "${params.outdir}/04_processed_sample_directories", mode: 'copy', pattern: "${pair_id}.tar.gz"
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_stitched_contig.csv"
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_derived_from_putative_chimeric_stitched_contig.csv"
   publishDir "${params.outdir}/06_summary_stats", mode: 'copy', pattern: "${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt"
@@ -1789,6 +1798,7 @@ process ASSEMBLE_PAIRED_AND_SINGLE_END {
 
   output:
     path("${pair_id}"), emit: assemble_with_unPaired_ch optional true
+    path("${pair_id}.tar.gz"), emit: assemble_with_unPaired_gz_ch optional true
     path("${pair_id}/${pair_id}_genes_with_stitched_contig.csv") optional true
     path("${pair_id}/${pair_id}_genes_derived_from_putative_chimeric_stitched_contig.csv") optional true
     path("${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt") optional true
