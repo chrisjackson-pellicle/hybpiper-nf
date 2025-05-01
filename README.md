@@ -291,7 +291,7 @@ Optional arguments:
                               string in Exonerate searches. Sequenced from this
                               taxon will still be used for read sorting
 
-  --timeout_extract_contigs Kill long-running processes if they take longer than
+  --timeout_extract_contigs   Kill long-running processes if they take longer than
                               X seconds. Default is 120
 
   --no_stitched_contig        Do not create stitched contigs; use longest Exonerate
