@@ -1511,8 +1511,8 @@ process FIX_TARGETFILE {
     path("fix_targetfile_report.txt")
     path("fix_targetfile_report.tsv")
     path("*fixed*")
-    path("fix_targetfile_alignments") optional true
-    path("fix_targetfile_additional_sequence_files") optional true
+    path("fix_targetfile_alignments"), optional: true
+    path("fix_targetfile_additional_sequence_files"), optional: true
 
   script:
   fix_targetfile_assemble_command = "hybpiper fix_targetfile " + fix_targetfile_command_list.join(' ') + " | tee fix_targetfile_report.txt"
@@ -1755,11 +1755,11 @@ process ASSEMBLE_SINGLE_END {
     tuple val(prefix), path(reads_single)
 
   output:
-    path("${prefix}"), emit: assemble_with_single_end_ch optional true
-    path("${prefix}.tar.gz"), emit: assemble_with_single_end_gz_ch optional true
-    path("${pair_id}/${pair_id}_genes_with_stitched_contig.csv") optional true
-    path("${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt") optional true
-    path("${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv") optional true
+    path("${prefix}"), emit: assemble_with_single_end_ch, optional: true
+    path("${prefix}.tar.gz"), emit: assemble_with_single_end_gz_ch, optional: true
+    path("${pair_id}/${pair_id}_genes_with_stitched_contig.csv"), optional: true
+    path("${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt"), optional: true
+    path("${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv"), optional: true
 
   script:
     assemble_command = "hybpiper assemble -r ${reads_single} --prefix ${prefix} --cpu ${task.cpus} " + command_list.join(' ')
@@ -1797,12 +1797,12 @@ process ASSEMBLE_PAIRED_AND_SINGLE_END {
     tuple val(pair_id), path(reads_R1), path(reads_R2), path(reads_unpaired)
 
   output:
-    path("${pair_id}"), emit: assemble_with_unPaired_ch optional true
-    path("${pair_id}.tar.gz"), emit: assemble_with_unPaired_gz_ch optional true
-    path("${pair_id}/${pair_id}_genes_with_stitched_contig.csv") optional true
-    path("${pair_id}/${pair_id}_genes_derived_from_putative_chimeric_stitched_contig.csv") optional true
-    path("${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt") optional true
-    path("${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv") optional true
+    path("${pair_id}"), emit: assemble_with_unPaired_ch, optional: true
+    path("${pair_id}.tar.gz"), emit: assemble_with_unPaired_gz_ch, optional: true
+    path("${pair_id}/${pair_id}_genes_with_stitched_contig.csv"), optional: true
+    path("${pair_id}/${pair_id}_genes_derived_from_putative_chimeric_stitched_contig.csv"), optional: true
+    path("${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt"), optional: true
+    path("${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv"), optional: true
 
   script:
     assemble_command = "hybpiper assemble -r ${reads_R1} ${reads_R2} --unpaired ${reads_unpaired} --prefix ${pair_id} --cpu ${task.cpus} " + command_list.join(' ')
@@ -1840,12 +1840,12 @@ process ASSEMBLE_PAIRED_END {
     tuple val(pair_id), path(reads_R1), path(reads_R2)
 
   output:
-    path("${pair_id}"), emit: assemble_ch optional true
-    path("${pair_id}.tar.gz"), emit: assemble_gz_ch optional true
-    path("${pair_id}/${pair_id}_genes_with_stitched_contig.csv") optional true
-    path("${pair_id}/${pair_id}_genes_derived_from_putative_chimeric_stitched_contig.csv") optional true
-    path("${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt") optional true
-    path("${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv") optional true
+    path("${pair_id}"), emit: assemble_ch, optional: true
+    path("${pair_id}.tar.gz"), emit: assemble_gz_ch, optional: true
+    path("${pair_id}/${pair_id}_genes_with_stitched_contig.csv"), optional: true
+    path("${pair_id}/${pair_id}_genes_derived_from_putative_chimeric_stitched_contig.csv"), optional: true
+    path("${pair_id}/${pair_id}_genes_with_long_paralog_warnings.txt"), optional: true
+    path("${pair_id}/${pair_id}_genes_with_paralog_warnings_by_contig_depth.csv"), optional: true
 
 
   script:
@@ -1985,7 +1985,7 @@ process PARALOG_RETRIEVER {
 
   output:
     path("paralogs_all/*paralogs_all.fasta")
-    path("paralogs_no_chimeras/*paralogs_no_chimeras.fasta") optional true
+    path("paralogs_no_chimeras/*paralogs_no_chimeras.fasta"), optional: true
     path("paralog_report.tsv")
     path("paralogs_above_threshold_report.txt") 
     path("paralog_heatmap.*")
