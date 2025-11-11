@@ -82,11 +82,11 @@ Example run command:
     nextflow run hybpiper.nf -c hybpiper.config -entry assemble -profile standard_singularity --illumina_reads_directory reads_for_hybpiper --targetfile_dna Angiosperms353_targetSequences.fasta
 
 ```   
-Mandatory arguments:
+\Mandatory arguments:
 
   ############################################################################
 
-  --illumina_reads_directory <directory>    
+  --illumina_reads_directory <directory>
                               Path to folder containing illumina read file(s)
 
   AND
@@ -103,50 +103,50 @@ Mandatory arguments:
 
 Optional arguments:
 
-  -profile <profile>          Configuration profile to use. Can use multiple 
-                              (comma separated). Available: standard (default), 
-                              standard_singularity, slurm_singularity, conda, 
+  -profile <profile>          Configuration profile to use. Can use multiple
+                              (comma separated). Available: standard (default),
+                              standard_singularity, slurm_singularity, conda,
                               conda_slurm
 
-  --namelist                  A text file containing sample names. Only these 
-                              samples will be processed, By default, all samples 
-                              in the provided <Illumina_reads_directory> 
+  --namelist                  A text file containing sample names. Only these
+                              samples will be processed, By default, all samples
+                              in the provided <Illumina_reads_directory>
                               directory are processed
 
-  --combine_read_files        Group and concatenate read-files via a common prefix. 
-                              Useful if samples have been run across multiple lanes. 
-                              Default prefix is all text preceding the first 
+  --combine_read_files        Group and concatenate read-files via a common prefix.
+                              Useful if samples have been run across multiple lanes.
+                              Default prefix is all text preceding the first
                               underscore (_) in read filenames
 
-  --combine_read_files_num_fields <int>     
-                              Number of fields (delimited by an underscore) to use 
-                              for combining read files when using the 
+  --combine_read_files_num_fields <int>
+                              Number of fields (delimited by an underscore) to use
+                              for combining read files when using the
                               `--combine_read_files` flag. Default is 1
 
-  --num_forks <int>           Specify the number of parallel processes (e.g. 
-                              concurrent runs of 'hybpiper assemble') to run at any 
-                              one time. Can be used to prevent Nextflow from using 
-                              all the threads/cpus on your machine. Default is 
-                              to use the maximum number possible  
+  --num_forks <int>           Specify the number of parallel processes (e.g.
+                              concurrent runs of 'hybpiper assemble') to run at any
+                              one time. Can be used to prevent Nextflow from using
+                              all the threads/cpus on your machine. Default is
+                              to use the maximum number possible
 
-  --outdir <directory_name>                 
-                              Specify the name of the pipeline results directory. 
-                              Default is 'results'        
+  --outdir <directory_name>
+                              Specify the name of the pipeline results directory.
+                              Default is 'results'
 
-  --paired_and_single         Use when providing both paired-end R1 and R2 read 
-                              files as well as a file of single-end reads for each 
-                              sample       
+  --paired_and_single         Use when providing both paired-end R1 and R2 read
+                              files as well as a file of single-end reads for each
+                              sample
 
-  --single_end                Use when providing providing only a folder of 
-                              single-end reads                         
+  --single_end                Use when providing providing only a folder of
+                              single-end reads
 
-  --read_pairs_pattern <pattern>            
-                              Provide a comma-separated read-pair pattern for 
-                              matching fowards and reverse paired-end readfiles, 
+  --read_pairs_pattern <pattern>
+                              Provide a comma-separated read-pair pattern for
+                              matching fowards and reverse paired-end readfiles,
                               e.g. '1P,2P'. Default is 'R1,R2'
 
-  --single_pattern <pattern>                
-                              Provide a pattern for matching single-end read 
+  --single_pattern <pattern>
+                              Provide a pattern for matching single-end read
                               files. Default is 'single'
 
   #######################################################################################
@@ -156,140 +156,234 @@ Optional arguments:
   --use_trimmomatic           Trim forwards and reverse reads using Trimmomatic.
                               Default is off
 
-  --trimmomatic_leading_quality <int>       
-                              Cut bases off the start of a read, if below this 
+  --trimmomatic_leading_quality <int>
+                              Cut bases off the start of a read, if below this
                               threshold quality.Default is 3
 
-  --trimmomatic_trailing_quality <int>      
-                              Cut bases off the end of a read, if below this 
+  --trimmomatic_trailing_quality <int>
+                              Cut bases off the end of a read, if below this
                               threshold quality. Default is 3
 
-  --trimmomatic_min_length <int>            
-                              Drop a read if it is below this specified length. 
+  --trimmomatic_min_length <int>
+                              Drop a read if it is below this specified length.
                               Default is 36
 
-  --trimmomatic_sliding_window_size <int>   
-                              Size of the sliding window used by Trimmomatic; 
-                              specifies the number of bases to average across. 
+  --trimmomatic_sliding_window_size <int>
+                              Size of the sliding window used by Trimmomatic;
+                              specifies the number of bases to average across.
                               Default is 4
 
   --trimmomatic_sliding_window_quality <int>
-                              Specifies the average quality required within the 
+                              Specifies the average quality required within the
                               sliding window. Default is 20
 
   #######################################################################################
   ############################# hybpiper assemble options: ##############################
   #######################################################################################
 
+  Options for step: map_reads:
+
   --bwa                       Use BWA to search reads for hits to target. Requires
                               BWA and a target file that is nucleotides!
 
   --diamond                   Use DIAMOND instead of BLASTx
 
-  --diamond_sensitivity       Use the provided sensitivity for DIAMOND searches. 
-                              Option are: 'mid-sensitive', 'sensitive', 
-                              'more-sensitive', 'very-sensitive', 'ultra-sensitive'
-
-  --distribute_low_mem        Distributing and writing reads to individual gene 
-                              directories  will be 40-50 percent slower, but can use 
-                              less memory/RAM with large input files
+  --diamond_sensitivity       {mid-sensitive,sensitive,more-sensitive,very-sensitive,
+                               ultra-sensitive}
+                              Use the provided sensitivity for DIAMOND searches.
 
   --evalue                    e-value threshold for blastx/DIAMOND hits, default: 0.0001
 
   --max_target_seqs           Max target seqs to save in BLASTx search, default is 10
 
-  --cov_cutoff <int>          Coverage cutoff to pass to the SPAdes assembler. 
+
+  Options for step: distribute_reads:
+
+  --distribute_low_mem        Distributing and writing reads to individual gene
+                              directories  will be 40-50 percent slower, but can use
+                              less memory/RAM with large input files
+
+
+  Options for step: assemble_reads:
+
+  --cov_cutoff <int>          Coverage cutoff to pass to the SPAdes assembler.
                               Default is 8
 
-  --single_cell_assembly      Run SPAdes assemblies in MDA (single-cell) mode. 
+  --single_cell_assembly      Run SPAdes assemblies in MDA (single-cell) mode.
                               Default is False
 
-  --kvals                     Values of k for SPAdes assemblies. SPAdes needs to be 
-                              compiled to handle larger k-values! Default is 
+  --kvals                     Values of k for SPAdes assemblies. SPAdes needs to be
+                              compiled to handle larger k-values! Default is
                               auto-detection by SPAdes
 
-  --thresh                    Percent identity threshold for retaining Exonerate
-                              hits. Default is 55, but increase this if you are 
-                              worried about contaminant sequences
-
-  --paralog_min_length_percentage <decimal> 
-                              Minimum length percentage of a SPAdes contig vs 
-                              reference protein query for a paralog warning to be 
-                              generated and a putative paralog contig to be 
-                              recovered. Default is 0.75 
-
-  --depth_multiplier          Assign a long paralog as the "main" sequence if it 
-                              has a coverage depth <depth_multiplier> times all 
-                              other long paralogs. Set to zero to not use depth. 
-                              Default is 10
-
-  --timeout_assemble          Kill long-running gene assemblies if they take longer 
-                              than X percent of average
-
-  --timeout_exonerate_contigs Kill long-running processes if they take longer than 
-                              X seconds. Default is 120
-
-  --target                    Use the target file sequence with this taxon name in 
-                              Exonerate searches for each gene. Other targets for 
-                              that gene will be used only for read sorting. Can be a 
-                              tab-delimited file (one <gene>\t<taxon_name> per line) 
-                              or a single taxon name
-
-  --exclude                   Do not use any sequence with the specified taxon name 
-                              string in Exonerate searches. Sequenced from this 
-                              taxon will still be used for read sorting
-
-  --no_stitched_contig        Do not create stitched contigs; use longest Exonerate 
-                              hit only. Default is off
-
-  --chimera_test_memory <int> Memory (RAM) amount in MB to use for bbmap.sh when
-                              peforming stitched-contig chimera tests. Default is 
-                              1000 MB
-
-  --bbmap_subfilter <int>     Ban alignments with more than this many 
-                              substitutions when performing read-pair mapping to 
-                              supercontig reference (bbmap.sh). Default is 7
-
-  --chimeric_stitched_contig_edit_distance <int>    
-                              Minimum number of base differences between one read 
-                              of a read pair vs the stitched-contig reference for a 
-                              read pair to be flagged as discordant. Default is 5
-
-  --chimeric_stitched_contig_discordant_reads_cutoff <int>           
-                              Minimum number of discordant reads pairs required 
-                              to flag a stitched-contig as a potential chimera of 
-                              contigs from multiple paralogs. Default is 5
-
-  --exonerate_hit_sliding_window_size <int>
-                              Size of the sliding window (in amino-acids) when 
-                              trimming termini of Exonerate hits. Default is 3.
-
-  --exonerate_hit_sliding_window_thresh <int>
-                              Percentage similarity threshold for the sliding window 
-                              (in amino-acids) when trimming termini of Exonerate hits. 
-                              Default is 55.
-
-  --merged                    Merge forward and reverse reads, and run SPAdes 
-                              assembly with merged and unmerged (the latter 
+  --merged                    Merge forward and reverse reads, and run SPAdes
+                              assembly with merged and unmerged (the latter
                               in interleaved format) data. Default is off
 
-  --run_intronerate           Run the intronerate() function to recover intron 
-                              and supercontig sequences. Default is off, and so 
-                              fasta files in `subfolders 09_sequences_intron` and 
+  --timeout_assemble_reads    Kill long-running gene assemblies if they take longer
+                              than X percent of average.
+
+
+  Options for step: extract_contigs:
+
+  --not_protein_coding        If provided, extract sequences from SPAdes contigs using
+                              BLASTn rather than Exonerate (step: extract_contigs)
+
+  --extract_contigs_blast_task
+                              {blastn,blastn-short,megablast,dc-megablast}
+                              Task to use for BLASTn searches during the extract_contigs
+                              step of the assembly pipeline. See
+                              https://www.ncbi.nlm.nih.gov/books/NBK569839/ for a
+                              description of tasks. Default is: blastn
+
+  --extract_contigs_blast_evalue
+                              Expectation value (E) threshold for saving hits.
+                              Default is: 10
+
+  --extract_contigs_blast_word_size
+                              Word size for wordfinder algorithm (length of best perfect
+                              match)
+
+  --extract_contigs_blast_gapopen
+                              Cost to open a gap
+
+  --extract_contigs_blast_gapextend
+                              Cost to extend a gap
+
+  --extract_contigs_blast_penalty
+                              Penalty for a nucleotide mismatch
+
+  --extract_contigs_blast_reward
+                              Reward for a nucleotide match
+
+  --extract_contigs_blast_perc_identity
+                              Percent identity. Can be used as a pre-filter at the BLASTn
+                              stage, followed by --thresh (see below)
+
+  --extract_contigs_blast_max_target_seqs
+                              Maximum number of aligned sequences to keep (value of 5 or
+                              more is recommended). Default is: 500
+
+  --thresh                    Percent identity threshold for retaining Exonerate/BLASTn
+                              hits. Default is 55, but increase this if you are worried
+                              about contaminant sequences. Exonerate hit identity is
+                              calculated using amino-acids, BLASTn hit identity is calculated
+                              using nucleotides
+
+  --paralog_min_length_percentage <decimal>
+                              Minimum length percentage of a SPAdes contig vs
+                              reference protein query for a paralog warning to be
+                              generated and a putative paralog contig to be
+                              recovered. Default is 0.75
+
+  --depth_multiplier          Assign a long paralog as the "main" sequence if it
+                              has a coverage depth <depth_multiplier> times all
+                              other long paralogs. Set to zero to not use depth.
+                              Default is 10
+
+  --target                    Use the target file sequence with this taxon name in
+                              Exonerate searches for each gene. Other targets for
+                              that gene will be used only for read sorting. Can be a
+                              tab-delimited file (one <gene>\t<taxon_name> per line)
+                              or a single taxon name
+
+  --exclude                   Do not use any sequence with the specified taxon name
+                              string in Exonerate searches. Sequenced from this
+                              taxon will still be used for read sorting
+
+  --timeout_extract_contigs   Kill long-running processes if they take longer than
+                              X seconds. Default is 120
+
+  --no_stitched_contig        Do not create stitched contigs; use longest Exonerate
+                              hit only. Default is off
+
+  --no_pad_stitched_contig_gaps_with_n
+                              When constructing stitched contigs, do not pad any gaps
+                              between hits (with respect to the "best" protein reference)
+                              with a number of Ns corresponding to the reference gap multiplied
+                              by 3 (Exonerate) or reference gap (BLASTn). Default is: True.
+
+  --chimeric_stitched_contig_check
+                              Attempt to determine whether a stitched contig is a potential
+                              chimera of contigs from multiple paralogs. Default is: False
+
+  --bbmap_memory <int>        MB memory (RAM) to use for bbmap.sh if a chimera check is
+                              performed during step extract_contigs. Default: is 1000
+
+  --bbmap_subfilter <int>     Ban alignments with more than this many
+                              substitutions when performing read-pair mapping to
+                              supercontig reference (bbmap.sh). Default is 7
+
+  --chimeric_stitched_contig_edit_distance <int>
+                              Minimum number of base differences between one read
+                              of a read pair vs the stitched-contig reference for a
+                              read pair to be flagged as discordant. Default is 5
+
+  --chimeric_stitched_contig_discordant_reads_cutoff <int>
+                              Minimum number of discordant reads pairs required
+                              to flag a stitched-contig as a potential chimera of
+                              contigs from multiple paralogs. Default is 5
+
+  --trim_hit_sliding_window_size <int>
+                              Size of the sliding window (amino acids for Exonerate,
+                              nucleotides for BLASTn) when trimming hit termini.
+                              Default is: 5 (Exonerate) or 15 (BLASTn)
+
+  --exonerate_hit_sliding_window_thresh <int>
+                              Percentage similarity threshold for the sliding window
+                              (amino acids for Exonerate, nucleotides for BLASTn)
+                              when trimming hit termini. Default is: 75 (Exonerate)
+                              or 65 (BLASTn)
+
+  --exonerate_skip_hits_with_frameshifts
+                              Skip Exonerate hits where the SPAdes sequence contains
+                              a frameshift. See:
+                              https://github.com/mossmatters/HybPiper/wiki/Troubleshooting-common-
+                              issues,-and-recommendations#42-hits-where-the-spades-contig-contains-frameshifts.
+                              Default is: False
+
+  --exonerate_skip_hits_with_internal_stop_codons
+                              Skip Exonerate hits where the SPAdes sequence contains an
+                              internal in-frame stop codon. See:
+                              https://github.com/mossmatters/HybPiper/wiki/Troubleshooting,-common-
+                              issues,-and-recommendations#31-sequences-containing-stop-codons.
+                              A single terminal stop codon is allowed, but see option
+                              "--exonerate_skip_hits_with_terminal_stop_codons" below. Default is: False.
+
+  --exonerate_skip_hits_with_terminal_stop_codons
+                              Skip Exonerate hits where the SPAdes sequence contains a single
+                              terminal stop codon. Only applies when option
+                              "--exonerate_skip_hits_with_internal_stop_codons" is also provided.
+                              Only use this flag if your target file exclusively contains
+                              protein-coding genes with no stop codons included, and you would like
+                              to prevent any in-frame stop codons in the output sequences.
+                              Default is: False.
+
+  --exonerate_refine_full
+                              Run Exonerate searches using the parameter "--refine full".
+                              Default is: False.
+
+  --no_intronerate            Do not run intronerate to recover fasta files for supercontigs
+                              with introns (if present), and introns-only. If this flag is used,
+                              fasta files in `subfolders 09_sequences_intron` and
                               `10_sequences_supercontig` will be empty
 
-  --keep_intermediate_files   Keep all intermediate files and logs, which can be 
-                              useful for debugging. Default action is to delete 
-                              them, which greatly reduces the total file number
-
-  --no_padding_supercontigs   If Intronerate is run, and a supercontig is created 
-                              by concatenating multiple SPAdes contigs, do not add 
-                              10 "N" characters between contig joins. By default, 
+  --no_padding_supercontigs   If Intronerate is run, and a supercontig is created
+                              by concatenating multiple SPAdes contigs, do not add
+                              10 "N" characters between contig joins. By default,
                               Ns will be added
 
-  --verbose_logging           If supplied, enable verbose login. NOTE: this can 
-                              increase the size of the log files by an order of 
+  --keep_intermediate_files   Keep all intermediate files and logs, which can be
+                              useful for debugging. Default action is to delete
+                              them, which greatly reduces the total file number
+
+  --verbose_logging           If supplied, enable verbose login. NOTE: this can
+                              increase the size of the log files by an order of
                               magnitude
+
+  --compress_sample_folder
+                              Tarball and compress the sample folder after assembly
+                              has completed (<sample_name>.tar.gz). Default is: False
 
   #######################################################################################
   ####################### hybpiper paralog_retriever options: ###########################
@@ -350,7 +444,6 @@ Optional arguments:
   --heatmap_dpi HEATMAP_DPI
                               Dot per inch (DPI) for the output heatmap image.
                               Default is 150
-
 ```
 
 Please see the Wiki entry [Additional pipeline features and details][5] for further explanation of the parameters above, and general pipeline functionality.
@@ -378,11 +471,16 @@ Please see the Wiki entry [Issues][4].
 
 ## Changelog
 
+*30 April 2025*
+
+- Updated the HybPiper version in the Singularity container `hybpiper-paragone` to version 2.3.2, and updated the `hybpiper-nf` script to version 1.1.0.
+- Updated the command line options for the entry point 'assemble' to reflect HybPiper version 2.3.2.
+
 *31 May 2024*
 
 - Updated the HybPiper version in the Singularity container `hybpiper-paragone` to version 2.1.7, and updated the `hybpiper-nf` script to version 1.0.4
-- Fixed an issue when calling `hybpiper retreive_sequences` with an amino-acid target file.
-- Updated the flag `--use_diamond` to `--diamond` to match standalong HybPiper.
+- Fixed an issue when calling `hybpiper retrieve_sequences` with an amino-acid target file.
+- Updated the flag `--use_diamond` to `--diamond` to match stand-alone HybPiper.
 - Updated the flag `--run_intronerate` to `--no_intronerate` to reflect changes made in HybPiper >= 2.1.6
 
 
