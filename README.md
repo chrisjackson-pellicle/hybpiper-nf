@@ -471,6 +471,11 @@ Please see the Wiki entry [Issues][4].
 
 ## Changelog
 
+*11 November 2025*
+
+- Bugfix: syntax 'optional true' changed to ', optional: true' in `hybpiper.nf` script.
+- Updated the `hybpiper-nf` script to version 1.1.1
+
 *30 April 2025*
 
 - Updated the HybPiper version in the Singularity container `hybpiper-paragone` to version 2.3.2, and updated the `hybpiper-nf` script to version 1.1.0.
